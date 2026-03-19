@@ -3,611 +3,248 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Crypto Realm - Gráfico em Movimento</title>
+    <title>BTC/USDT 3D - Explore os Candles</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
-
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #0a0f1a;
-            color: white;
+            margin: 0;
             overflow: hidden;
-            position: fixed;
-            width: 100%;
-            height: 100%;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             touch-action: none;
+            background: #0a0f1a;
         }
-
-        /* Tela inicial */
-        #home-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle at 100% 0%, #1a1f2e, #0a0f1a);
-            z-index: 1000;
-            overflow-y: auto;
-            transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-            padding: 20px;
-        }
-
-        #home-screen.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        .header {
-            padding: 40px 20px;
-            text-align: center;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-        }
-
-        .logo {
-            font-size: 32px;
-            font-weight: 300;
-            letter-spacing: 4px;
-            text-transform: uppercase;
-            background: linear-gradient(135deg, #ffffff, #94a3b8);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 10px;
-        }
-
-        .subtitle {
-            color: #f7931a;
-            font-size: 14px;
-            letter-spacing: 2px;
-            font-weight: 300;
-        }
-
-        .coin-list {
-            max-width: 800px;
-            margin: 30px auto;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            padding: 0 20px;
-        }
-
-        .coin-card {
-            background: rgba(255,255,255,0.02);
-            border: 1px solid rgba(255,255,255,0.03);
-            border-radius: 24px;
-            padding: 25px;
-            backdrop-filter: blur(10px);
-            transition: all 0.3s ease;
-            cursor: pointer;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .coin-card::before {
-            content: '';
+        
+        /* UI Elements */
+        #info {
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, #f7931a, #9945FF, transparent);
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        .coin-card:hover::before {
-            opacity: 1;
-        }
-
-        .coin-card:active {
-            transform: scale(0.99);
-            background: rgba(255,255,255,0.03);
-        }
-
-        .coin-header {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .coin-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-        }
-
-        .btc-icon { background: #f7931a; }
-        .siren-icon { background: #00ffff; }
-        .pippin-icon { background: #ff69b4; }
-        .tria-icon { background: #8b5cf6; }
-
-        .coin-info {
-            flex: 1;
-        }
-
-        .coin-name {
-            font-size: 20px;
-            font-weight: 400;
-            margin-bottom: 4px;
-        }
-
-        .coin-symbol {
-            color: #94a3b8;
-            font-size: 13px;
-            letter-spacing: 1px;
-        }
-
-        .coin-stats {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 20px;
-        }
-
-        .coin-price {
-            font-size: 24px;
-            font-weight: 300;
-        }
-
-        .coin-change {
-            font-size: 14px;
-            padding: 6px 12px;
+            top: 20px;
+            left: 20px;
+            color: white;
+            background: rgba(10, 15, 26, 0.85);
+            padding: 10px 18px;
             border-radius: 30px;
-            background: rgba(255,255,255,0.03);
-        }
-
-        .positive { color: #22c55e; }
-        .negative { color: #ef4444; }
-
-        .enter-text {
-            position: absolute;
-            bottom: 25px;
-            right: 25px;
-            color: #94a3b8;
-            font-size: 12px;
-            letter-spacing: 1px;
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        .coin-card:hover .enter-text {
-            opacity: 0.5;
-        }
-
-        /* Tela do mundo */
-        #world-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 2000;
-            display: none;
-        }
-
-        #world-screen.active {
-            display: block;
-        }
-
-        /* HUD */
-        #hud {
-            position: absolute;
-            top: 30px;
-            left: 30px;
-            z-index: 2100;
-            background: rgba(10,15,26,0.4);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255,255,255,0.03);
-            border-radius: 100px;
-            padding: 8px 20px 8px 8px;
+            font-size: 14px;
+            font-weight: 500;
+            z-index: 100;
+            border: 1px solid #f7931a;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
             display: flex;
             align-items: center;
-            gap: 15px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            gap: 8px;
         }
-
-        #world-icon {
-            width: 40px;
-            height: 40px;
+        
+        #btc-icon {
+            background: #f7931a;
+            color: white;
+            width: 24px;
+            height: 24px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 18px;
+            font-weight: bold;
+            font-size: 14px;
         }
-
+        
         #price-container {
             position: absolute;
-            top: 30px;
-            right: 30px;
-            z-index: 2100;
-            background: rgba(10,15,26,0.4);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255,255,255,0.03);
-            border-radius: 100px;
-            padding: 8px 25px;
-            text-align: right;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-        }
-
-        #price-value {
-            font-size: 18px;
-            font-weight: 300;
-            color: #f7931a;
-            letter-spacing: 0.5px;
-        }
-
-        #price-change {
-            font-size: 11px;
-            color: #94a3b8;
-            margin-top: 2px;
-        }
-
-        /* Controles */
-        #move-area {
-            position: absolute;
-            bottom: 40px;
-            left: 40px;
-            width: 120px;
-            height: 120px;
-            z-index: 2100;
-            opacity: 0.4;
-            transition: opacity 0.3s;
-            pointer-events: auto;
-        }
-
-        #move-area.active {
-            opacity: 1;
-        }
-
-        .move-ring {
-            width: 100%;
-            height: 100%;
-            border: 2px solid rgba(247,147,26,0.5);
-            border-radius: 50%;
-            position: relative;
-            background: rgba(10,15,26,0.3);
-            backdrop-filter: blur(5px);
-        }
-
-        .move-dot {
-            width: 40px;
-            height: 40px;
-            background: rgba(247,147,26,0.9);
-            border-radius: 50%;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            box-shadow: 0 0 30px rgba(247,147,26,0.5);
-            transition: transform 0.1s ease;
-            pointer-events: none;
-        }
-
-        #camera-area {
-            position: absolute;
-            bottom: 40px;
-            right: 40px;
-            width: 100px;
-            height: 100px;
-            z-index: 2100;
-            opacity: 0.4;
-            transition: opacity 0.3s;
-            pointer-events: auto;
-        }
-
-        #camera-area.active {
-            opacity: 1;
-        }
-
-        .camera-ring {
-            width: 100%;
-            height: 100%;
-            border: 2px solid rgba(153,69,255,0.5);
-            border-radius: 50%;
-            position: relative;
-            background: rgba(10,15,26,0.3);
-            backdrop-filter: blur(5px);
-        }
-
-        .camera-dot {
-            width: 30px;
-            height: 30px;
-            background: rgba(153,69,255,0.9);
-            border-radius: 50%;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            box-shadow: 0 0 30px rgba(153,69,255,0.5);
-            transition: transform 0.1s ease;
-            pointer-events: none;
-        }
-
-        #action-controls {
-            position: absolute;
-            bottom: 40px;
-            right: 180px;
-            display: flex;
-            gap: 15px;
-            z-index: 2100;
-            pointer-events: auto;
-        }
-
-        .action-btn {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background: rgba(10,15,26,0.6);
-            backdrop-filter: blur(10px);
-            border: 2px solid rgba(255,255,255,0.1);
-            color: rgba(255,255,255,0.8);
-            font-size: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-        }
-
-        .action-btn:active {
-            transform: scale(0.9);
-            background: rgba(255,255,255,0.2);
-            color: white;
-        }
-
-        #run-btn.active {
-            background: rgba(247,147,26,0.3);
-            border-color: #f7931a;
-            color: #f7931a;
-        }
-
-        #exit-btn {
-            position: absolute;
-            top: 30px;
-            right: 30px;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: rgba(239,68,68,0.2);
-            border: 2px solid rgba(239,68,68,0.3);
-            color: rgba(239,68,68,0.8);
-            font-size: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 2100;
-            cursor: pointer;
-            backdrop-filter: blur(10px);
-            transition: all 0.2s;
-            pointer-events: auto;
-        }
-
-        #exit-btn:active {
-            background: rgba(239,68,68,0.4);
-            color: #ef4444;
-            transform: scale(0.9);
-        }
-
-        #loading {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: white;
-            font-size: 14px;
-            z-index: 2200;
-            background: rgba(10,15,26,0.8);
-            backdrop-filter: blur(10px);
-            padding: 16px 32px;
-            border-radius: 50px;
-            border: 1px solid rgba(255,255,255,0.05);
-            display: none;
-        }
-
-        #hint {
-            position: absolute;
-            bottom: 180px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: rgba(255,255,255,0.5);
-            font-size: 14px;
-            z-index: 2100;
-            background: rgba(10,15,26,0.4);
-            backdrop-filter: blur(10px);
-            padding: 10px 25px;
-            border-radius: 50px;
-            border: 1px solid rgba(255,255,255,0.05);
-            animation: fadeOut 4s forwards;
-            pointer-events: none;
-            white-space: nowrap;
-        }
-
-        @keyframes fadeOut {
-            0% { opacity: 1; }
-            70% { opacity: 1; }
-            100% { opacity: 0; }
-        }
-
-        #debug-info {
-            position: absolute;
-            bottom: 200px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: #94a3b8;
-            font-size: 12px;
-            background: rgba(0,0,0,0.5);
-            padding: 5px 10px;
-            border-radius: 20px;
-            z-index: 2200;
-            display: none;
-        }
-
-        #boundary-warning {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: #f7931a;
-            font-size: 16px;
-            font-weight: bold;
-            text-shadow: 0 0 20px rgba(247,147,26,0.5);
-            z-index: 2300;
-            background: rgba(0,0,0,0.6);
+            top: 20px;
+            right: 20px;
+            background: rgba(10, 15, 26, 0.85);
             padding: 10px 20px;
             border-radius: 30px;
             border: 1px solid #f7931a;
-            backdrop-filter: blur(10px);
-            display: none;
-            animation: pulse 1s infinite;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 100;
+            text-align: right;
         }
-
-        @keyframes pulse {
-            0% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
-            50% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
-            100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
+        
+        #price {
+            color: #f7931a;
+            font-size: 22px;
+            font-weight: bold;
+            line-height: 1.2;
         }
-
-        #error-message {
+        
+        #price-change {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-top: 2px;
+        }
+        
+        .timeframe-container {
             position: absolute;
-            top: 50%;
+            top: 20px;
+            right: 180px;
+            display: flex;
+            gap: 6px;
+            background: rgba(10, 15, 26, 0.85);
+            padding: 6px;
+            border-radius: 40px;
+            backdrop-filter: blur(5px);
+            border: 1px solid #2d3748;
+            z-index: 100;
+        }
+        
+        .timeframe-btn {
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            padding: 6px 14px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .timeframe-btn.active {
+            background: #f7931a;
+            color: white;
+            box-shadow: 0 2px 8px rgba(247,147,26,0.3);
+        }
+        
+        #controls-hint {
+            position: absolute;
+            bottom: 30px;
             left: 50%;
-            transform: translate(-50%, -50%);
-            color: #ef4444;
-            font-size: 14px;
-            z-index: 2300;
-            background: rgba(0,0,0,0.8);
-            padding: 20px 30px;
-            border-radius: 50px;
-            border: 1px solid #ef4444;
-            backdrop-filter: blur(10px);
-            display: none;
+            transform: translateX(-50%);
+            color: #94a3b8;
+            background: rgba(10, 15, 26, 0.7);
+            padding: 8px 20px;
+            border-radius: 40px;
+            font-size: 13px;
+            backdrop-filter: blur(5px);
+            border: 1px solid #2d3748;
+            z-index: 100;
+            white-space: nowrap;
+        }
+        
+        #live-badge {
+            position: absolute;
+            top: 90px;
+            left: 20px;
+            background: #ef4444;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            z-index: 100;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+        
+        #stats {
+            position: absolute;
+            bottom: 90px;
+            left: 20px;
+            color: #94a3b8;
+            font-size: 11px;
+            background: rgba(10,15,26,0.5);
+            padding: 4px 10px;
+            border-radius: 20px;
+            z-index: 100;
+        }
+        
+        #position-indicator {
+            position: absolute;
+            bottom: 90px;
+            right: 20px;
+            color: #f7931a;
+            font-size: 11px;
+            background: rgba(10,15,26,0.5);
+            padding: 4px 10px;
+            border-radius: 20px;
+            border: 1px solid #f7931a;
+            z-index: 100;
+        }
+        
+        #joystick-area {
+            position: absolute;
+            bottom: 100px;
+            left: 30px;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(8px);
+            border: 2px solid rgba(247,147,26,0.5);
+            z-index: 1000;
+            pointer-events: none;
+        }
+        
+        #joystick-area::after {
+            content: "🕹️ ANDAR";
+            position: absolute;
+            bottom: -25px;
+            left: 15px;
+            color: white;
+            font-size: 10px;
+            white-space: nowrap;
+        }
+        
+        #camera-hint {
+            position: absolute;
+            bottom: 100px;
+            right: 30px;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(8px);
+            border: 2px solid rgba(59,130,246,0.5);
+            z-index: 1000;
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
             text-align: center;
+        }
+        
+        #camera-hint::after {
+            content: "👆 ARRASTE\nPARA OLHAR";
+            white-space: pre;
+            text-align: center;
+            line-height: 1.4;
         }
     </style>
 </head>
 <body>
-    <div id="home-screen">
-        <div class="header">
-            <div class="logo">CRYPTO REALM</div>
-            <div class="subtitle">CANDLES COM PARTÍCULAS</div>
-        </div>
-
-        <div class="coin-list">
-            <!-- Bitcoin -->
-            <div class="coin-card" onclick="enterWorld('btc')">
-                <div class="coin-header">
-                    <div class="coin-icon btc-icon">₿</div>
-                    <div class="coin-info">
-                        <div class="coin-name">Bitcoin</div>
-                        <div class="coin-symbol">BTC</div>
-                    </div>
-                </div>
-                <div class="coin-stats">
-                    <span class="coin-price">$67,890</span>
-                    <span class="coin-change positive">+2.34%</span>
-                </div>
-                <span class="enter-text">ENTRAR →</span>
-            </div>
-
-            <!-- Siren -->
-            <div class="coin-card" onclick="enterWorld('siren')">
-                <div class="coin-header">
-                    <div class="coin-icon siren-icon">🧜‍♀️</div>
-                    <div class="coin-info">
-                        <div class="coin-name">Siren</div>
-                        <div class="coin-symbol">SIREN</div>
-                    </div>
-                </div>
-                <div class="coin-stats">
-                    <span class="coin-price">$0.89</span>
-                    <span class="coin-change positive">+15.67%</span>
-                </div>
-                <span class="enter-text">ENTRAR →</span>
-            </div>
-
-            <!-- Pippin -->
-            <div class="coin-card" onclick="enterWorld('pippin')">
-                <div class="coin-header">
-                    <div class="coin-icon pippin-icon">🐧</div>
-                    <div class="coin-info">
-                        <div class="coin-name">Pippin</div>
-                        <div class="coin-symbol">PIPPIN</div>
-                    </div>
-                </div>
-                <div class="coin-stats">
-                    <span class="coin-price">$0.0023</span>
-                    <span class="coin-change negative">-8.12%</span>
-                </div>
-                <span class="enter-text">ENTRAR →</span>
-            </div>
-
-            <!-- Tria -->
-            <div class="coin-card" onclick="enterWorld('tria')">
-                <div class="coin-header">
-                    <div class="coin-icon tria-icon">🔺</div>
-                    <div class="coin-info">
-                        <div class="coin-name">Tria</div>
-                        <div class="coin-symbol">TRIA</div>
-                    </div>
-                </div>
-                <div class="coin-stats">
-                    <span class="coin-price">$12.45</span>
-                    <span class="coin-change positive">+5.23%</span>
-                </div>
-                <span class="enter-text">ENTRAR →</span>
-            </div>
-        </div>
+    <div id="info">
+        <div id="btc-icon">₿</div>
+        BTC/USDT • Explore os Candles
+    </div>
+    <div id="live-badge">🔴 AO VIVO</div>
+    
+    <div id="price-container">
+        <div id="price">---</div>
+        <div id="price-change">---</div>
     </div>
 
-    <div id="world-screen">
-        <div id="hud">
-            <div id="world-icon">₿</div>
-            <div>
-                <div id="world-coin-name">Bitcoin</div>
-                <div id="world-coin-symbol" style="color:#94a3b8; font-size:11px;">BTC</div>
-            </div>
-        </div>
-
-        <div id="price-container">
-            <div id="price-value">$67,890</div>
-            <div id="price-change">+2.34%</div>
-        </div>
-
-        <div id="move-area">
-            <div class="move-ring">
-                <div class="move-dot" id="move-dot"></div>
-            </div>
-        </div>
-
-        <div id="camera-area">
-            <div class="camera-ring">
-                <div class="camera-dot" id="camera-dot"></div>
-            </div>
-        </div>
-
-        <div id="action-controls">
-            <button class="action-btn" id="jump-btn">↑</button>
-            <button class="action-btn" id="run-btn">→</button>
-        </div>
-
-        <button id="exit-btn">✕</button>
-        <div id="loading">CARREGANDO SALA</div>
-        <div id="hint">VEJA AS PARTÍCULAS SUBINDO!</div>
-        <div id="debug-info"></div>
-        <div id="boundary-warning">🚫 LIMITE DA SALA</div>
-        <div id="error-message"></div>
+    <div class="timeframe-container">
+        <button class="timeframe-btn" data-tf="15m">15m</button>
+        <button class="timeframe-btn active" data-tf="1h">1h</button>
+        <button class="timeframe-btn" data-tf="4h">4h</button>
+        <button class="timeframe-btn" data-tf="1d">1D</button>
     </div>
 
+    <div id="controls-hint">👆 Arraste para olhar 360° • Joystick para andar</div>
+    <div id="stats">Conectando à Binance...</div>
+    <div id="position-indicator">📍 Posição: 0, 0, 0</div>
+    
+    <div id="joystick-area"></div>
+    <div id="camera-hint"></div>
+
+    <!-- Three.js -->
     <script type="importmap">
         {
             "imports": {
@@ -619,677 +256,625 @@
 
     <script type="module">
         import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
         import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 
-        const COINS = {
-            btc: { name: 'Bitcoin', symbol: 'BTC', binance: 'BTCUSDT', icon: '₿', color: '#f7931a', bgColor: 0xf7931a },
-            siren: { name: 'Siren', symbol: 'SIREN', binance: 'SIRENUSDT', icon: '🧜‍♀️', color: '#00ffff', bgColor: 0x00ffff },
-            pippin: { name: 'Pippin', symbol: 'PIPPIN', binance: 'PIPPINUSDT', icon: '🐧', color: '#ff69b4', bgColor: 0xff69b4 },
-            tria: { name: 'Tria', symbol: 'TRIA', binance: 'TRIAUSDT', icon: '🔺', color: '#8b5cf6', bgColor: 0x8b5cf6 }
+        // --- CONFIGURAÇÕES ---
+        const SYMBOL = 'btcusdt';
+        let currentTimeframe = '1h';
+        
+        const TIMEFRAMES = {
+            '15m': { binance: '15m', limit: 80, ms: 15 * 60 * 1000 },
+            '1h': { binance: '1h', limit: 100, ms: 60 * 60 * 1000 },
+            '4h': { binance: '4h', limit: 80, ms: 4 * 60 * 60 * 1000 },
+            '1d': { binance: '1d', limit: 60, ms: 24 * 60 * 60 * 1000 }
         };
 
-        let currentCoin = 'btc';
+        // --- VARIÁVEIS GLOBAIS ---
         let scene, camera, renderer, labelRenderer;
-        
-        // Personagem
-        let character = {
-            mesh: null,
-            position: new THREE.Vector3(0, 0, 10),
-            rotation: 0,
-            height: 2,
-            isRunning: false
-        };
-        
-        // Elementos do gráfico
-        let candleGroup, bollingerGroup, smokeGroup;
+        let character;
+        let candleGroup = new THREE.Group();
         let historicalCandles = [];
         let liveCandleMesh = null;
-        let liveSmokeParticles = [];
         let liveCandleData = null;
-        let minVolume = 100, maxVolume = 1000;
-        let lastPrice = 67000;
+        let minPrice = Infinity, maxPrice = -Infinity;
         let binanceSocket = null;
-        let dataLoaded = false;
         
-        // Posição do gráfico
-        let graphPosition = {
-            x: 0,
-            z: -5,
-            targetZ: -5,
-            speed: 0.1
-        };
+        // Controles do personagem
+        let moveForward = false;
+        let moveBackward = false;
+        let moveLeft = false;
+        let moveRight = false;
+        let characterSpeed = 0.2;
         
-        // Controles
-        let moveControl = { 
-            active: false, 
-            startX: 0, 
-            startY: 0, 
-            currentX: 0, 
-            currentY: 0,
-            worldX: 0,
-            worldZ: 0
-        };
+        // Controles da câmera (360°)
+        let cameraAngle = 0;          // Rotação horizontal (esquerda/direita)
+        let cameraPitch = 0.2;         // Inclinação vertical (cima/baixo)
+        const CAMERA_HEIGHT = 2.5;      // Altura base da câmera
+        const CAMERA_DISTANCE = 5;       // Distância do personagem
         
-        let cameraControl = { 
-            active: false, 
-            startX: 0, 
-            startY: 0, 
-            currentX: 0, 
-            currentY: 0 
-        };
-        
-        let cameraAngle = { horizontal: 0, vertical: 0.5 };
-        let moveSpeed = 0.15;
-        let cameraDistance = 8;
-        let cameraHeight = 3;
-        
-        // LIMITES DA SALA
-        const ROOM_SIZE = 20;
-        const WALL_HEIGHT = 10;
-        const WALL_THICKNESS = 0.5;
+        // Joystick virtual
+        let joystickActive = false;
+        let joystickStart = { x: 0, y: 0 };
+        let joystickVector = { x: 0, y: 0 };
         
         // Parâmetros visuais
+        const CANDLE_RADIUS = 0.45;
         const WICK_RADIUS = 0.08;
-        const SPACING = 2.5;
-        const GROUND_Y = 0;
-        const BB_PERIOD = 20;
-        const BB_STD = 2;
-        
-        // Parâmetros de volume
-        const MIN_HEIGHT = 0.5;
-        const MAX_HEIGHT = 8.0;
-        const MIN_RADIUS = 0.3;
-        const MAX_RADIUS = 1.5;
-        const MAX_CANDLES = 20;
+        const SPACING = 1.4;
+        const Y_RANGE = 18;
+        const FLOOR_Y = -1.8;
 
-        const TIMEFRAMES = { '1m': { binance: '1m', limit: 30, ms: 60 * 1000 } };
+        // --- INICIALIZAÇÃO ---
+        function init() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0a0f1a);
+            scene.fog = new THREE.Fog(0x0a0f1a, 40, 100);
 
-        // Elementos DOM
-        const homeScreen = document.getElementById('home-screen');
-        const worldScreen = document.getElementById('world-screen');
-        const loadingEl = document.getElementById('loading');
-        const worldIcon = document.getElementById('world-icon');
-        const worldCoinName = document.getElementById('world-coin-name');
-        const worldCoinSymbol = document.getElementById('world-coin-symbol');
-        const priceValue = document.getElementById('price-value');
-        const priceChange = document.getElementById('price-change');
-        const debugInfo = document.getElementById('debug-info');
-        const boundaryWarning = document.getElementById('boundary-warning');
-        const errorMessage = document.getElementById('error-message');
-        
-        const moveArea = document.getElementById('move-area');
-        const cameraArea = document.getElementById('camera-area');
-        const moveDot = document.getElementById('move-dot');
-        const cameraDot = document.getElementById('camera-dot');
-        const runBtn = document.getElementById('run-btn');
-        const jumpBtn = document.getElementById('jump-btn');
-        const exitBtn = document.getElementById('exit-btn');
+            // Câmera
+            camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
 
-        window.enterWorld = (coin) => {
-            currentCoin = coin;
-            const coinData = COINS[coin];
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            document.body.appendChild(renderer.domElement);
+
+            // Label renderer
+            labelRenderer = new CSS2DRenderer();
+            labelRenderer.setSize(window.innerWidth, window.innerHeight);
+            labelRenderer.domElement.style.position = 'absolute';
+            labelRenderer.domElement.style.top = '0px';
+            labelRenderer.domElement.style.left = '0px';
+            labelRenderer.domElement.style.pointerEvents = 'none';
+            document.body.appendChild(labelRenderer.domElement);
+
+            // Luzes
+            const ambientLight = new THREE.AmbientLight(0x404060);
+            scene.add(ambientLight);
+
+            const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+            dirLight.position.set(20, 40, 20);
+            dirLight.castShadow = true;
+            dirLight.shadow.mapSize.width = 1024;
+            dirLight.shadow.mapSize.height = 1024;
+            const d = 40;
+            dirLight.shadow.camera.left = -d;
+            dirLight.shadow.camera.right = d;
+            dirLight.shadow.camera.top = d;
+            dirLight.shadow.camera.bottom = -d;
+            dirLight.shadow.camera.near = 1;
+            dirLight.shadow.camera.far = 80;
+            scene.add(dirLight);
+
+            const fillLight = new THREE.PointLight(0x446688, 0.5);
+            fillLight.position.set(-10, 20, -20);
+            scene.add(fillLight);
+
+            createFloor();
+            createCharacter();
+
+            scene.add(candleGroup);
             
-            worldIcon.innerHTML = coinData.icon;
-            worldIcon.style.background = coinData.color;
-            worldCoinName.textContent = coinData.name;
-            worldCoinSymbol.textContent = coinData.symbol;
+            setupControls();
+            setupJoystick();
+            setupTimeframeButtons();
             
-            homeScreen.classList.add('hidden');
-            worldScreen.classList.add('active');
-            
-            loadingEl.style.display = 'block';
-            
-            setTimeout(() => {
-                initWorld();
-            }, 100);
-        };
-
-        window.exitWorld = () => {
-            worldScreen.classList.remove('active');
-            homeScreen.classList.remove('hidden');
-            
-            if (binanceSocket) binanceSocket.close();
-            if (renderer) {
-                renderer.dispose();
-                renderer = null;
-            }
-        };
-
-        function setupControls() {
-            moveArea.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                moveControl.active = true;
-                const rect = moveArea.getBoundingClientRect();
-                moveControl.startX = rect.left + rect.width/2;
-                moveControl.startY = rect.top + rect.height/2;
-                moveControl.currentX = 0;
-                moveControl.currentY = 0;
-                moveControl.worldX = 0;
-                moveControl.worldZ = 0;
-                moveArea.classList.add('active');
-                moveDot.style.transform = 'translate(-50%, -50%)';
-            });
-
-            moveArea.addEventListener('touchmove', (e) => {
-                e.preventDefault();
-                if (!moveControl.active) return;
-                
-                const touch = e.touches[0];
-                const dx = touch.clientX - moveControl.startX;
-                const dy = touch.clientY - moveControl.startY;
-                
-                const maxDistance = 50;
-                const distance = Math.sqrt(dx*dx + dy*dy);
-                
-                if (distance > maxDistance) {
-                    moveControl.currentX = (dx / distance) * maxDistance;
-                    moveControl.currentY = (dy / distance) * maxDistance;
-                } else {
-                    moveControl.currentX = dx;
-                    moveControl.currentY = dy;
-                }
-                
-                moveDot.style.transform = `translate(calc(-50% + ${moveControl.currentX}px), calc(-50% + ${moveControl.currentY}px))`;
-                
-                moveControl.worldX = moveControl.currentX / maxDistance;
-                moveControl.worldZ = moveControl.currentY / maxDistance;
-            });
-
-            moveArea.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                moveControl.active = false;
-                moveControl.currentX = 0;
-                moveControl.currentY = 0;
-                moveControl.worldX = 0;
-                moveControl.worldZ = 0;
-                moveArea.classList.remove('active');
-                moveDot.style.transform = 'translate(-50%, -50%)';
-            });
-
-            cameraArea.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                cameraControl.active = true;
-                const rect = cameraArea.getBoundingClientRect();
-                cameraControl.startX = rect.left + rect.width/2;
-                cameraControl.startY = rect.top + rect.height/2;
-                cameraControl.currentX = 0;
-                cameraControl.currentY = 0;
-                cameraArea.classList.add('active');
-                cameraDot.style.transform = 'translate(-50%, -50%)';
-            });
-
-            cameraArea.addEventListener('touchmove', (e) => {
-                e.preventDefault();
-                if (!cameraControl.active) return;
-                
-                const touch = e.touches[0];
-                const dx = touch.clientX - cameraControl.startX;
-                const dy = touch.clientY - cameraControl.startY;
-                
-                const maxDistance = 40;
-                const distance = Math.sqrt(dx*dx + dy*dy);
-                
-                if (distance > maxDistance) {
-                    cameraControl.currentX = (dx / distance) * maxDistance;
-                    cameraControl.currentY = (dy / distance) * maxDistance;
-                } else {
-                    cameraControl.currentX = dx;
-                    cameraControl.currentY = dy;
-                }
-                
-                cameraDot.style.transform = `translate(calc(-50% + ${cameraControl.currentX}px), calc(-50% + ${cameraControl.currentY}px))`;
-                
-                cameraAngle.horizontal += (cameraControl.currentX / maxDistance) * 0.05;
-                cameraAngle.vertical = Math.max(0.2, Math.min(1, cameraAngle.vertical - (cameraControl.currentY / maxDistance) * 0.05));
-            });
-
-            cameraArea.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                cameraControl.active = false;
-                cameraControl.currentX = 0;
-                cameraControl.currentY = 0;
-                cameraArea.classList.remove('active');
-                cameraDot.style.transform = 'translate(-50%, -50%)';
-            });
-
-            runBtn.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                toggleRun();
-            });
-
-            jumpBtn.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                jump();
-            });
-
-            exitBtn.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                exitWorld();
-            });
+            fetchHistoricalData();
         }
 
-        function toggleRun() {
-            character.isRunning = !character.isRunning;
-            moveSpeed = character.isRunning ? 0.3 : 0.15;
-            runBtn.classList.toggle('active');
-        }
+        // --- CHÃO COM LOGO BTC ---
+        function createFloor() {
+            const gridHelper = new THREE.GridHelper(120, 30, 0x3b4b6b, 0x1e2a3a);
+            gridHelper.position.y = FLOOR_Y;
+            scene.add(gridHelper);
 
-        function jump() {
-            if (character.position.y <= 0.1) {
-                character.position.y = 1;
-                setTimeout(() => {
-                    character.position.y = 0;
-                }, 400);
-            }
-        }
-
-        function createCharacter() {
-            const group = new THREE.Group();
-            const coinData = COINS[currentCoin];
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 512;
+            const ctx = canvas.getContext('2d');
             
-            // Corpo
-            const torsoGeo = new THREE.CylinderGeometry(0.4, 0.4, 1.2, 8);
-            const torsoMat = new THREE.MeshStandardMaterial({ 
-                color: 0x2d3748,
-                emissive: coinData.bgColor,
+            ctx.fillStyle = 'rgba(247, 147, 26, 0.12)';
+            ctx.font = 'bold 400px "Segoe UI", Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('₿', 256, 256);
+            
+            ctx.font = 'bold 80px "Segoe UI", Arial';
+            ctx.fillStyle = 'rgba(247, 147, 26, 0.08)';
+            ctx.fillText('BTC', 256, 420);
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            
+            const planeGeo = new THREE.PlaneGeometry(50, 50);
+            const planeMat = new THREE.MeshStandardMaterial({
+                map: texture,
+                transparent: true,
+                side: THREE.DoubleSide,
+                emissive: 0x221100,
                 emissiveIntensity: 0.2
             });
-            const torso = new THREE.Mesh(torsoGeo, torsoMat);
-            torso.position.y = 0.6;
-            torso.castShadow = true;
-            torso.receiveShadow = true;
-            group.add(torso);
+            const plane = new THREE.Mesh(planeGeo, planeMat);
+            plane.rotation.x = -Math.PI / 2;
+            plane.position.y = FLOOR_Y + 0.01;
+            scene.add(plane);
+        }
+
+        // --- PERSONAGEM ---
+        function createCharacter() {
+            character = new THREE.Group();
+            
+            // Corpo (trader com capa)
+            const bodyGeo = new THREE.CylinderGeometry(0.4, 0.4, 1.2, 8);
+            const bodyMat = new THREE.MeshStandardMaterial({ 
+                color: 0x3b82f6,
+                emissive: 0x1e3a8a,
+                emissiveIntensity: 0.3
+            });
+            const body = new THREE.Mesh(bodyGeo, bodyMat);
+            body.position.y = 0.6;
+            body.castShadow = true;
+            body.receiveShadow = true;
+            character.add(body);
             
             // Cabeça
             const headGeo = new THREE.SphereGeometry(0.3, 16);
-            const headMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8 });
+            const headMat = new THREE.MeshStandardMaterial({ color: 0xffccaa });
             const head = new THREE.Mesh(headGeo, headMat);
-            head.position.y = 1.4;
+            head.position.y = 1.3;
             head.castShadow = true;
             head.receiveShadow = true;
-            group.add(head);
+            character.add(head);
             
-            // Braços
-            const armGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.8, 6);
-            const armMat = new THREE.MeshStandardMaterial({ color: 0x2d3748 });
+            // Olhos
+            const eyeGeo = new THREE.SphereGeometry(0.05, 6);
+            const eyeMat = new THREE.MeshStandardMaterial({ color: 0x000000 });
             
-            const leftArm = new THREE.Mesh(armGeo, armMat);
-            leftArm.position.set(-0.5, 0.8, 0);
-            leftArm.rotation.z = 0.2;
-            leftArm.castShadow = true;
-            group.add(leftArm);
+            const eyeL = new THREE.Mesh(eyeGeo, eyeMat);
+            eyeL.position.set(-0.1, 1.35, 0.25);
+            character.add(eyeL);
             
-            const rightArm = new THREE.Mesh(armGeo, armMat);
-            rightArm.position.set(0.5, 0.8, 0);
-            rightArm.rotation.z = -0.2;
-            rightArm.castShadow = true;
-            group.add(rightArm);
+            const eyeR = new THREE.Mesh(eyeGeo, eyeMat);
+            eyeR.position.set(0.1, 1.35, 0.25);
+            character.add(eyeR);
             
-            // Pernas
-            const legGeo = new THREE.CylinderGeometry(0.15, 0.15, 0.8, 6);
-            const legMat = new THREE.MeshStandardMaterial({ color: 0x1e2a3a });
+            // Capacete BTC
+            const helmetGeo = new THREE.TorusGeometry(0.32, 0.05, 8, 16, Math.PI);
+            const helmetMat = new THREE.MeshStandardMaterial({ color: 0xf7931a });
+            const helmet = new THREE.Mesh(helmetGeo, helmetMat);
+            helmet.rotation.x = Math.PI / 2;
+            helmet.rotation.z = Math.PI / 2;
+            helmet.position.y = 1.3;
+            helmet.position.z = 0.1;
+            character.add(helmet);
             
-            const leftLeg = new THREE.Mesh(legGeo, legMat);
-            leftLeg.position.set(-0.25, 0.2, 0);
-            leftLeg.castShadow = true;
-            group.add(leftLeg);
+            // Capa de trader
+            const capeGeo = new THREE.ConeGeometry(0.5, 0.8, 8);
+            const capeMat = new THREE.MeshStandardMaterial({ color: 0x1e293b });
+            const cape = new THREE.Mesh(capeGeo, capeMat);
+            cape.position.y = 0.6;
+            cape.position.z = -0.3;
+            cape.rotation.x = 0.2;
+            cape.castShadow = true;
+            character.add(cape);
             
-            const rightLeg = new THREE.Mesh(legGeo, legMat);
-            rightLeg.position.set(0.25, 0.2, 0);
-            rightLeg.castShadow = true;
-            group.add(rightLeg);
-            
-            // Aura
-            const auraGeo = new THREE.SphereGeometry(0.6, 8);
-            const auraMat = new THREE.MeshStandardMaterial({
-                color: coinData.bgColor,
-                emissive: coinData.bgColor,
-                emissiveIntensity: 0.2,
-                transparent: true,
-                opacity: 0.3
-            });
-            const aura = new THREE.Mesh(auraGeo, auraMat);
-            aura.position.y = 0.8;
-            group.add(aura);
-            
-            group.position.copy(character.position);
-            group.castShadow = true;
-            group.receiveShadow = true;
-            
-            character.mesh = group;
-            scene.add(group);
+            scene.add(character);
         }
 
-        function createRoom() {
-            const coinData = COINS[currentCoin];
-            
-            // Chão
-            const groundGeo = new THREE.PlaneGeometry(ROOM_SIZE * 2, ROOM_SIZE * 2);
-            const groundMat = new THREE.MeshStandardMaterial({ 
-                color: 0x0a0f1a,
-                roughness: 0.7,
-                metalness: 0.1
-            });
-            const ground = new THREE.Mesh(groundGeo, groundMat);
-            ground.rotation.x = -Math.PI / 2;
-            ground.position.y = GROUND_Y;
-            ground.receiveShadow = true;
-            scene.add(ground);
-
-            // Grid do chão
-            const gridHelper = new THREE.GridHelper(ROOM_SIZE * 2, 20, coinData.bgColor, 0x2d3748);
-            gridHelper.position.y = GROUND_Y + 0.01;
-            scene.add(gridHelper);
-
-            // PAREDES
-            const wallMaterial = new THREE.MeshStandardMaterial({ 
-                color: 0x1a1f2e,
-                emissive: coinData.bgColor,
-                emissiveIntensity: 0.1,
-                transparent: true,
-                opacity: 0.8
-            });
-
-            // Parede Norte
-            const wallNorthGeo = new THREE.BoxGeometry(ROOM_SIZE * 2, WALL_HEIGHT, WALL_THICKNESS);
-            const wallNorth = new THREE.Mesh(wallNorthGeo, wallMaterial);
-            wallNorth.position.set(0, WALL_HEIGHT/2, -ROOM_SIZE);
-            wallNorth.receiveShadow = true;
-            wallNorth.castShadow = true;
-            scene.add(wallNorth);
-
-            // Parede Sul
-            const wallSouthGeo = new THREE.BoxGeometry(ROOM_SIZE * 2, WALL_HEIGHT, WALL_THICKNESS);
-            const wallSouth = new THREE.Mesh(wallSouthGeo, wallMaterial);
-            wallSouth.position.set(0, WALL_HEIGHT/2, ROOM_SIZE);
-            wallSouth.receiveShadow = true;
-            wallSouth.castShadow = true;
-            scene.add(wallSouth);
-
-            // Parede Leste
-            const wallEastGeo = new THREE.BoxGeometry(WALL_THICKNESS, WALL_HEIGHT, ROOM_SIZE * 2);
-            const wallEast = new THREE.Mesh(wallEastGeo, wallMaterial);
-            wallEast.position.set(ROOM_SIZE, WALL_HEIGHT/2, 0);
-            wallEast.receiveShadow = true;
-            wallEast.castShadow = true;
-            scene.add(wallEast);
-
-            // Parede Oeste
-            const wallWestGeo = new THREE.BoxGeometry(WALL_THICKNESS, WALL_HEIGHT, ROOM_SIZE * 2);
-            const wallWest = new THREE.Mesh(wallWestGeo, wallMaterial);
-            wallWest.position.set(-ROOM_SIZE, WALL_HEIGHT/2, 0);
-            wallWest.receiveShadow = true;
-            wallWest.castShadow = true;
-            scene.add(wallWest);
-
-            // Teto
-            const ceilingGeo = new THREE.BoxGeometry(ROOM_SIZE * 2, WALL_THICKNESS, ROOM_SIZE * 2);
-            const ceilingMat = new THREE.MeshStandardMaterial({ 
-                color: 0x0a0f1a,
-                emissive: coinData.bgColor,
-                emissiveIntensity: 0.05,
-                transparent: true,
-                opacity: 0.3
-            });
-            const ceiling = new THREE.Mesh(ceilingGeo, ceilingMat);
-            ceiling.position.set(0, WALL_HEIGHT, 0);
-            ceiling.receiveShadow = true;
-            ceiling.castShadow = true;
-            scene.add(ceiling);
-
-            // Luzes de parede
-            const lightMat = new THREE.MeshStandardMaterial({ 
-                color: coinData.bgColor,
-                emissive: coinData.bgColor,
-                emissiveIntensity: 0.5
-            });
-            
-            const positions = [
-                [-ROOM_SIZE + 1, 2, -ROOM_SIZE + 1],
-                [ROOM_SIZE - 1, 2, -ROOM_SIZE + 1],
-                [-ROOM_SIZE + 1, 2, ROOM_SIZE - 1],
-                [ROOM_SIZE - 1, 2, ROOM_SIZE - 1]
-            ];
-            
-            positions.forEach(pos => {
-                const lightGeo = new THREE.SphereGeometry(0.3, 8);
-                const light = new THREE.Mesh(lightGeo, lightMat);
-                light.position.set(pos[0], pos[1], pos[2]);
-                scene.add(light);
-            });
-
-            // Texto nas paredes
-            const canvas = document.createElement('canvas');
-            canvas.width = 512;
-            canvas.height = 128;
-            const ctx = canvas.getContext('2d');
-            ctx.fillStyle = coinData.color;
-            ctx.font = 'bold 60px "Inter"';
-            ctx.fillText(coinData.symbol, 50, 80);
-            
-            const texture = new THREE.CanvasTexture(canvas);
-            const signMaterial = new THREE.MeshStandardMaterial({ map: texture, emissive: coinData.bgColor });
-            
-            const signGeo = new THREE.PlaneGeometry(4, 1);
-            const signNorth = new THREE.Mesh(signGeo, signMaterial);
-            signNorth.position.set(0, 5, -ROOM_SIZE + 0.3);
-            signNorth.rotation.y = 0;
-            scene.add(signNorth);
-            
-            const signSouth = new THREE.Mesh(signGeo, signMaterial);
-            signSouth.position.set(0, 5, ROOM_SIZE - 0.3);
-            signSouth.rotation.y = Math.PI;
-            scene.add(signSouth);
+        // --- MAPEAR PREÇO PARA Y ---
+        function mapPriceToY(price) {
+            if (maxPrice === minPrice) return 0;
+            return ((price - minPrice) / (maxPrice - minPrice)) * Y_RANGE - (Y_RANGE / 2);
         }
 
-        function generateMockData() {
-            const data = [];
-            let basePrice = lastPrice;
-            let time = Date.now() - 30 * 60 * 1000;
+        // --- CALCULAR ALTURA DO CHÃO NA POSIÇÃO DO PERSONAGEM ---
+        function getGroundHeight(x, z) {
+            let highestY = FLOOR_Y + 0.5; // Altura mínima (chão)
             
-            for (let i = 0; i < 30; i++) {
-                const isBuy = Math.random() > 0.5;
-                const open = basePrice;
-                const change = (Math.random() * 500) * (isBuy ? 1 : -1);
-                const close = open + change;
-                const high = Math.max(open, close) + Math.random() * 200;
-                const low = Math.min(open, close) - Math.random() * 200;
-                const volume = Math.random() * 1000 + 200;
-                
-                data.push({ 
-                    time: time + i * 60000, 
-                    open, high, low, close, volume,
-                    isBuy 
-                });
-                basePrice = close;
-            }
-            
-            return data;
-        }
-
-        function initWorld() {
-            try {
-                const container = document.getElementById('world-screen');
-                
-                scene = new THREE.Scene();
-                scene.background = new THREE.Color(0x0a0f1a);
-                scene.fog = new THREE.Fog(0x0a0f1a, 20, 40);
-
-                camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-
-                renderer = new THREE.WebGLRenderer({ antialias: true });
-                renderer.setSize(window.innerWidth, window.innerHeight);
-                renderer.shadowMap.enabled = true;
-                renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-                container.appendChild(renderer.domElement);
-
-                labelRenderer = new CSS2DRenderer();
-                labelRenderer.setSize(window.innerWidth, window.innerHeight);
-                labelRenderer.domElement.style.position = 'absolute';
-                labelRenderer.domElement.style.top = '0px';
-                labelRenderer.domElement.style.left = '0px';
-                labelRenderer.domElement.style.pointerEvents = 'none';
-                container.appendChild(labelRenderer.domElement);
-
-                // Luzes
-                const ambientLight = new THREE.AmbientLight(0x404060);
-                scene.add(ambientLight);
-
-                const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
-                dirLight.position.set(10, 20, 10);
-                dirLight.castShadow = true;
-                dirLight.shadow.mapSize.width = 2048;
-                dirLight.shadow.mapSize.height = 2048;
-                scene.add(dirLight);
-
-                // Luz pontual para destacar as partículas
-                const particleLight = new THREE.PointLight(0xffffff, 1, 20);
-                particleLight.position.set(0, 5, 0);
-                scene.add(particleLight);
-
-                // Criar sala
-                createRoom();
-                
-                // Posicionar personagem NA FRENTE do gráfico
-                character.position.set(0, 0, 10);
-                createCharacter();
-                
-                // Criar grupos do gráfico
-                candleGroup = new THREE.Group();
-                bollingerGroup = new THREE.Group();
-                smokeGroup = new THREE.Group();
-                
-                // Posição inicial do gráfico
-                graphPosition.x = 0;
-                graphPosition.z = -5;
-                graphPosition.targetZ = -5;
-                
-                candleGroup.position.set(graphPosition.x, 0, graphPosition.z);
-                bollingerGroup.position.set(graphPosition.x, 0, graphPosition.z);
-                smokeGroup.position.set(graphPosition.x, 0, graphPosition.z);
-                
-                scene.add(candleGroup);
-                scene.add(bollingerGroup);
-                scene.add(smokeGroup);
-
-                // Label da sala
-                const labelDiv = document.createElement('div');
-                labelDiv.textContent = `${COINS[currentCoin].name} TRADING ROOM`;
-                labelDiv.style.color = COINS[currentCoin].color;
-                labelDiv.style.fontSize = '16px';
-                labelDiv.style.fontWeight = '300';
-                labelDiv.style.letterSpacing = '2px';
-                labelDiv.style.background = 'rgba(10,15,26,0.8)';
-                labelDiv.style.backdropFilter = 'blur(10px)';
-                labelDiv.style.padding = '8px 20px';
-                labelDiv.style.borderRadius = '30px';
-                labelDiv.style.border = '1px solid ' + COINS[currentCoin].color;
-                
-                const label = new CSS2DObject(labelDiv);
-                label.position.set(0, 8, -ROOM_SIZE + 2);
-                scene.add(label);
-
-                // GERAR DADOS MOCKADOS
-                const mockData = generateMockData();
-                processHistoricalData(mockData);
-                
-                loadingEl.style.display = 'none';
-                
-                animate();
-                
-                startSimulatedTrades();
-                
-            } catch (error) {
-                console.error('Erro ao iniciar mundo:', error);
-                loadingEl.style.display = 'none';
-                errorMessage.style.display = 'block';
-                errorMessage.innerHTML = 'Erro ao carregar sala. Tente novamente.';
-                setTimeout(() => {
-                    errorMessage.style.display = 'none';
-                }, 3000);
-            }
-        }
-
-        function processHistoricalData(data) {
-            // Manter apenas os últimos MAX_CANDLES
-            if (data.length > MAX_CANDLES) {
-                data = data.slice(-MAX_CANDLES);
-            }
-            
-            historicalCandles = data.slice(0, -1);
-            liveCandleData = { ...data[data.length - 1] };
-            lastPrice = liveCandleData.close;
-            
-            // Calcular min/max de volume
-            minVolume = Infinity;
-            maxVolume = -Infinity;
-            
-            [...historicalCandles, liveCandleData].forEach(c => {
-                if (c.volume) {
-                    minVolume = Math.min(minVolume, c.volume);
-                    maxVolume = Math.max(maxVolume, c.volume);
+            // Verificar candles históricos
+            candleGroup.children.forEach(child => {
+                if (child.userData && child.userData.hasOwnProperty('open')) {
+                    const candleX = child.position.x;
+                    const distance = Math.abs(x - candleX);
+                    
+                    // Se estiver dentro do raio do candle
+                    if (distance < CANDLE_RADIUS * 1.2) {
+                        const { open, close } = child.userData;
+                        const candleTop = mapPriceToY(Math.max(open, close));
+                        highestY = Math.max(highestY, candleTop + 0.2); // +0.2 para ficar em cima
+                    }
                 }
             });
             
-            if (minVolume === Infinity || minVolume === maxVolume) {
-                minVolume = 100;
-                maxVolume = 1000;
+            // Verificar candle ao vivo
+            if (liveCandleMesh && liveCandleData) {
+                const candleX = liveCandleMesh.position.x;
+                const distance = Math.abs(x - candleX);
+                
+                if (distance < CANDLE_RADIUS * 1.2) {
+                    const { open, close } = liveCandleData;
+                    const candleTop = mapPriceToY(Math.max(open, close));
+                    highestY = Math.max(highestY, candleTop + 0.2);
+                }
             }
             
-            dataLoaded = true;
-            renderCandles();
-            updatePriceDisplay();
+            return highestY;
         }
 
-        function startSimulatedTrades() {
-            setInterval(() => {
-                if (!liveCandleData || !dataLoaded) return;
-                
-                const isBuy = Math.random() > 0.5;
-                const change = (Math.random() * 100) * (isBuy ? 1 : -1);
-                const newPrice = Math.max(0.01, lastPrice + change);
-                const volume = Math.random() * 200 + 50;
-                
-                processNewTrade({
-                    price: newPrice,
-                    time: Date.now(),
-                    volume: volume,
-                    isBuy: isBuy
-                });
-            }, 800);
-        }
-
-        function processNewTrade(trade) {
-            if (!liveCandleData || !dataLoaded) return;
+        // --- CRIAR CANDLE CILÍNDRICO ESTÁTICO ---
+        function createStaticCylinderCandle(data, index, total) {
+            const { open, high, low, close } = data;
             
-            const tf = TIMEFRAMES['1m'];
+            const isGreen = close >= open;
+            const bodyColor = isGreen ? 0x22c55e : 0xef4444;
+            
+            const yOpen = mapPriceToY(open);
+            const yClose = mapPriceToY(close);
+            
+            const xPos = (index - total/2) * SPACING;
+            
+            const group = new THREE.Group();
+            group.position.set(xPos, 0, 0);
+            group.userData = { ...data, index };
+            
+            // Corpo cilíndrico
+            const bodyHeight = Math.abs(yClose - yOpen) || 0.1;
+            const bodyGeo = new THREE.CylinderGeometry(CANDLE_RADIUS, CANDLE_RADIUS, bodyHeight, 16);
+            const bodyMat = new THREE.MeshStandardMaterial({ 
+                color: bodyColor,
+                roughness: 0.4,
+                metalness: 0.1
+            });
+            const body = new THREE.Mesh(bodyGeo, bodyMat);
+            body.position.y = (yOpen + yClose) / 2;
+            body.castShadow = true;
+            body.receiveShadow = true;
+            group.add(body);
+            
+            return group;
+        }
+
+        // --- CRIAR CANDLE AO VIVO ---
+        function createLiveCylinderCandle(index, total) {
+            const xPos = (index - total/2) * SPACING;
+            
+            const group = new THREE.Group();
+            group.position.set(xPos, 0, 0);
+            
+            const bodyGeo = new THREE.CylinderGeometry(CANDLE_RADIUS, CANDLE_RADIUS, 1, 16);
+            const bodyMat = new THREE.MeshStandardMaterial({ 
+                color: 0x22c55e,
+                emissive: 0x116611,
+                roughness: 0.3,
+                metalness: 0.1
+            });
+            const body = new THREE.Mesh(bodyGeo, bodyMat);
+            body.castShadow = true;
+            body.receiveShadow = true;
+            group.add(body);
+            
+            group.userData = { body, xPos, isLive: true };
+            
+            return group;
+        }
+
+        // --- ATUALIZAR CANDLE AO VIVO ---
+        function updateLiveCandle() {
+            if (!liveCandleMesh || !liveCandleData) return;
+            
+            const { body } = liveCandleMesh.userData;
+            const { open, high, low, close } = liveCandleData;
+            
+            const yOpen = mapPriceToY(open);
+            const yClose = mapPriceToY(close);
+            
+            const isGreen = close >= open;
+            const bodyColor = isGreen ? 0x22c55e : 0xef4444;
+            
+            const bodyHeight = Math.abs(yClose - yOpen) || 0.1;
+            const bodyYCenter = (yOpen + yClose) / 2;
+            
+            body.scale.y = bodyHeight;
+            body.position.y = bodyYCenter;
+            body.material.color.setHex(bodyColor);
+            body.material.emissive.setHex(isGreen ? 0x116611 : 0x441111);
+            
+            // Atualizar UI
+            document.getElementById('price').innerHTML = `$${close.toFixed(0)}`;
+            const change = ((close - open) / open * 100).toFixed(2);
+            const changeClass = change >= 0 ? '📈' : '📉';
+            document.getElementById('price-change').innerHTML = `${changeClass} ${Math.abs(change)}%`;
+        }
+
+        // --- PROCESSAR DADOS HISTÓRICOS ---
+        function processHistoricalData(data) {
+            historicalCandles = data.slice(0, -1);
+            liveCandleData = { ...data[data.length - 1] };
+            
+            minPrice = Infinity;
+            maxPrice = -Infinity;
+            
+            [...historicalCandles, liveCandleData].forEach(c => {
+                minPrice = Math.min(minPrice, c.low);
+                maxPrice = Math.max(maxPrice, c.high);
+            });
+            
+            const priceRange = maxPrice - minPrice;
+            minPrice -= priceRange * 0.1;
+            maxPrice += priceRange * 0.1;
+            
+            renderCandles();
+            
+            document.getElementById('stats').innerHTML = `${historicalCandles.length+1} candles • Explore livremente!`;
+        }
+
+        // --- RENDERIZAR CANDLES ---
+        function renderCandles() {
+            while(candleGroup.children.length) {
+                candleGroup.remove(candleGroup.children[0]);
+            }
+            
+            const total = historicalCandles.length + 1;
+            
+            historicalCandles.forEach((candle, index) => {
+                const staticCandle = createStaticCylinderCandle(candle, index, total);
+                candleGroup.add(staticCandle);
+            });
+            
+            const liveIndex = historicalCandles.length;
+            liveCandleMesh = createLiveCylinderCandle(liveIndex, total);
+            candleGroup.add(liveCandleMesh);
+            
+            updateLiveCandle();
+            
+            // Posicionar personagem no último candle
+            const lastX = (liveIndex - total/2) * SPACING;
+            character.position.set(lastX, getGroundHeight(lastX, 0), 0);
+        }
+
+        // --- CONTROLES DE OLHAR 360° ---
+        function setupControls() {
+            // Teclado (para desktop)
+            window.addEventListener('keydown', (e) => {
+                switch(e.key) {
+                    case 'w': case 'W': moveForward = true; break;
+                    case 's': case 'S': moveBackward = true; break;
+                    case 'a': case 'A': moveLeft = true; break;
+                    case 'd': case 'D': moveRight = true; break;
+                }
+            });
+            
+            window.addEventListener('keyup', (e) => {
+                switch(e.key) {
+                    case 'w': case 'W': moveForward = false; break;
+                    case 's': case 'S': moveBackward = false; break;
+                    case 'a': case 'A': moveLeft = false; break;
+                    case 'd': case 'D': moveRight = false; break;
+                }
+            });
+            
+            // Arrastar para olhar 360° (mobile)
+            let lastTouchX = 0;
+            let lastTouchY = 0;
+            
+            renderer.domElement.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 1 && !joystickActive) {
+                    lastTouchX = e.touches[0].clientX;
+                    lastTouchY = e.touches[0].clientY;
+                }
+            });
+            
+            renderer.domElement.addEventListener('touchmove', (e) => {
+                if (e.touches.length === 1 && !joystickActive) {
+                    const deltaX = e.touches[0].clientX - lastTouchX;
+                    const deltaY = e.touches[0].clientY - lastTouchY;
+                    
+                    // Atualizar ângulos da câmera (horizontal e vertical)
+                    cameraAngle += deltaX * 0.005;
+                    cameraPitch += deltaY * 0.005;
+                    
+                    // Limitar pitch para não virar de cabeça para baixo
+                    cameraPitch = Math.max(-0.8, Math.min(1.2, cameraPitch));
+                    
+                    lastTouchX = e.touches[0].clientX;
+                    lastTouchY = e.touches[0].clientY;
+                }
+            });
+            
+            // Duplo toque para resetar câmera
+            let lastTap = 0;
+            renderer.domElement.addEventListener('touchend', (e) => {
+                const currentTime = new Date().getTime();
+                if (currentTime - lastTap < 300) {
+                    cameraAngle = 0;
+                    cameraPitch = 0.2;
+                }
+                lastTap = currentTime;
+            });
+        }
+
+        // --- JOYSTICK VIRTUAL ---
+        function setupJoystick() {
+            const joystickArea = document.getElementById('joystick-area');
+            
+            joystickArea.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                joystickActive = true;
+                const touch = e.touches[0];
+                const rect = joystickArea.getBoundingClientRect();
+                joystickStart = {
+                    x: rect.left + rect.width/2,
+                    y: rect.top + rect.height/2
+                };
+            });
+            
+            joystickArea.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                if (!joystickActive) return;
+                
+                const touch = e.touches[0];
+                const deltaX = touch.clientX - joystickStart.x;
+                const deltaY = touch.clientY - joystickStart.y;
+                const dist = Math.sqrt(deltaX*deltaX + deltaY*deltaY);
+                
+                if (dist > 10) {
+                    const normDist = Math.min(dist / 50, 1);
+                    joystickVector.x = (deltaX / dist) * normDist;
+                    joystickVector.y = (deltaY / dist) * normDist;
+                    
+                    // Atualizar direções baseado no joystick
+                    moveForward = joystickVector.y < -0.2;
+                    moveBackward = joystickVector.y > 0.2;
+                    moveLeft = joystickVector.x < -0.2;
+                    moveRight = joystickVector.x > 0.2;
+                }
+            });
+            
+            joystickArea.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                joystickActive = false;
+                joystickVector.x = 0;
+                joystickVector.y = 0;
+                moveForward = moveBackward = moveLeft = moveRight = false;
+            });
+        }
+
+        // --- ATUALIZAR MOVIMENTO DO PERSONAGEM ---
+        function updateMovement() {
+            if (!character) return;
+            
+            // Calcular direção do movimento
+            let moveX = 0, moveZ = 0;
+            
+            if (moveForward) moveZ -= 1;
+            if (moveBackward) moveZ += 1;
+            if (moveLeft) moveX -= 1;
+            if (moveRight) moveX += 1;
+            
+            if (moveX !== 0 || moveZ !== 0) {
+                // Normalizar para velocidade constante em diagonais
+                const length = Math.sqrt(moveX*moveX + moveZ*moveZ);
+                moveX /= length;
+                moveZ /= length;
+                
+                // Mover na direção que a câmera está olhando (horizontalmente)
+                const forwardX = Math.sin(cameraAngle) * moveZ;
+                const forwardZ = Math.cos(cameraAngle) * moveZ;
+                const rightX = Math.cos(cameraAngle) * moveX;
+                const rightZ = -Math.sin(cameraAngle) * moveX;
+                
+                const newX = character.position.x + (forwardX + rightX) * characterSpeed;
+                const newZ = character.position.z + (forwardZ + rightZ) * characterSpeed;
+                
+                // Verificar altura do chão na nova posição
+                const groundY = getGroundHeight(newX, newZ);
+                
+                character.position.x = newX;
+                character.position.z = newZ;
+                character.position.y = groundY;
+                
+                // Rotacionar personagem na direção do movimento
+                if (moveZ !== 0 || moveX !== 0) {
+                    const moveAngle = Math.atan2(moveX, moveZ);
+                    character.rotation.y = moveAngle + cameraAngle;
+                }
+            }
+            
+            // Atualizar posição da câmera em relação ao personagem
+            updateCamera();
+            
+            // Atualizar UI
+            document.getElementById('position-indicator').innerHTML = 
+                `📍 X: ${character.position.x.toFixed(1)} • Y: ${character.position.y.toFixed(1)} • Z: ${character.position.z.toFixed(1)}`;
+        }
+
+        // --- ATUALIZAR CÂMERA (360° AO REDOR DO PERSONAGEM) ---
+        function updateCamera() {
+            if (!character) return;
+            
+            // Calcular posição da câmera em esfera ao redor do personagem
+            const horizontalDist = CAMERA_DISTANCE * Math.cos(cameraPitch);
+            const verticalDist = CAMERA_DISTANCE * Math.sin(cameraPitch);
+            
+            const camX = character.position.x - Math.sin(cameraAngle) * horizontalDist;
+            const camZ = character.position.z - Math.cos(cameraAngle) * horizontalDist;
+            const camY = character.position.y + CAMERA_HEIGHT + verticalDist;
+            
+            camera.position.set(camX, camY, camZ);
+            
+            // Olhar para o personagem
+            camera.lookAt(
+                character.position.x,
+                character.position.y + 1, // Olhar para o torso
+                character.position.z
+            );
+        }
+
+        // --- BOTÕES DE TIMEFRAME ---
+        function setupTimeframeButtons() {
+            document.querySelectorAll('.timeframe-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('.timeframe-btn').forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    currentTimeframe = e.target.dataset.tf;
+                    fetchHistoricalData();
+                });
+            });
+        }
+
+        // --- WEBSOCKET BINANCE ---
+        function connectWebSocket() {
+            if (binanceSocket) binanceSocket.close();
+            
+            const stream = `${SYMBOL}@trade`;
+            const wsUrl = `wss://stream.binance.com:9443/ws/${stream}`;
+            
+            binanceSocket = new WebSocket(wsUrl);
+            
+            binanceSocket.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.e === 'trade') {
+                    processNewTrade({
+                        price: parseFloat(data.p),
+                        time: data.T
+                    });
+                }
+            };
+            
+            binanceSocket.onerror = () => {
+                console.log('WebSocket error, usando dados simulados');
+                startSimulatedTrades();
+            };
+        }
+
+        // --- PROCESSAR NOVO TRADE ---
+        function processNewTrade(trade) {
+            if (!liveCandleData) return;
+            
+            const tf = TIMEFRAMES[currentTimeframe];
             const periodStart = Math.floor(liveCandleData.time / tf.ms) * tf.ms;
             const tradePeriodStart = Math.floor(trade.time / tf.ms) * tf.ms;
             
             if (tradePeriodStart > periodStart) {
-                // NOVO CANDLE - Mover o gráfico para trás
                 historicalCandles.push({ ...liveCandleData });
                 
-                // Manter apenas os últimos MAX_CANDLES
-                if (historicalCandles.length > MAX_CANDLES) {
+                if (historicalCandles.length > tf.limit) {
                     historicalCandles.shift();
                 }
-                
-                // Mover o gráfico para trás para dar espaço
-                graphPosition.targetZ -= SPACING * 0.5;
-                
-                // Limitar para não sair da sala
-                graphPosition.targetZ = Math.max(-ROOM_SIZE + 10, graphPosition.targetZ);
                 
                 liveCandleData = {
                     time: trade.time,
                     open: trade.price,
                     high: trade.price,
                     low: trade.price,
-                    close: trade.price,
-                    volume: trade.volume || 100,
-                    isBuy: trade.isBuy
+                    close: trade.price
                 };
+                
+                const priceRange = maxPrice - minPrice;
+                minPrice = Math.min(minPrice, trade.price) - priceRange * 0.05;
+                maxPrice = Math.max(maxPrice, trade.price) + priceRange * 0.05;
                 
                 renderCandles();
                 return;
@@ -1300,364 +885,94 @@
             liveCandleData.low = Math.min(liveCandleData.low, trade.price);
             liveCandleData.close = trade.price;
             
-            if (trade.volume) {
-                liveCandleData.volume = (liveCandleData.volume || 0) + trade.volume;
-                if (liveCandleData.volume > maxVolume) {
-                    maxVolume = liveCandleData.volume;
-                }
-            }
-            
-            liveCandleData.isBuy = trade.isBuy;
-            
-            lastPrice = trade.price;
             updateLiveCandle();
-            updatePriceDisplay();
         }
 
-        function updatePriceDisplay() {
-            if (!liveCandleData) return;
-            
-            priceValue.textContent = `$${liveCandleData.close.toFixed(2)}`;
-            const change = ((liveCandleData.close - liveCandleData.open) / liveCandleData.open * 100).toFixed(2);
-            const changeClass = change >= 0 ? '📈' : '📉';
-            priceChange.textContent = `${changeClass} ${Math.abs(change)}%`;
-            priceChange.style.color = change >= 0 ? '#22c55e' : '#ef4444';
-        }
-
-        function calculateCandleDimensions(volume, isBuy) {
-            const normalizedVolume = (volume - minVolume) / (maxVolume - minVolume);
-            
-            if (isBuy) {
-                const height = MIN_HEIGHT + normalizedVolume * (MAX_HEIGHT - MIN_HEIGHT);
-                const radius = MAX_RADIUS - normalizedVolume * (MAX_RADIUS - MIN_RADIUS);
-                return { height, radius };
-            } else {
-                const height = MAX_HEIGHT - normalizedVolume * (MAX_HEIGHT - MIN_HEIGHT);
-                const radius = MIN_RADIUS + normalizedVolume * (MAX_RADIUS - MIN_RADIUS);
-                return { height, radius };
-            }
-        }
-
-        function createCandle(data, index, total, isLive = false) {
-            const { open, high, low, close, volume, isBuy } = data;
-            
-            const isGreen = close >= open;
-            const bodyColor = isGreen ? 0x22c55e : 0xef4444;
-            
-            const dimensions = calculateCandleDimensions(volume, isBuy);
-            
-            // Posição X baseada no índice, mas centralizada
-            const xPos = (index - total/2) * SPACING;
-            
-            const group = new THREE.Group();
-            group.position.set(xPos, 0, 0);
-            
-            // Corpo do candle
-            const bodyGeo = new THREE.CylinderGeometry(dimensions.radius, dimensions.radius, dimensions.height, 16);
-            const bodyMat = new THREE.MeshStandardMaterial({ 
-                color: bodyColor,
-                roughness: 0.3,
-                metalness: 0.2,
-                emissive: bodyColor,
-                emissiveIntensity: isLive ? 0.8 : 0.2,
-                transparent: true,
-                opacity: 0.9
-            });
-            const body = new THREE.Mesh(bodyGeo, bodyMat);
-            body.position.y = dimensions.height / 2;
-            body.castShadow = true;
-            body.receiveShadow = true;
-            group.add(body);
-            
-            // Pavio
-            const wickHeight = Math.abs(high - low) * 0.1;
-            if (wickHeight > 0.5) {
-                const wickGeo = new THREE.CylinderGeometry(WICK_RADIUS, WICK_RADIUS, wickHeight, 8);
-                const wickMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8 });
-                const wick = new THREE.Mesh(wickGeo, wickMat);
-                wick.position.y = dimensions.height / 2 + (wickHeight / 2);
-                wick.castShadow = true;
-                group.add(wick);
-            }
-            
-            if (isLive) {
-                // Brilho interno
-                const glowGeo = new THREE.SphereGeometry(dimensions.radius * 1.5, 8);
-                const glowMat = new THREE.MeshStandardMaterial({
-                    color: bodyColor,
-                    emissive: bodyColor,
-                    emissiveIntensity: 0.5,
-                    transparent: true,
-                    opacity: 0.3
+        // --- DADOS SIMULADOS (FALLBACK) ---
+        function startSimulatedTrades() {
+            setInterval(() => {
+                if (!liveCandleData) return;
+                
+                const change = (Math.random() - 0.5) * 60;
+                const newPrice = liveCandleData.close + change;
+                
+                processNewTrade({
+                    price: newPrice,
+                    time: Date.now()
                 });
-                const glow = new THREE.Mesh(glowGeo, glowMat);
-                glow.position.y = dimensions.height / 2;
-                group.add(glow);
-                
-                // Guardar referência para atualização
-                group.userData = { body, dimensions };
-            }
-            
-            return group;
+            }, 800);
         }
 
-        // FUNÇÃO CORRIGIDA DE PARTÍCULAS
-        function createSmokeParticles(color, count = 25) {
-            const particles = [];
-            const particleGroup = new THREE.Group();
-            
-            const geometry = new THREE.SphereGeometry(0.15, 6, 6);
-            
-            for (let i = 0; i < count; i++) {
-                const material = new THREE.MeshStandardMaterial({
-                    color: color,
-                    emissive: color,
-                    emissiveIntensity: 0.8,
-                    transparent: true,
-                    opacity: 0.7
-                });
+        // --- BUSCAR DADOS DA BINANCE ---
+        async function fetchHistoricalData() {
+            try {
+                document.getElementById('stats').innerHTML = 'Carregando...';
                 
-                const particle = new THREE.Mesh(geometry, material);
+                const tf = TIMEFRAMES[currentTimeframe];
+                const url = `https://api.binance.com/api/v3/klines?symbol=${SYMBOL.toUpperCase()}&interval=${tf.binance}&limit=${tf.limit}`;
                 
-                // Posição inicial aleatória ao redor do topo do candle
-                const angle = Math.random() * Math.PI * 2;
-                const radius = 0.5 + Math.random() * 0.5;
-                const height = 2 + Math.random() * 3;
+                const response = await fetch(url);
+                const data = await response.json();
                 
-                particle.position.set(
-                    Math.cos(angle) * radius,
-                    height,
-                    Math.sin(angle) * radius
-                );
+                const formatted = data.map(k => ({
+                    time: k[0],
+                    open: parseFloat(k[1]),
+                    high: parseFloat(k[2]),
+                    low: parseFloat(k[3]),
+                    close: parseFloat(k[4])
+                }));
                 
-                particle.userData = {
-                    velocity: new THREE.Vector3(
-                        (Math.random() - 0.5) * 0.03,
-                        Math.random() * 0.04 + 0.02, // Velocidade para cima
-                        (Math.random() - 0.5) * 0.03
-                    ),
-                    baseY: height,
-                    angle: angle,
-                    radius: radius,
-                    life: 1.0
-                };
+                processHistoricalData(formatted);
+                connectWebSocket();
                 
-                particle.castShadow = false;
-                particle.receiveShadow = false;
-                
-                particleGroup.add(particle);
-                particles.push(particle);
-            }
-            
-            return { group: particleGroup, particles };
-        }
-
-        // FUNÇÃO CORRIGIDA DE ATUALIZAÇÃO DAS PARTÍCULAS
-        function updateSmoke(particles, candleY, isGreen, volume, candleHeight) {
-            if (!particles || particles.length === 0) return;
-            
-            const time = Date.now() * 0.002;
-            const color = isGreen ? 0x22c55e : 0xef4444;
-            const intensity = Math.min(1, (volume || 100) / 500);
-            
-            particles.forEach((particle, i) => {
-                const data = particle.userData;
-                
-                // Movimento das partículas
-                particle.position.x += data.velocity.x;
-                particle.position.y += data.velocity.y;
-                particle.position.z += data.velocity.z;
-                
-                // Efeito de rotação
-                data.velocity.x += Math.sin(time + i) * 0.001;
-                data.velocity.z += Math.cos(time + i) * 0.001;
-                
-                // Reset quando sobe demais
-                if (particle.position.y > candleY + candleHeight + 4) {
-                    // Reiniciar partícula na base do candle
-                    const angle = Math.random() * Math.PI * 2;
-                    const radius = 0.5 + Math.random() * 0.5;
-                    
-                    particle.position.set(
-                        Math.cos(angle) * radius,
-                        candleY + candleHeight * 0.3,
-                        Math.sin(angle) * radius
-                    );
-                    
-                    data.velocity.set(
-                        (Math.random() - 0.5) * 0.03,
-                        Math.random() * 0.05 + 0.03,
-                        (Math.random() - 0.5) * 0.03
-                    );
-                }
-                
-                // Opacidade pulsante baseada na intensidade
-                particle.material.opacity = 0.5 + Math.sin(time * 4 + i) * 0.3;
-                particle.material.emissiveIntensity = intensity * (0.5 + Math.sin(time * 3) * 0.3);
-                
-                // Atualizar cor baseada na tendência
-                particle.material.color.setHex(color);
-                particle.material.emissive.setHex(color);
-            });
-        }
-
-        function updateLiveCandle() {
-            if (!liveCandleMesh || !liveCandleData) return;
-            
-            const { body, dimensions } = liveCandleMesh.userData;
-            const { open, close, volume, isBuy } = liveCandleData;
-            
-            const isGreen = close >= open;
-            const bodyColor = isGreen ? 0x22c55e : 0xef4444;
-            
-            const newDimensions = calculateCandleDimensions(volume || 100, isBuy);
-            
-            // Atualizar tamanho do candle
-            body.scale.x = newDimensions.radius / MIN_RADIUS;
-            body.scale.z = newDimensions.radius / MIN_RADIUS;
-            body.scale.y = newDimensions.height;
-            body.position.y = newDimensions.height / 2;
-            body.material.color.setHex(bodyColor);
-            body.material.emissive.setHex(bodyColor);
-            body.material.emissiveIntensity = 0.8 + Math.sin(Date.now() * 0.01) * 0.3;
-            
-            // Atualizar partículas com a altura atual do candle
-            if (liveSmokeParticles.length > 0) {
-                updateSmoke(liveSmokeParticles, newDimensions.height / 2, isGreen, volume, newDimensions.height);
+            } catch (error) {
+                console.error('Erro ao buscar dados:', error);
+                generateMockData();
             }
         }
 
-        function renderCandles() {
-            while(candleGroup.children.length) {
-                candleGroup.remove(candleGroup.children[0]);
+        // --- DADOS MOCKADOS ---
+        function generateMockData() {
+            const tf = TIMEFRAMES[currentTimeframe];
+            const data = [];
+            let basePrice = 50000;
+            let time = Date.now() - tf.limit * tf.ms;
+            
+            for (let i = 0; i < tf.limit; i++) {
+                const open = basePrice + (Math.random() - 0.5) * 800;
+                const close = open + (Math.random() - 0.5) * 600;
+                const high = Math.max(open, close) + Math.random() * 300;
+                const low = Math.min(open, close) - Math.random() * 300;
+                
+                data.push({ time: time + i * tf.ms, open, high, low, close });
+                basePrice = close;
             }
             
-            while(smokeGroup.children.length) {
-                smokeGroup.remove(smokeGroup.children[0]);
-            }
-            
-            liveSmokeParticles = [];
-            
-            const total = historicalCandles.length + 1;
-            
-            historicalCandles.forEach((candle, index) => {
-                const staticCandle = createCandle(candle, index, total, false);
-                candleGroup.add(staticCandle);
-            });
-            
-            const liveIndex = historicalCandles.length;
-            liveCandleMesh = createCandle(liveCandleData, liveIndex, total, true);
-            candleGroup.add(liveCandleMesh);
-            
-            // CRIAR PARTÍCULAS PARA O CANDLE AO VIVO
-            const isGreen = liveCandleData.close >= liveCandleData.open;
-            const smokeColor = isGreen ? 0x22c55e : 0xef4444;
-            
-            // Criar grupo de partículas separado
-            const smoke = createSmokeParticles(smokeColor, 30); // Mais partículas
-            
-            // Posicionar as partículas no mesmo lugar do candle ao vivo
-            smoke.group.position.set(liveCandleMesh.position.x, 0, 0);
-            
-            // Adicionar ao grupo de fumaça
-            smokeGroup.add(smoke.group);
-            liveSmokeParticles = smoke.particles;
-            
-            console.log('Partículas criadas:', liveSmokeParticles.length); // Debug
+            processHistoricalData(data);
+            startSimulatedTrades();
         }
 
+        // --- ANIMAÇÃO ---
         function animate() {
             requestAnimationFrame(animate);
             
-            // Movimento suave do gráfico
-            graphPosition.z += (graphPosition.targetZ - graphPosition.z) * 0.05;
-            
-            candleGroup.position.z = graphPosition.z;
-            bollingerGroup.position.z = graphPosition.z;
-            smokeGroup.position.z = graphPosition.z;
-            
-            // Movimento do personagem
-            if (moveControl.active && (Math.abs(moveControl.worldX) > 0.1 || Math.abs(moveControl.worldZ) > 0.1)) {
-                
-                const angle = cameraAngle.horizontal;
-                
-                const forwardX = Math.sin(angle);
-                const forwardZ = Math.cos(angle);
-                const rightX = Math.cos(angle);
-                const rightZ = -Math.sin(angle);
-                
-                const newX = character.position.x + (forwardX * moveControl.worldZ + rightX * moveControl.worldX) * moveSpeed;
-                const newZ = character.position.z + (forwardZ * moveControl.worldZ + rightZ * moveControl.worldX) * moveSpeed;
-                
-                const limit = ROOM_SIZE - 1;
-                character.position.x = Math.max(-limit, Math.min(limit, newX));
-                character.position.z = Math.max(-limit, Math.min(limit, newZ));
-                
-                if (Math.abs(newX) > limit || Math.abs(newZ) > limit) {
-                    boundaryWarning.style.display = 'block';
-                    setTimeout(() => {
-                        boundaryWarning.style.display = 'none';
-                    }, 300);
-                }
-                
-                if (Math.abs(moveControl.worldX) > 0.1 || Math.abs(moveControl.worldZ) > 0.1) {
-                    character.rotation = Math.atan2(
-                        forwardX * moveControl.worldZ + rightX * moveControl.worldX,
-                        forwardZ * moveControl.worldZ + rightZ * moveControl.worldX
-                    );
-                }
-                
-                if (character.mesh) {
-                    character.mesh.position.copy(character.position);
-                    character.mesh.rotation.y = character.rotation;
-                }
-                
-                debugInfo.style.display = 'block';
-                debugInfo.innerHTML = `Partículas: ${liveSmokeParticles.length} | Vol: ${liveCandleData?.volume.toFixed(0)}`;
-            } else {
-                debugInfo.style.display = 'none';
-            }
-            
-            // Posicionar câmera
-            if (character.mesh) {
-                const camX = character.position.x + Math.sin(cameraAngle.horizontal) * cameraDistance;
-                const camZ = character.position.z + Math.cos(cameraAngle.horizontal) * cameraDistance;
-                const camY = character.position.y + cameraHeight * cameraAngle.vertical;
-                
-                camera.position.set(
-                    Math.max(-ROOM_SIZE + 2, Math.min(ROOM_SIZE - 2, camX)),
-                    Math.max(2, Math.min(WALL_HEIGHT - 2, camY)),
-                    Math.max(-ROOM_SIZE + 2, Math.min(ROOM_SIZE - 2, camZ))
-                );
-                
-                camera.lookAt(character.position.x, character.position.y + 1, character.position.z);
-            }
-            
-            // Atualizar elementos
-            if (dataLoaded && liveCandleMesh && liveSmokeParticles.length > 0) {
-                updateLiveCandle();
-            }
+            updateMovement();
             
             renderer.render(scene, camera);
             labelRenderer.render(scene, camera);
         }
 
-        setupControls();
-
+        // --- RESIZE ---
         window.addEventListener('resize', () => {
-            if (camera && renderer && labelRenderer) {
-                camera.aspect = window.innerWidth / window.innerHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth, window.innerHeight);
-                labelRenderer.setSize(window.innerWidth, window.innerHeight);
-            }
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            labelRenderer.setSize(window.innerWidth, window.innerHeight);
         });
 
-        document.addEventListener('touchmove', (e) => {
-            if (moveControl.active || cameraControl.active) {
-                e.preventDefault();
-            }
-        }, { passive: false });
+        // --- INICIAR ---
+        init();
+        animate();
     </script>
 </body>
 </html>
