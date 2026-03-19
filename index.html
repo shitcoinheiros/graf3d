@@ -1,0 +1,1384 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CryptoVerse 3D - Entre no mundo dos gráficos</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #0a0f1a;
+            color: white;
+            overflow: hidden;
+        }
+
+        /* Tela inicial estilo CoinMarketCap */
+        #home-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0a0f1a 0%, #1a1f2e 100%);
+            z-index: 1000;
+            overflow-y: auto;
+            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        #home-screen.hidden {
+            transform: translateX(-100%);
+        }
+
+        .header {
+            padding: 30px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #f7931a, #ffae4a);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-3d {
+            background: #9945FF;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 30px;
+            font-size: 14px;
+            -webkit-text-fill-color: white;
+            animation: pulse 2s infinite;
+        }
+
+        .stats-bar {
+            display: flex;
+            gap: 30px;
+            color: #94a3b8;
+            font-size: 14px;
+        }
+
+        .market-cap {
+            color: #22c55e;
+            font-weight: bold;
+        }
+
+        .coin-list {
+            padding: 30px 40px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .coin-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 20px;
+            padding: 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .coin-card:hover {
+            background: rgba(255,255,255,0.06);
+            border-color: #f7931a;
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(247,147,26,0.2);
+        }
+
+        .coin-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #f7931a, #9945FF);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .coin-card:hover::before {
+            opacity: 1;
+        }
+
+        .coin-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .coin-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 20px;
+        }
+
+        .btc-icon { background: #f7931a; }
+        .siren-icon { background: #00ffff; }
+        .pippin-icon { background: #ff69b4; }
+        .tria-icon { background: #8b5cf6; }
+
+        .coin-info {
+            flex: 1;
+        }
+
+        .coin-name {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .coin-symbol {
+            color: #94a3b8;
+            font-size: 14px;
+        }
+
+        .coin-price {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .coin-change {
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .positive { color: #22c55e; }
+        .negative { color: #ef4444; }
+
+        .enter-3d-btn {
+            position: absolute;
+            bottom: 25px;
+            right: 25px;
+            background: rgba(153,69,255,0.2);
+            border: 1px solid #9945FF;
+            color: #9945FF;
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            z-index: 10;
+        }
+
+        .coin-card:hover .enter-3d-btn {
+            background: #9945FF;
+            color: white;
+        }
+
+        /* Tela do gráfico 2D/3D */
+        #chart-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #0a0f1a;
+            z-index: 2000;
+            display: none;
+        }
+
+        #chart-screen.active {
+            display: block;
+        }
+
+        .chart-header {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 2100;
+            padding: 10px 20px;
+            background: rgba(10,15,26,0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 50px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .back-btn {
+            background: transparent;
+            border: 1px solid #94a3b8;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .back-btn:hover {
+            background: #94a3b8;
+            color: #0a0f1a;
+        }
+
+        .chart-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .mode-switch {
+            background: linear-gradient(135deg, #f7931a, #9945FF);
+            color: white;
+            border: none;
+            padding: 8px 25px;
+            border-radius: 30px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(247,147,26,0.3);
+        }
+
+        .mode-switch:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(247,147,26,0.5);
+        }
+
+        .mode-switch .icon {
+            font-size: 18px;
+        }
+
+        .timeframe-container {
+            display: flex;
+            gap: 5px;
+            background: rgba(255,255,255,0.05);
+            padding: 5px;
+            border-radius: 30px;
+        }
+
+        .timeframe-btn {
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .timeframe-btn.active {
+            background: #f7931a;
+            color: white;
+        }
+
+        .coin-info-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .selected-coin-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        /* Container do gráfico */
+        #chart-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        #live-price {
+            position: absolute;
+            top: 100px;
+            right: 30px;
+            background: rgba(10,15,26,0.9);
+            padding: 15px 25px;
+            border-radius: 20px;
+            border: 1px solid #f7931a;
+            z-index: 2100;
+            text-align: right;
+            backdrop-filter: blur(10px);
+        }
+
+        #live-price .price {
+            font-size: 28px;
+            font-weight: bold;
+            color: #f7931a;
+        }
+
+        #live-price .change {
+            font-size: 14px;
+            color: #94a3b8;
+        }
+
+        #stats-3d {
+            position: absolute;
+            bottom: 30px;
+            left: 30px;
+            color: #94a3b8;
+            font-size: 12px;
+            background: rgba(10,15,26,0.7);
+            padding: 10px 20px;
+            border-radius: 30px;
+            z-index: 2100;
+            backdrop-filter: blur(5px);
+        }
+
+        /* Loading */
+        #loading-3d {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 18px;
+            z-index: 2200;
+            display: none;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.7; }
+            50% { opacity: 1; }
+            100% { opacity: 0.7; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Tela inicial -->
+    <div id="home-screen">
+        <div class="header">
+            <div class="logo">
+                🚀 CryptoVerse 
+                <span class="logo-3d">3D</span>
+            </div>
+            <div class="stats-bar">
+                <span>📊 Moedas: <strong>4</strong></span>
+                <span>💰 Market Cap: <span class="market-cap">$2.4T</span></span>
+                <span>⚡ Volume 24h: $98.5B</span>
+            </div>
+        </div>
+
+        <div class="coin-list">
+            <!-- Bitcoin -->
+            <div class="coin-card" data-coin="btc">
+                <div class="coin-header">
+                    <div class="coin-icon btc-icon">₿</div>
+                    <div class="coin-info">
+                        <div class="coin-name">Bitcoin</div>
+                        <div class="coin-symbol">BTC</div>
+                    </div>
+                </div>
+                <div class="coin-price">$67,890</div>
+                <div class="coin-change positive">
+                    📈 +2.34% <span style="color:#94a3b8; font-size:12px;">(24h)</span>
+                </div>
+                <div class="enter-3d-btn">🎮 ENTRAR NO MUNDO 3D</div>
+            </div>
+
+            <!-- Siren -->
+            <div class="coin-card" data-coin="siren">
+                <div class="coin-header">
+                    <div class="coin-icon siren-icon">🧜‍♀️</div>
+                    <div class="coin-info">
+                        <div class="coin-name">Siren</div>
+                        <div class="coin-symbol">SIREN</div>
+                    </div>
+                </div>
+                <div class="coin-price">$0.89</div>
+                <div class="coin-change positive">
+                    📈 +15.67% <span style="color:#94a3b8; font-size:12px;">(24h)</span>
+                </div>
+                <div class="enter-3d-btn">🎮 ENTRAR NO MUNDO 3D</div>
+            </div>
+
+            <!-- Pippin -->
+            <div class="coin-card" data-coin="pippin">
+                <div class="coin-header">
+                    <div class="coin-icon pippin-icon">🐧</div>
+                    <div class="coin-info">
+                        <div class="coin-name">Pippin</div>
+                        <div class="coin-symbol">PIPPIN</div>
+                    </div>
+                </div>
+                <div class="coin-price">$0.0023</div>
+                <div class="coin-change negative">
+                    📉 -8.12% <span style="color:#94a3b8; font-size:12px;">(24h)</span>
+                </div>
+                <div class="enter-3d-btn">🎮 ENTRAR NO MUNDO 3D</div>
+            </div>
+
+            <!-- Tria -->
+            <div class="coin-card" data-coin="tria">
+                <div class="coin-header">
+                    <div class="coin-icon tria-icon">🔺</div>
+                    <div class="coin-info">
+                        <div class="coin-name">Tria</div>
+                        <div class="coin-symbol">TRIA</div>
+                    </div>
+                </div>
+                <div class="coin-price">$12.45</div>
+                <div class="coin-change positive">
+                    📈 +5.23% <span style="color:#94a3b8; font-size:12px;">(24h)</span>
+                </div>
+                <div class="enter-3d-btn">🎮 ENTRAR NO MUNDO 3D</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tela do gráfico -->
+    <div id="chart-screen">
+        <div class="chart-header">
+            <button class="back-btn">← Voltar</button>
+            
+            <div class="coin-info-header">
+                <div class="selected-coin-icon" id="selected-coin-icon">₿</div>
+                <div>
+                    <span id="selected-coin-name">Bitcoin</span>
+                    <span style="color:#94a3b8; margin-left:10px;" id="selected-coin-symbol">BTC</span>
+                </div>
+            </div>
+
+            <div class="chart-controls">
+                <div class="timeframe-container">
+                    <button class="timeframe-btn active" data-tf="1m">1m</button>
+                    <button class="timeframe-btn" data-tf="5m">5m</button>
+                    <button class="timeframe-btn" data-tf="15m">15m</button>
+                    <button class="timeframe-btn" data-tf="1h">1h</button>
+                </div>
+                <button class="mode-switch" id="mode-switch">
+                    <span class="icon">🎮</span>
+                    ATIVAR MODO 3D
+                </button>
+            </div>
+        </div>
+
+        <div id="live-price">
+            <div class="price" id="current-price">$67,890</div>
+            <div class="change" id="current-change">📈 +2.34%</div>
+        </div>
+
+        <div id="stats-3d" id="stats-3d">
+            🎲 Modo 2D • Arraste para ver mais
+        </div>
+
+        <div id="loading-3d">🚀 Carregando mundo 3D...</div>
+        <div id="chart-container"></div>
+    </div>
+
+    <!-- TradingView Widget (gráfico 2D) -->
+    <script src="https://s3.tradingview.com/tv.js"></script>
+    
+    <!-- Three.js -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // --- CONFIGURAÇÕES ---
+        const COINS = {
+            btc: {
+                name: 'Bitcoin',
+                symbol: 'BTC',
+                binance: 'BTCUSDT',
+                icon: '₿',
+                color: '#f7931a',
+                bgColor: 0xf7931a,
+                floor: '₿'
+            },
+            siren: {
+                name: 'Siren',
+                symbol: 'SIREN',
+                binance: 'SIRENUSDT',
+                icon: '🧜‍♀️',
+                color: '#00ffff',
+                bgColor: 0x00ffff,
+                floor: '🧜‍♀️'
+            },
+            pippin: {
+                name: 'Pippin',
+                symbol: 'PIPPIN',
+                binance: 'PIPPINUSDT',
+                icon: '🐧',
+                color: '#ff69b4',
+                bgColor: 0xff69b4,
+                floor: '🐧'
+            },
+            tria: {
+                name: 'Tria',
+                symbol: 'TRIA',
+                binance: 'TRIAUSDT',
+                icon: '🔺',
+                color: '#8b5cf6',
+                bgColor: 0x8b5cf6,
+                floor: '🔺'
+            }
+        };
+
+        let currentCoin = 'btc';
+        let currentTimeframe = '1m';
+        let is3DMode = false;
+        let tradingViewWidget = null;
+        
+        // Variáveis Three.js
+        let scene, camera, renderer, controls;
+        let candleGroup, bollingerGroup, smokeGroup;
+        let historicalCandles = [];
+        let liveCandleMesh = null;
+        let liveSmokeParticles = [];
+        let liveCandleData = null;
+        let minPrice, maxPrice, minVolume, maxVolume;
+        let lastPrice = 67000;
+        let binanceSocket = null;
+        let dataLoaded = false;
+        let animationFrame;
+        
+        // Parâmetros visuais 3D
+        const WICK_RADIUS = 0.08;
+        const SPACING = 1.4;
+        const Y_RANGE = 18;
+        const FLOOR_Y = -1.8;
+        const BB_PERIOD = 20;
+        const BB_STD = 2;
+        const MIN_RADIUS = 0.25;
+        const MAX_RADIUS = 0.8;
+
+        // TIMEFRAMES
+        const TIMEFRAMES = {
+            '1m': { binance: '1m', limit: 60, ms: 60 * 1000 },
+            '5m': { binance: '5m', limit: 60, ms: 5 * 60 * 1000 },
+            '15m': { binance: '15m', limit: 60, ms: 15 * 60 * 1000 },
+            '1h': { binance: '1h', limit: 48, ms: 60 * 60 * 1000 }
+        };
+
+        // --- ELEMENTOS DOM ---
+        const homeScreen = document.getElementById('home-screen');
+        const chartScreen = document.getElementById('chart-screen');
+        const backBtn = document.querySelector('.back-btn');
+        const modeSwitch = document.getElementById('mode-switch');
+        const timeframeBtns = document.querySelectorAll('.timeframe-btn');
+        const coinCards = document.querySelectorAll('.coin-card');
+        const selectedCoinIcon = document.getElementById('selected-coin-icon');
+        const selectedCoinName = document.getElementById('selected-coin-name');
+        const selectedCoinSymbol = document.getElementById('selected-coin-symbol');
+        const currentPriceEl = document.getElementById('current-price');
+        const currentChangeEl = document.getElementById('current-change');
+        const stats3d = document.getElementById('stats-3d');
+
+        // --- EVENT LISTENERS ---
+        coinCards.forEach(card => {
+            card.addEventListener('click', (e) => {
+                const coin = card.dataset.coin;
+                if (coin) {
+                    openChart(coin);
+                }
+            });
+        });
+
+        backBtn.addEventListener('click', () => {
+            chartScreen.classList.remove('active');
+            homeScreen.classList.remove('hidden');
+            if (binanceSocket) binanceSocket.close();
+            if (animationFrame) cancelAnimationFrame(animationFrame);
+        });
+
+        modeSwitch.addEventListener('click', toggle3DMode);
+
+        timeframeBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                timeframeBtns.forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                currentTimeframe = e.target.dataset.tf;
+                
+                if (is3DMode) {
+                    fetchHistoricalData3D();
+                } else {
+                    updateTradingViewChart();
+                }
+            });
+        });
+
+        // --- FUNÇÕES ---
+        function openChart(coin) {
+            currentCoin = coin;
+            const coinData = COINS[coin];
+            
+            selectedCoinIcon.innerHTML = coinData.icon;
+            selectedCoinIcon.style.background = coinData.color;
+            selectedCoinName.textContent = coinData.name;
+            selectedCoinSymbol.textContent = coinData.symbol;
+            
+            homeScreen.classList.add('hidden');
+            chartScreen.classList.add('active');
+            
+            // Iniciar com gráfico 2D
+            is3DMode = false;
+            modeSwitch.innerHTML = '<span class="icon">🎮</span> ATIVAR MODO 3D';
+            stats3d.innerHTML = '🎲 Modo 2D • Arraste para ver mais';
+            
+            // Criar gráfico TradingView
+            createTradingViewChart(coinData);
+        }
+
+        function createTradingViewChart(coinData) {
+            const container = document.getElementById('chart-container');
+            container.innerHTML = '';
+            
+            if (tradingViewWidget) {
+                tradingViewWidget.remove();
+            }
+            
+            // Mapear símbolos (alguns podem não existir, usar BTC como fallback)
+            let symbol = 'BINANCE:BTCUSDT';
+            if (coinData.symbol === 'BTC') symbol = 'BINANCE:BTCUSDT';
+            else if (coinData.symbol === 'SIREN') symbol = 'BINANCE:SIRENUSDT';
+            else if (coinData.symbol === 'PIPPIN') symbol = 'BINANCE:PIPPINUSDT';
+            else if (coinData.symbol === 'TRIA') symbol = 'BINANCE:TRIAUSDT';
+            
+            tradingViewWidget = new TradingView.widget({
+                container_id: 'chart-container',
+                symbol: symbol,
+                interval: currentTimeframe,
+                theme: 'dark',
+                style: '1',
+                locale: 'br',
+                toolbar_bg: '#0a0f1a',
+                enable_publishing: false,
+                hide_side_toolbar: false,
+                allow_symbol_change: false,
+                studies: ['Volume@tv-basicstudies', 'Bollinger Bands@tv-basicstudies'],
+                width: '100%',
+                height: '100%',
+                backgroundColor: '#0a0f1a',
+                gridColor: '#1e2a3a'
+            });
+        }
+
+        function updateTradingViewChart() {
+            if (tradingViewWidget) {
+                tradingViewWidget.setInterval(currentTimeframe);
+            }
+        }
+
+        // --- MODO 3D ---
+        function toggle3DMode() {
+            is3DMode = !is3DMode;
+            
+            if (is3DMode) {
+                modeSwitch.innerHTML = '<span class="icon">⬅️</span> VOLTAR AO 2D';
+                stats3d.innerHTML = '🎮 MODO 3D IMERSIVO ATIVADO • Partículas ativas';
+                document.getElementById('chart-container').innerHTML = '';
+                init3DScene();
+                fetchHistoricalData3D();
+            } else {
+                modeSwitch.innerHTML = '<span class="icon">🎮</span> ATIVAR MODO 3D';
+                stats3d.innerHTML = '🎲 Modo 2D • Arraste para ver mais';
+                
+                if (binanceSocket) binanceSocket.close();
+                if (animationFrame) cancelAnimationFrame(animationFrame);
+                
+                // Destruir cena 3D
+                if (renderer) {
+                    renderer.dispose();
+                    renderer = null;
+                }
+                
+                // Recriar gráfico 2D
+                createTradingViewChart(COINS[currentCoin]);
+            }
+        }
+
+        function init3DScene() {
+            const container = document.getElementById('chart-container');
+            
+            // Scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0a0f1a);
+            scene.fog = new THREE.Fog(0x0a0f1a, 40, 100);
+
+            // Camera
+            camera = new THREE.PerspectiveCamera(50, container.clientWidth / container.clientHeight, 0.1, 1000);
+            camera.position.set(35, 18, 45);
+
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            container.appendChild(renderer.domElement);
+
+            // Controls
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.maxPolarAngle = Math.PI / 2.2;
+            controls.minDistance = 20;
+            controls.maxDistance = 120;
+            controls.enableZoom = true;
+            controls.enablePan = true;
+            controls.screenSpacePanning = true;
+
+            // Luzes
+            const ambientLight = new THREE.AmbientLight(0x404060);
+            scene.add(ambientLight);
+
+            const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+            dirLight.position.set(20, 40, 20);
+            dirLight.castShadow = true;
+            dirLight.shadow.mapSize.width = 1024;
+            dirLight.shadow.mapSize.height = 1024;
+            const d = 40;
+            dirLight.shadow.camera.left = -d;
+            dirLight.shadow.camera.right = d;
+            dirLight.shadow.camera.top = d;
+            dirLight.shadow.camera.bottom = -d;
+            dirLight.shadow.camera.near = 1;
+            dirLight.shadow.camera.far = 80;
+            scene.add(dirLight);
+
+            const fillLight = new THREE.PointLight(0x446688, 0.5);
+            fillLight.position.set(-10, 20, -20);
+            scene.add(fillLight);
+
+            // Grupos
+            candleGroup = new THREE.Group();
+            bollingerGroup = new THREE.Group();
+            smokeGroup = new THREE.Group();
+            
+            scene.add(candleGroup);
+            scene.add(bollingerGroup);
+            scene.add(smokeGroup);
+
+            // Chão personalizado com logo da moeda
+            createCustomFloor(COINS[currentCoin]);
+
+            // Iniciar animação
+            animate();
+        }
+
+        function createCustomFloor(coinData) {
+            const gridHelper = new THREE.GridHelper(120, 30, coinData.bgColor, 0x2d3748);
+            gridHelper.position.y = FLOOR_Y;
+            scene.add(gridHelper);
+
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+            
+            ctx.fillStyle = `rgba(${parseInt(coinData.color.slice(1,3), 16)}, ${parseInt(coinData.color.slice(3,5), 16)}, ${parseInt(coinData.color.slice(5,7), 16)}, 0.15)`;
+            ctx.font = 'bold 400px "Segoe UI", Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(coinData.floor, 256, 256);
+            
+            ctx.font = 'bold 60px "Segoe UI", Arial';
+            ctx.fillStyle = `rgba(${parseInt(coinData.color.slice(1,3), 16)}, ${parseInt(coinData.color.slice(3,5), 16)}, ${parseInt(coinData.color.slice(5,7), 16)}, 0.1)`;
+            ctx.fillText(coinData.symbol, 256, 420);
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            
+            const planeGeo = new THREE.PlaneGeometry(50, 50);
+            const planeMat = new THREE.MeshStandardMaterial({
+                map: texture,
+                transparent: true,
+                side: THREE.DoubleSide,
+                emissive: coinData.bgColor,
+                emissiveIntensity: 0.1
+            });
+            const plane = new THREE.Mesh(planeGeo, planeMat);
+            plane.rotation.x = -Math.PI / 2;
+            plane.position.y = FLOOR_Y + 0.01;
+            scene.add(plane);
+        }
+
+        async function fetchHistoricalData3D() {
+            try {
+                stats3d.innerHTML = '🚀 Buscando dados da Binance...';
+                
+                const coinData = COINS[currentCoin];
+                const tf = TIMEFRAMES[currentTimeframe];
+                
+                // Usar BTC como fallback se a moeda não existir na Binance
+                let symbol = 'BTCUSDT';
+                if (coinData.symbol === 'BTC') symbol = 'BTCUSDT';
+                else symbol = coinData.symbol + 'USDT';
+                
+                const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${tf.binance}&limit=${tf.limit}`;
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                const formatted = data.map(k => ({
+                    time: k[0],
+                    open: parseFloat(k[1]),
+                    high: parseFloat(k[2]),
+                    low: parseFloat(k[3]),
+                    close: parseFloat(k[4]),
+                    volume: parseFloat(k[5])
+                }));
+                
+                processHistoricalData3D(formatted);
+                connectWebSocket3D(symbol);
+                
+            } catch (error) {
+                console.error('Erro ao buscar dados:', error);
+                stats3d.innerHTML = '⚠️ Usando dados simulados';
+                generateMockData3D();
+            }
+        }
+
+        function processHistoricalData3D(data) {
+            historicalCandles = data.slice(0, -1);
+            liveCandleData = { ...data[data.length - 1] };
+            lastPrice = liveCandleData.close;
+            
+            // Calcular min/max
+            minPrice = Infinity;
+            maxPrice = -Infinity;
+            minVolume = Infinity;
+            maxVolume = -Infinity;
+            
+            [...historicalCandles, liveCandleData].forEach(c => {
+                minPrice = Math.min(minPrice, c.low);
+                maxPrice = Math.max(maxPrice, c.high);
+                if (c.volume) {
+                    minVolume = Math.min(minVolume, c.volume);
+                    maxVolume = Math.max(maxVolume, c.volume);
+                }
+            });
+            
+            const priceRange = maxPrice - minPrice;
+            minPrice -= priceRange * 0.1;
+            maxPrice += priceRange * 0.1;
+            
+            if (minVolume === Infinity || minVolume === maxVolume) {
+                minVolume = 100;
+                maxVolume = 1000;
+            }
+            
+            dataLoaded = true;
+            renderCandles3D();
+            createBollingerBands3D();
+            
+            stats3d.innerHTML = `🎮 ${historicalCandles.length+1} candles reais • Volume: $${(maxVolume/1000).toFixed(0)}k`;
+        }
+
+        function generateMockData3D() {
+            const tf = TIMEFRAMES[currentTimeframe];
+            const data = [];
+            let basePrice = lastPrice;
+            let time = Date.now() - tf.limit * tf.ms;
+            
+            for (let i = 0; i < tf.limit; i++) {
+                const open = basePrice + (Math.random() - 0.5) * 800;
+                const close = open + (Math.random() - 0.5) * 600;
+                const high = Math.max(open, close) + Math.random() * 300;
+                const low = Math.min(open, close) - Math.random() * 300;
+                const volume = Math.random() * 1000 + 200;
+                
+                data.push({ time: time + i * tf.ms, open, high, low, close, volume });
+                basePrice = close;
+            }
+            
+            processHistoricalData3D(data);
+            startSimulatedTrades3D();
+        }
+
+        function connectWebSocket3D(symbol) {
+            if (binanceSocket) binanceSocket.close();
+            
+            const stream = `${symbol.toLowerCase()}@trade`;
+            const wsUrl = `wss://stream.binance.com:9443/ws/${stream}`;
+            
+            binanceSocket = new WebSocket(wsUrl);
+            
+            binanceSocket.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.e === 'trade') {
+                    processNewTrade3D({
+                        price: parseFloat(data.p),
+                        time: data.T,
+                        volume: parseFloat(data.q)
+                    });
+                }
+            };
+            
+            binanceSocket.onerror = () => {
+                startSimulatedTrades3D();
+            };
+        }
+
+        function processNewTrade3D(trade) {
+            if (!liveCandleData || !dataLoaded) return;
+            
+            const tf = TIMEFRAMES[currentTimeframe];
+            const periodStart = Math.floor(liveCandleData.time / tf.ms) * tf.ms;
+            const tradePeriodStart = Math.floor(trade.time / tf.ms) * tf.ms;
+            
+            if (tradePeriodStart > periodStart) {
+                historicalCandles.push({ ...liveCandleData });
+                
+                if (historicalCandles.length > tf.limit) {
+                    historicalCandles.shift();
+                }
+                
+                liveCandleData = {
+                    time: trade.time,
+                    open: trade.price,
+                    high: trade.price,
+                    low: trade.price,
+                    close: trade.price,
+                    volume: trade.volume || 100
+                };
+                
+                minPrice = Math.min(minPrice, trade.price);
+                maxPrice = Math.max(maxPrice, trade.price);
+                const priceRange = maxPrice - minPrice;
+                minPrice -= priceRange * 0.1;
+                maxPrice += priceRange * 0.1;
+                
+                renderCandles3D();
+                return;
+            }
+            
+            if (liveCandleData.open === 0) liveCandleData.open = trade.price;
+            liveCandleData.high = Math.max(liveCandleData.high, trade.price);
+            liveCandleData.low = Math.min(liveCandleData.low, trade.price);
+            liveCandleData.close = trade.price;
+            
+            if (trade.volume) {
+                liveCandleData.volume = (liveCandleData.volume || 0) + trade.volume;
+                if (liveCandleData.volume > maxVolume) {
+                    maxVolume = liveCandleData.volume;
+                }
+            }
+            
+            lastPrice = trade.price;
+            updateLiveCandle3D();
+            updatePriceDisplay();
+        }
+
+        function startSimulatedTrades3D() {
+            setInterval(() => {
+                if (!liveCandleData || !dataLoaded) return;
+                
+                const change = (Math.random() - 0.5) * 100;
+                const newPrice = Math.max(0.01, lastPrice + change);
+                const volume = Math.random() * 200 + 50;
+                
+                processNewTrade3D({
+                    price: newPrice,
+                    time: Date.now(),
+                    volume: volume
+                });
+            }, 1000);
+        }
+
+        function updatePriceDisplay() {
+            if (!liveCandleData) return;
+            
+            currentPriceEl.innerHTML = `$${liveCandleData.close.toFixed(2)}`;
+            const change = ((liveCandleData.close - liveCandleData.open) / liveCandleData.open * 100).toFixed(2);
+            const changeClass = change >= 0 ? '📈' : '📉';
+            currentChangeEl.innerHTML = `${changeClass} ${Math.abs(change)}%`;
+            currentChangeEl.style.color = change >= 0 ? '#22c55e' : '#ef4444';
+        }
+
+        // --- FUNÇÕES 3D (mantidas do código anterior) ---
+        function mapPriceToY(price) {
+            if (maxPrice === minPrice) return 0;
+            return ((price - minPrice) / (maxPrice - minPrice)) * Y_RANGE - (Y_RANGE / 2);
+        }
+
+        function mapVolumeToRadius(volume) {
+            if (maxVolume === minVolume) return (MIN_RADIUS + MAX_RADIUS) / 2;
+            const normalized = (volume - minVolume) / (maxVolume - minVolume);
+            return MIN_RADIUS + normalized * (MAX_RADIUS - MIN_RADIUS);
+        }
+
+        function createBollingerBands3D() {
+            while(bollingerGroup.children.length) {
+                bollingerGroup.remove(bollingerGroup.children[0]);
+            }
+            
+            if (historicalCandles.length < BB_PERIOD) return;
+            
+            const total = historicalCandles.length + 1;
+            const points = [];
+            
+            for (let i = 0; i < total; i++) {
+                let candle;
+                if (i < historicalCandles.length) {
+                    candle = historicalCandles[i];
+                } else {
+                    candle = liveCandleData;
+                }
+                
+                const allCandles = [...historicalCandles, liveCandleData];
+                const startIdx = Math.max(0, i - BB_PERIOD + 1);
+                const windowCandles = allCandles.slice(startIdx, i + 1);
+                
+                if (windowCandles.length >= BB_PERIOD) {
+                    const closes = windowCandles.map(c => c.close);
+                    const mean = closes.reduce((a, b) => a + b, 0) / BB_PERIOD;
+                    const squaredDiffs = closes.map(p => Math.pow(p - mean, 2));
+                    const variance = squaredDiffs.reduce((a, b) => a + b, 0) / BB_PERIOD;
+                    const stdDev = Math.sqrt(variance);
+                    
+                    const xPos = (i - total/2) * SPACING;
+                    
+                    points.push({
+                        x: xPos,
+                        upper: mapPriceToY(mean + (stdDev * BB_STD)),
+                        middle: mapPriceToY(mean),
+                        lower: mapPriceToY(mean - (stdDev * BB_STD))
+                    });
+                }
+            }
+            
+            if (points.length < 2) return;
+            
+            const materials = {
+                upper: new THREE.LineBasicMaterial({ color: 0x8b5cf6 }),
+                middle: new THREE.LineBasicMaterial({ color: 0x60a5fa }),
+                lower: new THREE.LineBasicMaterial({ color: 0x8b5cf6 })
+            };
+            
+            const upperPoints = points.map(p => new THREE.Vector3(p.x, p.upper, 0));
+            const upperGeo = new THREE.BufferGeometry().setFromPoints(upperPoints);
+            const upperLine = new THREE.Line(upperGeo, materials.upper);
+            bollingerGroup.add(upperLine);
+            
+            const middlePoints = points.map(p => new THREE.Vector3(p.x, p.middle, 0));
+            const middleGeo = new THREE.BufferGeometry().setFromPoints(middlePoints);
+            const middleLine = new THREE.Line(middleGeo, materials.middle);
+            bollingerGroup.add(middleLine);
+            
+            const lowerPoints = points.map(p => new THREE.Vector3(p.x, p.lower, 0));
+            const lowerGeo = new THREE.BufferGeometry().setFromPoints(lowerPoints);
+            const lowerLine = new THREE.Line(lowerGeo, materials.lower);
+            bollingerGroup.add(lowerLine);
+        }
+
+        function createStaticCylinderCandle(data, index, total) {
+            const { open, high, low, close, volume } = data;
+            
+            const isGreen = close >= open;
+            const bodyColor = isGreen ? 0x22c55e : 0xef4444;
+            
+            const yOpen = mapPriceToY(open);
+            const yClose = mapPriceToY(close);
+            const yHigh = mapPriceToY(high);
+            const yLow = mapPriceToY(low);
+            
+            const xPos = (index - total/2) * SPACING;
+            const radius = mapVolumeToRadius(volume);
+            
+            const group = new THREE.Group();
+            group.position.set(xPos, 0, 0);
+            
+            // Corpo com brilho intenso
+            const bodyHeight = Math.abs(yClose - yOpen) || 0.1;
+            const bodyGeo = new THREE.CylinderGeometry(radius, radius, bodyHeight, 16);
+            const bodyMat = new THREE.MeshStandardMaterial({ 
+                color: bodyColor,
+                roughness: 0.2,
+                metalness: 0.3,
+                emissive: isGreen ? 0x22c55e : 0xef4444,
+                emissiveIntensity: 0.3
+            });
+            const body = new THREE.Mesh(bodyGeo, bodyMat);
+            body.position.y = (yOpen + yClose) / 2;
+            body.castShadow = true;
+            body.receiveShadow = true;
+            group.add(body);
+            
+            // Pavios
+            const wickMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0x444444 });
+            
+            if (yHigh > Math.max(yOpen, yClose)) {
+                const wickHeight = yHigh - Math.max(yOpen, yClose);
+                const wickGeo = new THREE.CylinderGeometry(WICK_RADIUS, WICK_RADIUS, wickHeight, 8);
+                const wick = new THREE.Mesh(wickGeo, wickMat);
+                wick.position.y = Math.max(yOpen, yClose) + wickHeight/2;
+                wick.castShadow = true;
+                group.add(wick);
+            }
+            
+            if (yLow < Math.min(yOpen, yClose)) {
+                const wickHeight = Math.min(yOpen, yClose) - yLow;
+                const wickGeo = new THREE.CylinderGeometry(WICK_RADIUS, WICK_RADIUS, wickHeight, 8);
+                const wick = new THREE.Mesh(wickGeo, wickMat);
+                wick.position.y = Math.min(yOpen, yClose) - wickHeight/2;
+                wick.castShadow = true;
+                group.add(wick);
+            }
+            
+            return group;
+        }
+
+        function createLiveCylinderCandle(index, total) {
+            const xPos = (index - total/2) * SPACING;
+            
+            const group = new THREE.Group();
+            group.position.set(xPos, 0, 0);
+            
+            const bodyGeo = new THREE.CylinderGeometry(MIN_RADIUS, MIN_RADIUS, 1, 16);
+            const bodyMat = new THREE.MeshStandardMaterial({ 
+                color: 0x22c55e,
+                emissive: 0x22c55e,
+                emissiveIntensity: 0.5,
+                roughness: 0.2,
+                metalness: 0.1
+            });
+            const body = new THREE.Mesh(bodyGeo, bodyMat);
+            body.castShadow = true;
+            body.receiveShadow = true;
+            group.add(body);
+            
+            const wickGeo = new THREE.CylinderGeometry(WICK_RADIUS, WICK_RADIUS, 1, 8);
+            const wickMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0x444444 });
+            
+            const topWick = new THREE.Mesh(wickGeo, wickMat);
+            topWick.visible = false;
+            topWick.castShadow = true;
+            group.add(topWick);
+            
+            const bottomWick = new THREE.Mesh(wickGeo, wickMat);
+            bottomWick.visible = false;
+            bottomWick.castShadow = true;
+            group.add(bottomWick);
+            
+            group.userData = { body, topWick, bottomWick, xPos };
+            
+            return group;
+        }
+
+        function createSmokeParticles(color, count = 12) {
+            const particles = [];
+            const particleGroup = new THREE.Group();
+            
+            const geometry = new THREE.SphereGeometry(0.15, 6, 6);
+            
+            for (let i = 0; i < count; i++) {
+                const material = new THREE.MeshStandardMaterial({
+                    color: color,
+                    emissive: color,
+                    emissiveIntensity: 0.8,
+                    transparent: true,
+                    opacity: 0.6
+                });
+                
+                const particle = new THREE.Mesh(geometry, material);
+                
+                const angle = (i / count) * Math.PI * 2;
+                const radius = 0.8;
+                particle.position.set(
+                    Math.cos(angle) * radius,
+                    1.8,
+                    Math.sin(angle) * radius
+                );
+                
+                particle.castShadow = false;
+                particle.receiveShadow = false;
+                
+                particle.userData = {
+                    baseY: 1.8,
+                    speed: 0.03 + Math.random() * 0.04,
+                    angle: angle,
+                    radius: radius,
+                    phase: Math.random() * Math.PI * 2,
+                    originalColor: color
+                };
+                
+                particleGroup.add(particle);
+                particles.push(particle);
+            }
+            
+            return { group: particleGroup, particles };
+        }
+
+        function updateSmoke3D(smokeParticles, candleY, isGreen) {
+            if (!smokeParticles) return;
+            
+            const time = Date.now() * 0.003;
+            const color = isGreen ? 0x22c55e : 0xef4444;
+            const intensity = isGreen ? 0.8 : 1.0;
+            
+            smokeParticles.forEach((particle, i) => {
+                const data = particle.userData;
+                
+                data.angle += 0.03;
+                particle.position.x = Math.cos(data.angle + data.phase) * data.radius;
+                particle.position.z = Math.sin(data.angle + data.phase) * data.radius;
+                particle.position.y = candleY + 1.5 + Math.sin(time + i) * 0.5;
+                
+                particle.material.opacity = 0.4 + Math.sin(time * 3 + i) * 0.3;
+                particle.material.emissiveIntensity = intensity * (0.5 + Math.sin(time * 2) * 0.3);
+                
+                data.radius += 0.003;
+                if (data.radius > 2.0) data.radius = 0.8;
+                
+                particle.material.color.setHex(color);
+                particle.material.emissive.setHex(color);
+            });
+        }
+
+        function updateLiveCandle3D() {
+            if (!liveCandleMesh || !liveCandleData) return;
+            
+            const { body, topWick, bottomWick } = liveCandleMesh.userData;
+            const { open, high, low, close, volume } = liveCandleData;
+            
+            const yOpen = mapPriceToY(open);
+            const yClose = mapPriceToY(close);
+            const yHigh = mapPriceToY(high);
+            const yLow = mapPriceToY(low);
+            
+            const isGreen = close >= open;
+            const bodyColor = isGreen ? 0x22c55e : 0xef4444;
+            
+            const bodyHeight = Math.abs(yClose - yOpen) || 0.1;
+            const bodyYCenter = (yOpen + yClose) / 2;
+            
+            const radius = mapVolumeToRadius(volume || 100);
+            
+            body.scale.x = radius / MIN_RADIUS;
+            body.scale.z = radius / MIN_RADIUS;
+            body.scale.y = bodyHeight;
+            body.position.y = bodyYCenter;
+            body.material.color.setHex(bodyColor);
+            body.material.emissive.setHex(bodyColor);
+            body.material.emissiveIntensity = 0.8 + Math.sin(Date.now() * 0.01) * 0.3;
+            
+            if (yHigh > Math.max(yOpen, yClose)) {
+                const wickHeight = yHigh - Math.max(yOpen, yClose);
+                topWick.scale.y = wickHeight;
+                topWick.position.y = Math.max(yOpen, yClose) + wickHeight/2;
+                topWick.visible = true;
+            } else {
+                topWick.visible = false;
+            }
+            
+            if (yLow < Math.min(yOpen, yClose)) {
+                const wickHeight = Math.min(yOpen, yClose) - yLow;
+                bottomWick.scale.y = wickHeight;
+                bottomWick.position.y = Math.min(yOpen, yClose) - wickHeight/2;
+                bottomWick.visible = true;
+            } else {
+                bottomWick.visible = false;
+            }
+            
+            if (liveSmokeParticles.length > 0) {
+                updateSmoke3D(liveSmokeParticles, bodyYCenter, isGreen);
+            }
+            
+            updatePriceDisplay();
+            createBollingerBands3D();
+        }
+
+        function renderCandles3D() {
+            while(candleGroup.children.length) {
+                candleGroup.remove(candleGroup.children[0]);
+            }
+            
+            while(smokeGroup.children.length) {
+                smokeGroup.remove(smokeGroup.children[0]);
+            }
+            
+            liveSmokeParticles = [];
+            
+            const total = historicalCandles.length + 1;
+            
+            historicalCandles.forEach((candle, index) => {
+                const staticCandle = createStaticCylinderCandle(candle, index, total);
+                candleGroup.add(staticCandle);
+            });
+            
+            const liveIndex = historicalCandles.length;
+            liveCandleMesh = createLiveCylinderCandle(liveIndex, total);
+            candleGroup.add(liveCandleMesh);
+            
+            const isGreen = liveCandleData.close >= liveCandleData.open;
+            const smokeColor = isGreen ? 0x22c55e : 0xef4444;
+            const smoke = createSmokeParticles(smokeColor, 15);
+            smoke.group.position.set(liveCandleMesh.position.x, 0, 0);
+            smokeGroup.add(smoke.group);
+            liveSmokeParticles = smoke.particles;
+            
+            updateLiveCandle3D();
+            
+            const lastX = (liveIndex - total/2) * SPACING;
+            camera.position.set(lastX + 25, 18, 35);
+            controls.target.set(lastX, 0, 0);
+            controls.update();
+        }
+
+        function animate() {
+            if (!renderer || !scene || !camera) return;
+            
+            animationFrame = requestAnimationFrame(animate);
+            
+            if (dataLoaded && liveCandleMesh && liveSmokeParticles.length > 0) {
+                const isGreen = liveCandleData.close >= liveCandleData.open;
+                const yCenter = (mapPriceToY(liveCandleData.open) + mapPriceToY(liveCandleData.close)) / 2;
+                updateSmoke3D(liveSmokeParticles, yCenter, isGreen);
+            }
+            
+            if (controls) controls.update();
+            renderer.render(scene, camera);
+        }
+
+        // Resize handler
+        window.addEventListener('resize', () => {
+            if (is3DMode && renderer && camera) {
+                const container = document.getElementById('chart-container');
+                camera.aspect = container.clientWidth / container.clientHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(container.clientWidth, container.clientHeight);
+            }
+        });
+    </script>
+</body>
+</html>
