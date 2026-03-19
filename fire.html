@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BTC/USDT 3D - Explore os Candles</title>
+    <title>BTC/USDT 3D - Trilha de Candles</title>
     <style>
         body {
             margin: 0;
@@ -170,8 +170,8 @@
             position: absolute;
             bottom: 100px;
             left: 30px;
-            width: 120px;
-            height: 120px;
+            width: 100px;
+            height: 100px;
             border-radius: 50%;
             background: rgba(255,255,255,0.15);
             backdrop-filter: blur(8px);
@@ -185,28 +185,25 @@
             color: white;
             font-size: 14px;
             font-weight: bold;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
             box-shadow: 0 4px 20px rgba(0,0,0,0.3);
         }
         
         #joystick-area::before {
-            content: "🕹️";
-            font-size: 32px;
-            opacity: 0.8;
+            content: "⬆️⬇️";
+            font-size: 24px;
         }
         
         #joystick-area.active {
             background: rgba(247,147,26,0.3);
             border-color: #f7931a;
-            transform: scale(1.05);
         }
         
-        #camera-hint {
+        #look-area {
             position: absolute;
             bottom: 100px;
             right: 30px;
-            width: 120px;
-            height: 120px;
+            width: 100px;
+            height: 100px;
             border-radius: 50%;
             background: rgba(255,255,255,0.15);
             backdrop-filter: blur(8px);
@@ -219,22 +216,12 @@
             color: white;
             font-size: 14px;
             font-weight: bold;
-            text-align: center;
-            line-height: 1.4;
             box-shadow: 0 4px 20px rgba(0,0,0,0.3);
         }
         
-        #camera-hint::before {
-            content: "👆👆";
-            font-size: 24px;
-            display: block;
-            margin-bottom: 4px;
-        }
-        
-        #camera-hint span {
-            display: block;
-            font-size: 12px;
-            opacity: 0.9;
+        #look-area::before {
+            content: "👆";
+            font-size: 32px;
         }
         
         .debug-info {
@@ -253,7 +240,7 @@
 <body>
     <div id="info">
         <div id="btc-icon">₿</div>
-        BTC/USDT • Explore os Candles
+        BTC/USDT • Trilha de Candles
     </div>
     <div id="live-badge">🔴 AO VIVO</div>
     
@@ -269,12 +256,12 @@
         <button class="timeframe-btn" data-tf="1d">1D</button>
     </div>
 
-    <div id="controls-hint">👆 Arraste a tela para olhar 360° • Joystick para andar</div>
+    <div id="controls-hint">👆 Arraste a área azul para olhar • Joystick amarelo para andar (frente/trás)</div>
     <div id="stats">Conectando à Binance...</div>
-    <div id="position-indicator">📍 Posição: 0, 0, 0</div>
+    <div id="position-indicator">📍 Posição: 0, 0</div>
     
     <div id="joystick-area"></div>
-    <div id="camera-hint"><span>Arraste aqui<br>para olhar</span></div>
+    <div id="look-area"></div>
     
     <div class="debug-info" id="debug">Pronto</div>
 
@@ -314,18 +301,20 @@
         let minPrice = Infinity, maxPrice = -Infinity;
         let binanceSocket = null;
         
-        // Controles do personagem
+        // Controles do personagem (SÓ FRENTE/TRÁS)
         let moveForward = false;
         let moveBackward = false;
-        let moveLeft = false;
-        let moveRight = false;
         let characterSpeed = 0.25;
         
+        // Posição na trilha (índice do candle)
+        let currentCandleIndex = 0;
+        let totalCandles = 0;
+        
         // Controles da câmera (360°)
-        let cameraAngle = 0;          // Rotação horizontal (esquerda/direita)
-        let cameraPitch = 0.3;         // Inclinação vertical (cima/baixo) - um pouco para baixo para ver melhor
-        const CAMERA_HEIGHT = 2.8;      // Altura base da câmera
-        const CAMERA_DISTANCE = 6;       // Distância do personagem
+        let cameraAngle = 0;
+        let cameraPitch = 0.3;
+        const CAMERA_HEIGHT = 2.8;
+        const CAMERA_DISTANCE = 6;
         
         // Joystick virtual
         let joystickActive = false;
@@ -339,7 +328,6 @@
         
         // Parâmetros visuais
         const CANDLE_RADIUS = 0.45;
-        const WICK_RADIUS = 0.08;
         const SPACING = 1.4;
         const Y_RANGE = 18;
         const FLOOR_Y = -1.8;
@@ -350,10 +338,8 @@
             scene.background = new THREE.Color(0x0a0f1a);
             scene.fog = new THREE.Fog(0x0a0f1a, 40, 100);
 
-            // Câmera
             camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
 
-            // Renderer
             renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -361,7 +347,6 @@
             renderer.shadowMap.type = THREE.PCFSoftShadowMap;
             document.body.appendChild(renderer.domElement);
 
-            // Label renderer
             labelRenderer = new CSS2DRenderer();
             labelRenderer.setSize(window.innerWidth, window.innerHeight);
             labelRenderer.domElement.style.position = 'absolute';
@@ -403,11 +388,9 @@
             setupTimeframeButtons();
             
             fetchHistoricalData();
-            
-            document.getElementById('debug').textContent = 'Inicializado';
         }
 
-        // --- CHÃO COM LOGO BTC ---
+        // --- CHÃO ---
         function createFloor() {
             const gridHelper = new THREE.GridHelper(120, 30, 0x3b4b6b, 0x1e2a3a);
             gridHelper.position.y = FLOOR_Y;
@@ -448,13 +431,9 @@
         function createCharacter() {
             character = new THREE.Group();
             
-            // Corpo (trader com capa)
+            // Corpo
             const bodyGeo = new THREE.CylinderGeometry(0.4, 0.4, 1.2, 8);
-            const bodyMat = new THREE.MeshStandardMaterial({ 
-                color: 0x3b82f6,
-                emissive: 0x1e3a8a,
-                emissiveIntensity: 0.3
-            });
+            const bodyMat = new THREE.MeshStandardMaterial({ color: 0x3b82f6 });
             const body = new THREE.Mesh(bodyGeo, bodyMat);
             body.position.y = 0.6;
             body.castShadow = true;
@@ -470,18 +449,6 @@
             head.receiveShadow = true;
             character.add(head);
             
-            // Olhos
-            const eyeGeo = new THREE.SphereGeometry(0.05, 6);
-            const eyeMat = new THREE.MeshStandardMaterial({ color: 0x000000 });
-            
-            const eyeL = new THREE.Mesh(eyeGeo, eyeMat);
-            eyeL.position.set(-0.1, 1.35, 0.25);
-            character.add(eyeL);
-            
-            const eyeR = new THREE.Mesh(eyeGeo, eyeMat);
-            eyeR.position.set(0.1, 1.35, 0.25);
-            character.add(eyeR);
-            
             // Capacete BTC
             const helmetGeo = new THREE.TorusGeometry(0.32, 0.05, 8, 16, Math.PI);
             const helmetMat = new THREE.MeshStandardMaterial({ color: 0xf7931a });
@@ -492,27 +459,6 @@
             helmet.position.z = 0.1;
             character.add(helmet);
             
-            // Capa de trader
-            const capeGeo = new THREE.ConeGeometry(0.5, 0.8, 8);
-            const capeMat = new THREE.MeshStandardMaterial({ color: 0x1e293b });
-            const cape = new THREE.Mesh(capeGeo, capeMat);
-            cape.position.y = 0.6;
-            cape.position.z = -0.3;
-            cape.rotation.x = 0.2;
-            cape.castShadow = true;
-            character.add(cape);
-            
-            // Adicionar uma seta indicando a frente do personagem
-            const arrowGroup = new THREE.Group();
-            const arrowGeo = new THREE.ConeGeometry(0.1, 0.3, 6);
-            const arrowMat = new THREE.MeshStandardMaterial({ color: 0xffaa00 });
-            const arrow = new THREE.Mesh(arrowGeo, arrowMat);
-            arrow.position.y = 0.2;
-            arrow.position.z = 0.5;
-            arrow.rotation.x = Math.PI / 2;
-            arrowGroup.add(arrow);
-            character.add(arrowGroup);
-            
             scene.add(character);
         }
 
@@ -522,41 +468,30 @@
             return ((price - minPrice) / (maxPrice - minPrice)) * Y_RANGE - (Y_RANGE / 2);
         }
 
-        // --- CALCULAR ALTURA DO CHÃO NA POSIÇÃO DO PERSONAGEM ---
-        function getGroundHeight(x, z) {
-            let highestY = FLOOR_Y + 0.5; // Altura mínima (chão)
-            
-            // Verificar candles históricos
-            candleGroup.children.forEach(child => {
-                if (child.userData && child.userData.hasOwnProperty('open')) {
-                    const candleX = child.position.x;
-                    const distance = Math.abs(x - candleX);
-                    
-                    // Se estiver dentro do raio do candle
-                    if (distance < CANDLE_RADIUS * 1.2) {
-                        const { open, close } = child.userData;
-                        const candleTop = mapPriceToY(Math.max(open, close));
-                        highestY = Math.max(highestY, candleTop + 0.2); // +0.2 para ficar em cima
-                    }
-                }
-            });
-            
-            // Verificar candle ao vivo
-            if (liveCandleMesh && liveCandleData) {
-                const candleX = liveCandleMesh.position.x;
-                const distance = Math.abs(x - candleX);
-                
-                if (distance < CANDLE_RADIUS * 1.2) {
-                    const { open, close } = liveCandleData;
-                    const candleTop = mapPriceToY(Math.max(open, close));
-                    highestY = Math.max(highestY, candleTop + 0.2);
-                }
-            }
-            
-            return highestY;
+        // --- OBTER POSIÇÃO X DO CANDLE PELO ÍNDICE ---
+        function getCandleX(index) {
+            if (totalCandles === 0) return 0;
+            return (index - totalCandles/2) * SPACING;
         }
 
-        // --- CRIAR CANDLE CILÍNDRICO ESTÁTICO ---
+        // --- OBTER ALTURA DO CANDLE PELO ÍNDICE ---
+        function getCandleHeight(index) {
+            if (index < 0 || index >= totalCandles) return FLOOR_Y + 0.5;
+            
+            let candleData;
+            if (index < historicalCandles.length) {
+                candleData = historicalCandles[index];
+            } else {
+                candleData = liveCandleData;
+            }
+            
+            if (!candleData) return FLOOR_Y + 0.5;
+            
+            const { open, close } = candleData;
+            return mapPriceToY(Math.max(open, close)) + 0.2;
+        }
+
+        // --- CRIAR CANDLE CILÍNDRICO ---
         function createStaticCylinderCandle(data, index, total) {
             const { open, high, low, close } = data;
             
@@ -572,14 +507,9 @@
             group.position.set(xPos, 0, 0);
             group.userData = { ...data, index };
             
-            // Corpo cilíndrico
             const bodyHeight = Math.abs(yClose - yOpen) || 0.1;
             const bodyGeo = new THREE.CylinderGeometry(CANDLE_RADIUS, CANDLE_RADIUS, bodyHeight, 16);
-            const bodyMat = new THREE.MeshStandardMaterial({ 
-                color: bodyColor,
-                roughness: 0.4,
-                metalness: 0.1
-            });
+            const bodyMat = new THREE.MeshStandardMaterial({ color: bodyColor });
             const body = new THREE.Mesh(bodyGeo, bodyMat);
             body.position.y = (yOpen + yClose) / 2;
             body.castShadow = true;
@@ -599,9 +529,7 @@
             const bodyGeo = new THREE.CylinderGeometry(CANDLE_RADIUS, CANDLE_RADIUS, 1, 16);
             const bodyMat = new THREE.MeshStandardMaterial({ 
                 color: 0x22c55e,
-                emissive: 0x116611,
-                roughness: 0.3,
-                metalness: 0.1
+                emissive: 0x116611
             });
             const body = new THREE.Mesh(bodyGeo, bodyMat);
             body.castShadow = true;
@@ -618,7 +546,7 @@
             if (!liveCandleMesh || !liveCandleData) return;
             
             const { body } = liveCandleMesh.userData;
-            const { open, high, low, close } = liveCandleData;
+            const { open, close } = liveCandleData;
             
             const yOpen = mapPriceToY(open);
             const yClose = mapPriceToY(close);
@@ -632,13 +560,8 @@
             body.scale.y = bodyHeight;
             body.position.y = bodyYCenter;
             body.material.color.setHex(bodyColor);
-            body.material.emissive.setHex(isGreen ? 0x116611 : 0x441111);
             
-            // Atualizar UI
             document.getElementById('price').innerHTML = `$${close.toFixed(0)}`;
-            const change = ((close - open) / open * 100).toFixed(2);
-            const changeClass = change >= 0 ? '📈' : '📉';
-            document.getElementById('price-change').innerHTML = `${changeClass} ${Math.abs(change)}%`;
         }
 
         // --- PROCESSAR DADOS HISTÓRICOS ---
@@ -659,8 +582,6 @@
             maxPrice += priceRange * 0.1;
             
             renderCandles();
-            
-            document.getElementById('stats').innerHTML = `${historicalCandles.length+1} candles • Explore livremente!`;
         }
 
         // --- RENDERIZAR CANDLES ---
@@ -669,52 +590,50 @@
                 candleGroup.remove(candleGroup.children[0]);
             }
             
-            const total = historicalCandles.length + 1;
+            totalCandles = historicalCandles.length + 1;
             
             historicalCandles.forEach((candle, index) => {
-                const staticCandle = createStaticCylinderCandle(candle, index, total);
+                const staticCandle = createStaticCylinderCandle(candle, index, totalCandles);
                 candleGroup.add(staticCandle);
             });
             
             const liveIndex = historicalCandles.length;
-            liveCandleMesh = createLiveCylinderCandle(liveIndex, total);
+            liveCandleMesh = createLiveCylinderCandle(liveIndex, totalCandles);
             candleGroup.add(liveCandleMesh);
             
             updateLiveCandle();
             
             // Posicionar personagem no último candle
-            const lastX = (liveIndex - total/2) * SPACING;
-            character.position.set(lastX, getGroundHeight(lastX, 0), 0);
+            currentCandleIndex = liveIndex;
+            updateCharacterPosition();
             
-            // Fazer o personagem olhar para frente (direção positiva do eixo X)
-            character.rotation.y = 0;
-            
-            // Posicionar câmera atrás do personagem
-            cameraAngle = 0; // Olhando para frente
-            cameraPitch = 0.3; // Levemente para baixo
-            updateCamera();
+            document.getElementById('stats').innerHTML = `${totalCandles} candles na trilha`;
         }
 
-        // --- CONTROLES DE TECLADO (DESKTOP) ---
+        // --- ATUALIZAR POSIÇÃO DO PERSONAGEM NA TRILHA ---
+        function updateCharacterPosition() {
+            if (!character) return;
+            
+            const x = getCandleX(currentCandleIndex);
+            const y = getCandleHeight(currentCandleIndex);
+            
+            character.position.set(x, y, 0);
+            
+            document.getElementById('position-indicator').innerHTML = 
+                `📍 Candle ${currentCandleIndex + 1}/${totalCandles}`;
+        }
+
+        // --- CONTROLES DE TECLADO ---
         function setupControls() {
-            // Teclado (para desktop)
             window.addEventListener('keydown', (e) => {
                 switch(e.key.toLowerCase()) {
                     case 'w': 
                         moveForward = true; 
-                        document.getElementById('debug').textContent = 'W pressionado';
+                        document.getElementById('debug').textContent = '↑';
                         break;
                     case 's': 
                         moveBackward = true;
-                        document.getElementById('debug').textContent = 'S pressionado';
-                        break;
-                    case 'a': 
-                        moveLeft = true;
-                        document.getElementById('debug').textContent = 'A pressionado';
-                        break;
-                    case 'd': 
-                        moveRight = true;
-                        document.getElementById('debug').textContent = 'D pressionado';
+                        document.getElementById('debug').textContent = '↓';
                         break;
                 }
             });
@@ -723,19 +642,16 @@
                 switch(e.key.toLowerCase()) {
                     case 'w': moveForward = false; break;
                     case 's': moveBackward = false; break;
-                    case 'a': moveLeft = false; break;
-                    case 'd': moveRight = false; break;
                 }
             });
         }
 
-        // --- JOYSTICK VIRTUAL (ANDAR) ---
+        // --- JOYSTICK (SÓ FRENTE/TRÁS) ---
         function setupJoystick() {
             const joystickArea = document.getElementById('joystick-area');
             
             joystickArea.addEventListener('touchstart', (e) => {
                 e.preventDefault();
-                e.stopPropagation();
                 joystickActive = true;
                 joystickArea.classList.add('active');
                 
@@ -745,124 +661,78 @@
                     x: rect.left + rect.width/2,
                     y: rect.top + rect.height/2
                 };
-                
-                document.getElementById('debug').textContent = 'Joystick ativado';
             });
             
             joystickArea.addEventListener('touchmove', (e) => {
                 e.preventDefault();
-                e.stopPropagation();
                 if (!joystickActive) return;
                 
                 const touch = e.touches[0];
-                const deltaX = touch.clientX - joystickStart.x;
                 const deltaY = touch.clientY - joystickStart.y;
-                const dist = Math.sqrt(deltaX*deltaX + deltaY*deltaY);
                 
-                if (dist > 10) {
-                    const normDist = Math.min(dist / 50, 1);
-                    joystickVector.x = (deltaX / dist) * normDist;
-                    joystickVector.y = (deltaY / dist) * normDist;
+                // Só detecta movimento vertical
+                if (Math.abs(deltaY) > 20) {
+                    moveForward = deltaY < -20;
+                    moveBackward = deltaY > 20;
                     
-                    // Limiar para evitar movimentos muito pequenos
-                    moveForward = joystickVector.y < -0.2;
-                    moveBackward = joystickVector.y > 0.2;
-                    moveLeft = joystickVector.x < -0.2;
-                    moveRight = joystickVector.x > 0.2;
-                    
-                    document.getElementById('debug').textContent = `Joy: ${joystickVector.x.toFixed(2)}, ${joystickVector.y.toFixed(2)}`;
+                    document.getElementById('debug').textContent = deltaY < 0 ? '⬆️' : '⬇️';
                 }
             });
             
             joystickArea.addEventListener('touchend', (e) => {
                 e.preventDefault();
-                e.stopPropagation();
                 joystickActive = false;
                 joystickArea.classList.remove('active');
-                joystickVector.x = 0;
-                joystickVector.y = 0;
                 moveForward = false;
                 moveBackward = false;
-                moveLeft = false;
-                moveRight = false;
-                document.getElementById('debug').textContent = 'Joystick desativado';
-            });
-            
-            joystickArea.addEventListener('touchcancel', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                joystickActive = false;
-                joystickArea.classList.remove('active');
-                joystickVector.x = 0;
-                joystickVector.y = 0;
-                moveForward = false;
-                moveBackward = false;
-                moveLeft = false;
-                moveRight = false;
             });
         }
 
-        // --- CONTROLE DE OLHAR 360° ---
+        // --- CONTROLE DE OLHAR ---
         function setupLookControls() {
-            const cameraHint = document.getElementById('camera-hint');
+            const lookArea = document.getElementById('look-area');
             
-            cameraHint.addEventListener('touchstart', (e) => {
+            lookArea.addEventListener('touchstart', (e) => {
                 e.preventDefault();
-                e.stopPropagation();
                 lookActive = true;
                 
                 const touch = e.touches[0];
                 lastTouchX = touch.clientX;
                 lastTouchY = touch.clientY;
                 
-                cameraHint.style.borderColor = '#f7931a';
-                document.getElementById('debug').textContent = 'Look ativado';
+                lookArea.style.borderColor = '#f7931a';
             });
             
-            cameraHint.addEventListener('touchmove', (e) => {
+            lookArea.addEventListener('touchmove', (e) => {
                 e.preventDefault();
-                e.stopPropagation();
                 if (!lookActive) return;
                 
                 const touch = e.touches[0];
                 const deltaX = touch.clientX - lastTouchX;
                 const deltaY = touch.clientY - lastTouchY;
                 
-                // Ajustar ângulos da câmera
                 cameraAngle += deltaX * 0.01;
                 cameraPitch += deltaY * 0.01;
-                
-                // Limitar pitch para não virar de cabeça para baixo
                 cameraPitch = Math.max(-0.5, Math.min(1.2, cameraPitch));
                 
                 lastTouchX = touch.clientX;
                 lastTouchY = touch.clientY;
                 
                 updateCamera();
-                document.getElementById('debug').textContent = `Ang: ${cameraAngle.toFixed(2)}, Pitch: ${cameraPitch.toFixed(2)}`;
             });
             
-            cameraHint.addEventListener('touchend', (e) => {
+            lookArea.addEventListener('touchend', (e) => {
                 e.preventDefault();
-                e.stopPropagation();
                 lookActive = false;
-                cameraHint.style.borderColor = 'rgba(59,130,246,0.6)';
+                lookArea.style.borderColor = 'rgba(59,130,246,0.6)';
             });
             
-            cameraHint.addEventListener('touchcancel', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                lookActive = false;
-                cameraHint.style.borderColor = 'rgba(59,130,246,0.6)';
-            });
-            
-            // Suporte para mouse (desktop)
+            // Mouse support
             renderer.domElement.addEventListener('mousedown', (e) => {
-                if (e.button === 0) { // Botão esquerdo
+                if (e.button === 0) {
                     lookActive = true;
                     lastTouchX = e.clientX;
                     lastTouchY = e.clientY;
-                    renderer.domElement.style.cursor = 'grabbing';
                 }
             });
             
@@ -884,65 +754,34 @@
             
             window.addEventListener('mouseup', () => {
                 lookActive = false;
-                renderer.domElement.style.cursor = 'default';
             });
         }
 
-        // --- ATUALIZAR MOVIMENTO DO PERSONAGEM ---
+        // --- MOVIMENTO NA TRILHA ---
         function updateMovement() {
             if (!character) return;
             
-            // Calcular direção do movimento
-            let moveX = 0, moveZ = 0;
+            let newIndex = currentCandleIndex;
             
-            if (moveForward) moveZ -= 1;
-            if (moveBackward) moveZ += 1;
-            if (moveLeft) moveX -= 1;
-            if (moveRight) moveX += 1;
-            
-            if (moveX !== 0 || moveZ !== 0) {
-                // Normalizar para velocidade constante em diagonais
-                const length = Math.sqrt(moveX*moveX + moveZ*moveZ);
-                moveX /= length;
-                moveZ /= length;
-                
-                // Mover na direção que a câmera está olhando (horizontalmente)
-                // Importante: queremos que frente seja a direção da câmera, não do personagem
-                const forwardX = Math.sin(cameraAngle) * moveZ;
-                const forwardZ = Math.cos(cameraAngle) * moveZ;
-                const rightX = Math.cos(cameraAngle) * moveX;
-                const rightZ = -Math.sin(cameraAngle) * moveX;
-                
-                const newX = character.position.x + (forwardX + rightX) * characterSpeed;
-                const newZ = character.position.z + (forwardZ + rightZ) * characterSpeed;
-                
-                // Verificar altura do chão na nova posição
-                const groundY = getGroundHeight(newX, newZ);
-                
-                character.position.x = newX;
-                character.position.z = newZ;
-                character.position.y = groundY;
-                
-                // Rotacionar personagem na direção do movimento (opcional - pode remover se preferir)
-                if (moveZ !== 0 || moveX !== 0) {
-                    const moveAngle = Math.atan2(moveX, moveZ);
-                    // character.rotation.y = moveAngle + cameraAngle; // Descomente se quiser que o personagem gire
-                }
+            if (moveForward) {
+                newIndex = Math.min(currentCandleIndex + 1, totalCandles - 1);
+            }
+            if (moveBackward) {
+                newIndex = Math.max(currentCandleIndex - 1, 0);
             }
             
-            // Atualizar posição da câmera
-            updateCamera();
+            if (newIndex !== currentCandleIndex) {
+                currentCandleIndex = newIndex;
+                updateCharacterPosition();
+            }
             
-            // Atualizar UI
-            document.getElementById('position-indicator').innerHTML = 
-                `📍 X: ${character.position.x.toFixed(1)} • Y: ${character.position.y.toFixed(1)} • Z: ${character.position.z.toFixed(1)}`;
+            updateCamera();
         }
 
-        // --- ATUALIZAR CÂMERA (360° AO REDOR DO PERSONAGEM) ---
+        // --- ATUALIZAR CÂMERA ---
         function updateCamera() {
             if (!character) return;
             
-            // Calcular posição da câmera em esfera ao redor do personagem
             const horizontalDist = CAMERA_DISTANCE * Math.cos(cameraPitch);
             const verticalDist = CAMERA_DISTANCE * Math.sin(cameraPitch);
             
@@ -951,8 +790,6 @@
             const camY = character.position.y + CAMERA_HEIGHT + verticalDist;
             
             camera.position.set(camX, camY, camZ);
-            
-            // Olhar para o personagem (um pouco acima do chão)
             camera.lookAt(
                 character.position.x,
                 character.position.y + 1.2,
@@ -972,12 +809,11 @@
             });
         }
 
-        // --- WEBSOCKET BINANCE ---
+        // --- WEBSOCKET ---
         function connectWebSocket() {
             if (binanceSocket) binanceSocket.close();
             
-            const stream = `${SYMBOL}@trade`;
-            const wsUrl = `wss://stream.binance.com:9443/ws/${stream}`;
+            const wsUrl = `wss://stream.binance.com:9443/ws/${SYMBOL}@trade`;
             
             binanceSocket = new WebSocket(wsUrl);
             
@@ -992,7 +828,6 @@
             };
             
             binanceSocket.onerror = () => {
-                console.log('WebSocket error, usando dados simulados');
                 startSimulatedTrades();
             };
         }
@@ -1010,6 +845,7 @@
                 
                 if (historicalCandles.length > tf.limit) {
                     historicalCandles.shift();
+                    if (currentCandleIndex > 0) currentCandleIndex--;
                 }
                 
                 liveCandleData = {
@@ -1019,10 +855,6 @@
                     low: trade.price,
                     close: trade.price
                 };
-                
-                const priceRange = maxPrice - minPrice;
-                minPrice = Math.min(minPrice, trade.price) - priceRange * 0.05;
-                maxPrice = Math.max(maxPrice, trade.price) + priceRange * 0.05;
                 
                 renderCandles();
                 return;
@@ -1034,9 +866,14 @@
             liveCandleData.close = trade.price;
             
             updateLiveCandle();
+            
+            // Se o personagem está no último candle, atualiza altura
+            if (currentCandleIndex === totalCandles - 1) {
+                updateCharacterPosition();
+            }
         }
 
-        // --- DADOS SIMULADOS (FALLBACK) ---
+        // --- DADOS SIMULADOS ---
         function startSimulatedTrades() {
             setInterval(() => {
                 if (!liveCandleData) return;
@@ -1051,11 +888,9 @@
             }, 800);
         }
 
-        // --- BUSCAR DADOS DA BINANCE ---
+        // --- BUSCAR DADOS ---
         async function fetchHistoricalData() {
             try {
-                document.getElementById('stats').innerHTML = 'Carregando...';
-                
                 const tf = TIMEFRAMES[currentTimeframe];
                 const url = `https://api.binance.com/api/v3/klines?symbol=${SYMBOL.toUpperCase()}&interval=${tf.binance}&limit=${tf.limit}`;
                 
@@ -1074,7 +909,6 @@
                 connectWebSocket();
                 
             } catch (error) {
-                console.error('Erro ao buscar dados:', error);
                 generateMockData();
             }
         }
