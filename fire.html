@@ -499,7 +499,7 @@
     <div id="home-screen">
         <div class="header">
             <div class="logo">CRYPTO REALM</div>
-            <div class="subtitle">GRÁFICO EM MOVIMENTO</div>
+            <div class="subtitle">CANDLES COM PARTÍCULAS</div>
         </div>
 
         <div class="coin-list">
@@ -602,7 +602,7 @@
 
         <button id="exit-btn">✕</button>
         <div id="loading">CARREGANDO SALA</div>
-        <div id="hint">O GRÁFICO SE MOVE! FIQUE NA FRENTE</div>
+        <div id="hint">VEJA AS PARTÍCULAS SUBINDO!</div>
         <div id="debug-info"></div>
         <div id="boundary-warning">🚫 LIMITE DA SALA</div>
         <div id="error-message"></div>
@@ -634,7 +634,7 @@
         // Personagem
         let character = {
             mesh: null,
-            position: new THREE.Vector3(0, 0, 10), // Começa na frente do gráfico
+            position: new THREE.Vector3(0, 0, 10),
             rotation: 0,
             height: 2,
             isRunning: false
@@ -651,10 +651,10 @@
         let binanceSocket = null;
         let dataLoaded = false;
         
-        // NOVO: Posição do gráfico
+        // Posição do gráfico
         let graphPosition = {
             x: 0,
-            z: -5, // Posição inicial
+            z: -5,
             targetZ: -5,
             speed: 0.1
         };
@@ -700,7 +700,7 @@
         const MAX_HEIGHT = 8.0;
         const MIN_RADIUS = 0.3;
         const MAX_RADIUS = 1.5;
-        const MAX_CANDLES = 20; // Número de candles visíveis
+        const MAX_CANDLES = 20;
 
         const TIMEFRAMES = { '1m': { binance: '1m', limit: 30, ms: 60 * 1000 } };
 
@@ -1142,6 +1142,11 @@
                 dirLight.shadow.mapSize.height = 2048;
                 scene.add(dirLight);
 
+                // Luz pontual para destacar as partículas
+                const particleLight = new THREE.PointLight(0xffffff, 1, 20);
+                particleLight.position.set(0, 5, 0);
+                scene.add(particleLight);
+
                 // Criar sala
                 createRoom();
                 
@@ -1376,61 +1381,69 @@
             }
             
             if (isLive) {
-                const glowGeo = new THREE.SphereGeometry(dimensions.radius * 2, 8);
+                // Brilho interno
+                const glowGeo = new THREE.SphereGeometry(dimensions.radius * 1.5, 8);
                 const glowMat = new THREE.MeshStandardMaterial({
                     color: bodyColor,
                     emissive: bodyColor,
-                    emissiveIntensity: 0.3,
+                    emissiveIntensity: 0.5,
                     transparent: true,
-                    opacity: 0.2
+                    opacity: 0.3
                 });
                 const glow = new THREE.Mesh(glowGeo, glowMat);
                 glow.position.y = dimensions.height / 2;
                 group.add(glow);
                 
+                // Guardar referência para atualização
                 group.userData = { body, dimensions };
             }
             
             return group;
         }
 
-        function createSmokeParticles(color, count = 15) {
+        // FUNÇÃO CORRIGIDA DE PARTÍCULAS
+        function createSmokeParticles(color, count = 25) {
             const particles = [];
             const particleGroup = new THREE.Group();
             
-            const geometry = new THREE.SphereGeometry(0.2, 5, 5);
+            const geometry = new THREE.SphereGeometry(0.15, 6, 6);
             
             for (let i = 0; i < count; i++) {
                 const material = new THREE.MeshStandardMaterial({
                     color: color,
                     emissive: color,
-                    emissiveIntensity: 0.6,
+                    emissiveIntensity: 0.8,
                     transparent: true,
-                    opacity: 0.5
+                    opacity: 0.7
                 });
                 
                 const particle = new THREE.Mesh(geometry, material);
                 
-                const angle = (i / count) * Math.PI * 2;
-                const radius = 0.8;
+                // Posição inicial aleatória ao redor do topo do candle
+                const angle = Math.random() * Math.PI * 2;
+                const radius = 0.5 + Math.random() * 0.5;
+                const height = 2 + Math.random() * 3;
+                
                 particle.position.set(
                     Math.cos(angle) * radius,
-                    1.0,
+                    height,
                     Math.sin(angle) * radius
                 );
                 
                 particle.userData = {
-                    baseY: 1.0,
-                    speed: 0.03 + Math.random() * 0.04,
+                    velocity: new THREE.Vector3(
+                        (Math.random() - 0.5) * 0.03,
+                        Math.random() * 0.04 + 0.02, // Velocidade para cima
+                        (Math.random() - 0.5) * 0.03
+                    ),
+                    baseY: height,
                     angle: angle,
                     radius: radius,
-                    phase: Math.random() * Math.PI * 2,
-                    velocity: new THREE.Vector3(
-                        (Math.random() - 0.5) * 0.02,
-                        Math.random() * 0.03,
-                        (Math.random() - 0.5) * 0.02
-                    )
+                    life: 1.0
                 };
+                
+                particle.castShadow = false;
+                particle.receiveShadow = false;
                 
                 particleGroup.add(particle);
                 particles.push(particle);
@@ -1439,42 +1452,50 @@
             return { group: particleGroup, particles };
         }
 
-        function updateSmoke(particles, candleY, isGreen, volume) {
-            if (!particles) return;
+        // FUNÇÃO CORRIGIDA DE ATUALIZAÇÃO DAS PARTÍCULAS
+        function updateSmoke(particles, candleY, isGreen, volume, candleHeight) {
+            if (!particles || particles.length === 0) return;
             
-            const time = Date.now() * 0.003;
+            const time = Date.now() * 0.002;
             const color = isGreen ? 0x22c55e : 0xef4444;
-            const intensity = Math.min(1, volume / 500);
+            const intensity = Math.min(1, (volume || 100) / 500);
             
             particles.forEach((particle, i) => {
                 const data = particle.userData;
                 
-                data.angle += 0.02 + Math.random() * 0.01;
+                // Movimento das partículas
                 particle.position.x += data.velocity.x;
-                particle.position.z += data.velocity.z;
                 particle.position.y += data.velocity.y;
+                particle.position.z += data.velocity.z;
                 
-                if (Math.abs(particle.position.x) > 2 || 
-                    Math.abs(particle.position.z) > 2 || 
-                    particle.position.y > candleY + 3) {
-                    
+                // Efeito de rotação
+                data.velocity.x += Math.sin(time + i) * 0.001;
+                data.velocity.z += Math.cos(time + i) * 0.001;
+                
+                // Reset quando sobe demais
+                if (particle.position.y > candleY + candleHeight + 4) {
+                    // Reiniciar partícula na base do candle
                     const angle = Math.random() * Math.PI * 2;
+                    const radius = 0.5 + Math.random() * 0.5;
+                    
                     particle.position.set(
-                        Math.cos(angle) * 0.8,
-                        candleY,
-                        Math.sin(angle) * 0.8
+                        Math.cos(angle) * radius,
+                        candleY + candleHeight * 0.3,
+                        Math.sin(angle) * radius
                     );
                     
                     data.velocity.set(
                         (Math.random() - 0.5) * 0.03,
-                        Math.random() * 0.04,
+                        Math.random() * 0.05 + 0.03,
                         (Math.random() - 0.5) * 0.03
                     );
                 }
                 
-                particle.material.opacity = 0.3 + Math.sin(time * 3 + i) * 0.2;
-                particle.material.emissiveIntensity = intensity * (0.3 + Math.sin(time * 2) * 0.2);
+                // Opacidade pulsante baseada na intensidade
+                particle.material.opacity = 0.5 + Math.sin(time * 4 + i) * 0.3;
+                particle.material.emissiveIntensity = intensity * (0.5 + Math.sin(time * 3) * 0.3);
                 
+                // Atualizar cor baseada na tendência
                 particle.material.color.setHex(color);
                 particle.material.emissive.setHex(color);
             });
@@ -1483,24 +1504,26 @@
         function updateLiveCandle() {
             if (!liveCandleMesh || !liveCandleData) return;
             
-            const { body } = liveCandleMesh.userData;
+            const { body, dimensions } = liveCandleMesh.userData;
             const { open, close, volume, isBuy } = liveCandleData;
             
             const isGreen = close >= open;
             const bodyColor = isGreen ? 0x22c55e : 0xef4444;
             
-            const dimensions = calculateCandleDimensions(volume || 100, isBuy);
+            const newDimensions = calculateCandleDimensions(volume || 100, isBuy);
             
-            body.scale.x = dimensions.radius / MIN_RADIUS;
-            body.scale.z = dimensions.radius / MIN_RADIUS;
-            body.scale.y = dimensions.height;
-            body.position.y = dimensions.height / 2;
+            // Atualizar tamanho do candle
+            body.scale.x = newDimensions.radius / MIN_RADIUS;
+            body.scale.z = newDimensions.radius / MIN_RADIUS;
+            body.scale.y = newDimensions.height;
+            body.position.y = newDimensions.height / 2;
             body.material.color.setHex(bodyColor);
             body.material.emissive.setHex(bodyColor);
             body.material.emissiveIntensity = 0.8 + Math.sin(Date.now() * 0.01) * 0.3;
             
+            // Atualizar partículas com a altura atual do candle
             if (liveSmokeParticles.length > 0) {
-                updateSmoke(liveSmokeParticles, dimensions.height, isGreen, volume);
+                updateSmoke(liveSmokeParticles, newDimensions.height / 2, isGreen, volume, newDimensions.height);
             }
         }
 
@@ -1526,12 +1549,21 @@
             liveCandleMesh = createCandle(liveCandleData, liveIndex, total, true);
             candleGroup.add(liveCandleMesh);
             
+            // CRIAR PARTÍCULAS PARA O CANDLE AO VIVO
             const isGreen = liveCandleData.close >= liveCandleData.open;
             const smokeColor = isGreen ? 0x22c55e : 0xef4444;
-            const smoke = createSmokeParticles(smokeColor, 20);
+            
+            // Criar grupo de partículas separado
+            const smoke = createSmokeParticles(smokeColor, 30); // Mais partículas
+            
+            // Posicionar as partículas no mesmo lugar do candle ao vivo
             smoke.group.position.set(liveCandleMesh.position.x, 0, 0);
+            
+            // Adicionar ao grupo de fumaça
             smokeGroup.add(smoke.group);
             liveSmokeParticles = smoke.particles;
+            
+            console.log('Partículas criadas:', liveSmokeParticles.length); // Debug
         }
 
         function animate() {
@@ -1581,7 +1613,7 @@
                 }
                 
                 debugInfo.style.display = 'block';
-                debugInfo.innerHTML = `Pos: ${character.position.x.toFixed(1)}/${character.position.z.toFixed(1)} | Gráfico: ${graphPosition.z.toFixed(1)}`;
+                debugInfo.innerHTML = `Partículas: ${liveSmokeParticles.length} | Vol: ${liveCandleData?.volume.toFixed(0)}`;
             } else {
                 debugInfo.style.display = 'none';
             }
