@@ -411,6 +411,7 @@
             padding: 16px 32px;
             border-radius: 50px;
             border: 1px solid rgba(255,255,255,0.05);
+            display: none;
         }
 
         #hint {
@@ -474,6 +475,23 @@
             0% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
             50% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
             100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
+        }
+
+        #error-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #ef4444;
+            font-size: 14px;
+            z-index: 2300;
+            background: rgba(0,0,0,0.8);
+            padding: 20px 30px;
+            border-radius: 50px;
+            border: 1px solid #ef4444;
+            backdrop-filter: blur(10px);
+            display: none;
+            text-align: center;
         }
     </style>
 </head>
@@ -587,6 +605,7 @@
         <div id="hint">USE OS CONTROLES PARA EXPLORAR A SALA</div>
         <div id="debug-info"></div>
         <div id="boundary-warning">🚫 LIMITE DA SALA</div>
+        <div id="error-message"></div>
     </div>
 
     <script type="importmap">
@@ -615,7 +634,7 @@
         // Personagem
         let character = {
             mesh: null,
-            position: new THREE.Vector3(0, 0, 0), // Começa no centro da sala
+            position: new THREE.Vector3(0, 0, 0),
             rotation: 0,
             height: 2,
             isRunning: false
@@ -627,7 +646,7 @@
         let liveCandleMesh = null;
         let liveSmokeParticles = [];
         let liveCandleData = null;
-        let minPrice, maxPrice, minVolume, maxVolume;
+        let minVolume = 100, maxVolume = 1000;
         let lastPrice = 67000;
         let binanceSocket = null;
         let dataLoaded = false;
@@ -657,7 +676,7 @@
         let cameraHeight = 3;
         
         // LIMITES DA SALA
-        const ROOM_SIZE = 20; // Tamanho da sala (de -20 a 20)
+        const ROOM_SIZE = 20;
         const WALL_HEIGHT = 10;
         const WALL_THICKNESS = 0.5;
         
@@ -687,6 +706,7 @@
         const priceChange = document.getElementById('price-change');
         const debugInfo = document.getElementById('debug-info');
         const boundaryWarning = document.getElementById('boundary-warning');
+        const errorMessage = document.getElementById('error-message');
         
         const moveArea = document.getElementById('move-area');
         const cameraArea = document.getElementById('camera-area');
@@ -708,7 +728,13 @@
             homeScreen.classList.add('hidden');
             worldScreen.classList.add('active');
             
-            initWorld();
+            // Mostrar loading
+            loadingEl.style.display = 'block';
+            
+            // Inicializar mundo imediatamente
+            setTimeout(() => {
+                initWorld();
+            }, 100);
         };
 
         window.exitWorld = () => {
@@ -726,17 +752,14 @@
             // Controle de movimento
             moveArea.addEventListener('touchstart', (e) => {
                 e.preventDefault();
-                const touch = e.touches[0];
-                const rect = moveArea.getBoundingClientRect();
-                
                 moveControl.active = true;
+                const rect = moveArea.getBoundingClientRect();
                 moveControl.startX = rect.left + rect.width/2;
                 moveControl.startY = rect.top + rect.height/2;
                 moveControl.currentX = 0;
                 moveControl.currentY = 0;
                 moveControl.worldX = 0;
                 moveControl.worldZ = 0;
-                
                 moveArea.classList.add('active');
                 moveDot.style.transform = 'translate(-50%, -50%)';
             });
@@ -746,7 +769,6 @@
                 if (!moveControl.active) return;
                 
                 const touch = e.touches[0];
-                
                 const dx = touch.clientX - moveControl.startX;
                 const dy = touch.clientY - moveControl.startY;
                 
@@ -781,15 +803,12 @@
             // Controle de câmera
             cameraArea.addEventListener('touchstart', (e) => {
                 e.preventDefault();
-                const touch = e.touches[0];
-                const rect = cameraArea.getBoundingClientRect();
-                
                 cameraControl.active = true;
+                const rect = cameraArea.getBoundingClientRect();
                 cameraControl.startX = rect.left + rect.width/2;
                 cameraControl.startY = rect.top + rect.height/2;
                 cameraControl.currentX = 0;
                 cameraControl.currentY = 0;
-                
                 cameraArea.classList.add('active');
                 cameraDot.style.transform = 'translate(-50%, -50%)';
             });
@@ -799,7 +818,6 @@
                 if (!cameraControl.active) return;
                 
                 const touch = e.touches[0];
-                
                 const dx = touch.clientX - cameraControl.startX;
                 const dy = touch.clientY - cameraControl.startY;
                 
@@ -862,12 +880,13 @@
 
         function createCharacter() {
             const group = new THREE.Group();
+            const coinData = COINS[currentCoin];
             
             // Corpo
             const torsoGeo = new THREE.CylinderGeometry(0.4, 0.4, 1.2, 8);
             const torsoMat = new THREE.MeshStandardMaterial({ 
                 color: 0x2d3748,
-                emissive: COINS[currentCoin].bgColor,
+                emissive: coinData.bgColor,
                 emissiveIntensity: 0.2
             });
             const torso = new THREE.Mesh(torsoGeo, torsoMat);
@@ -918,8 +937,8 @@
             // Aura
             const auraGeo = new THREE.SphereGeometry(0.6, 8);
             const auraMat = new THREE.MeshStandardMaterial({
-                color: COINS[currentCoin].bgColor,
-                emissive: COINS[currentCoin].bgColor,
+                color: coinData.bgColor,
+                emissive: coinData.bgColor,
                 emissiveIntensity: 0.2,
                 transparent: true,
                 opacity: 0.3
@@ -936,7 +955,6 @@
             scene.add(group);
         }
 
-        // NOVA FUNÇÃO: Criar sala com limites
         function createRoom() {
             const coinData = COINS[currentCoin];
             
@@ -967,7 +985,7 @@
                 opacity: 0.8
             });
 
-            // Parede Norte (fundo)
+            // Parede Norte
             const wallNorthGeo = new THREE.BoxGeometry(ROOM_SIZE * 2, WALL_HEIGHT, WALL_THICKNESS);
             const wallNorth = new THREE.Mesh(wallNorthGeo, wallMaterial);
             wallNorth.position.set(0, WALL_HEIGHT/2, -ROOM_SIZE);
@@ -975,7 +993,7 @@
             wallNorth.castShadow = true;
             scene.add(wallNorth);
 
-            // Parede Sul (frente)
+            // Parede Sul
             const wallSouthGeo = new THREE.BoxGeometry(ROOM_SIZE * 2, WALL_HEIGHT, WALL_THICKNESS);
             const wallSouth = new THREE.Mesh(wallSouthGeo, wallMaterial);
             wallSouth.position.set(0, WALL_HEIGHT/2, ROOM_SIZE);
@@ -983,7 +1001,7 @@
             wallSouth.castShadow = true;
             scene.add(wallSouth);
 
-            // Parede Leste (direita)
+            // Parede Leste
             const wallEastGeo = new THREE.BoxGeometry(WALL_THICKNESS, WALL_HEIGHT, ROOM_SIZE * 2);
             const wallEast = new THREE.Mesh(wallEastGeo, wallMaterial);
             wallEast.position.set(ROOM_SIZE, WALL_HEIGHT/2, 0);
@@ -991,7 +1009,7 @@
             wallEast.castShadow = true;
             scene.add(wallEast);
 
-            // Parede Oeste (esquerda)
+            // Parede Oeste
             const wallWestGeo = new THREE.BoxGeometry(WALL_THICKNESS, WALL_HEIGHT, ROOM_SIZE * 2);
             const wallWest = new THREE.Mesh(wallWestGeo, wallMaterial);
             wallWest.position.set(-ROOM_SIZE, WALL_HEIGHT/2, 0);
@@ -999,7 +1017,7 @@
             wallWest.castShadow = true;
             scene.add(wallWest);
 
-            // TETO (opcional, para dar sensação de sala fechada)
+            // Teto
             const ceilingGeo = new THREE.BoxGeometry(ROOM_SIZE * 2, WALL_THICKNESS, ROOM_SIZE * 2);
             const ceilingMat = new THREE.MeshStandardMaterial({ 
                 color: 0x0a0f1a,
@@ -1014,14 +1032,13 @@
             ceiling.castShadow = true;
             scene.add(ceiling);
 
-            // Luzes de parede (efeito decorativo)
+            // Luzes de parede
             const lightMat = new THREE.MeshStandardMaterial({ 
                 color: coinData.bgColor,
                 emissive: coinData.bgColor,
                 emissiveIntensity: 0.5
             });
             
-            // Postes de luz nos cantos
             const positions = [
                 [-ROOM_SIZE + 1, 2, -ROOM_SIZE + 1],
                 [ROOM_SIZE - 1, 2, -ROOM_SIZE + 1],
@@ -1048,7 +1065,6 @@
             const texture = new THREE.CanvasTexture(canvas);
             const signMaterial = new THREE.MeshStandardMaterial({ map: texture, emissive: coinData.bgColor });
             
-            // Placas nas paredes
             const signGeo = new THREE.PlaneGeometry(4, 1);
             const signNorth = new THREE.Mesh(signGeo, signMaterial);
             signNorth.position.set(0, 5, -ROOM_SIZE + 0.3);
@@ -1061,152 +1077,127 @@
             scene.add(signSouth);
         }
 
-        async function initWorld() {
-            loadingEl.style.display = 'block';
+        // GERAR DADOS MOCKADOS IMEDIATAMENTE
+        function generateMockData() {
+            const data = [];
+            let basePrice = lastPrice;
+            let time = Date.now() - 30 * 60 * 1000;
             
-            const container = document.getElementById('world-screen');
+            for (let i = 0; i < 30; i++) {
+                const isBuy = Math.random() > 0.5;
+                const open = basePrice;
+                const change = (Math.random() * 500) * (isBuy ? 1 : -1);
+                const close = open + change;
+                const high = Math.max(open, close) + Math.random() * 200;
+                const low = Math.min(open, close) - Math.random() * 200;
+                const volume = Math.random() * 1000 + 200;
+                
+                data.push({ 
+                    time: time + i * 60000, 
+                    open, high, low, close, volume,
+                    isBuy 
+                });
+                basePrice = close;
+            }
             
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x0a0f1a);
-            scene.fog = new THREE.Fog(0x0a0f1a, 20, 40);
-
-            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0, 5, 15);
-
-            renderer = new THREE.WebGLRenderer({ antialias: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.shadowMap.enabled = true;
-            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-            container.appendChild(renderer.domElement);
-
-            labelRenderer = new CSS2DRenderer();
-            labelRenderer.setSize(window.innerWidth, window.innerHeight);
-            labelRenderer.domElement.style.position = 'absolute';
-            labelRenderer.domElement.style.top = '0px';
-            labelRenderer.domElement.style.left = '0px';
-            labelRenderer.domElement.style.pointerEvents = 'none';
-            container.appendChild(labelRenderer.domElement);
-
-            // Luzes
-            const ambientLight = new THREE.AmbientLight(0x404060);
-            scene.add(ambientLight);
-
-            const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
-            dirLight.position.set(10, 20, 10);
-            dirLight.castShadow = true;
-            dirLight.shadow.mapSize.width = 2048;
-            dirLight.shadow.mapSize.height = 2048;
-            dirLight.shadow.camera.left = -ROOM_SIZE;
-            dirLight.shadow.camera.right = ROOM_SIZE;
-            dirLight.shadow.camera.top = ROOM_SIZE;
-            dirLight.shadow.camera.bottom = -ROOM_SIZE;
-            scene.add(dirLight);
-
-            // Criar sala
-            createRoom();
-            
-            // Criar personagem no centro
-            character.position.set(0, 0, 0);
-            createCharacter();
-            
-            // Criar área do gráfico
-            candleGroup = new THREE.Group();
-            bollingerGroup = new THREE.Group();
-            smokeGroup = new THREE.Group();
-            
-            // Posicionar gráfico no centro da sala, um pouco afastado
-            candleGroup.position.set(0, 0, -5);
-            bollingerGroup.position.set(0, 0, -5);
-            smokeGroup.position.set(0, 0, -5);
-            
-            scene.add(candleGroup);
-            scene.add(bollingerGroup);
-            scene.add(smokeGroup);
-
-            // Label da sala
-            const labelDiv = document.createElement('div');
-            labelDiv.textContent = `${COINS[currentCoin].name} TRADING ROOM`;
-            labelDiv.style.color = COINS[currentCoin].color;
-            labelDiv.style.fontSize = '16px';
-            labelDiv.style.fontWeight = '300';
-            labelDiv.style.letterSpacing = '2px';
-            labelDiv.style.background = 'rgba(10,15,26,0.8)';
-            labelDiv.style.backdropFilter = 'blur(10px)';
-            labelDiv.style.padding = '8px 20px';
-            labelDiv.style.borderRadius = '30px';
-            labelDiv.style.border = '1px solid ' + COINS[currentCoin].color;
-            
-            const label = new CSS2DObject(labelDiv);
-            label.position.set(0, 8, -ROOM_SIZE + 2);
-            scene.add(label);
-
-            await fetchHistoricalData();
-            
-            loadingEl.style.display = 'none';
-            
-            setTimeout(() => {
-                document.getElementById('hint').style.opacity = '0';
-            }, 4000);
-            
-            animate();
+            return data;
         }
 
-        // Função para verificar limites da sala
-        function checkBoundaries() {
-            const limit = ROOM_SIZE - 1; // Deixa uma margem de 1 unidade das paredes
-            let hitBoundary = false;
-            
-            if (Math.abs(character.position.x) > limit) {
-                character.position.x = Math.sign(character.position.x) * limit;
-                hitBoundary = true;
-            }
-            
-            if (Math.abs(character.position.z) > limit) {
-                character.position.z = Math.sign(character.position.z) * limit;
-                hitBoundary = true;
-            }
-            
-            if (hitBoundary) {
-                boundaryWarning.style.display = 'block';
-                setTimeout(() => {
-                    boundaryWarning.style.display = 'none';
-                }, 500);
-            }
-            
-            return hitBoundary;
-        }
-
-        // Funções de dados (mantidas do código anterior)
-        async function fetchHistoricalData() {
+        function initWorld() {
             try {
-                const coinData = COINS[currentCoin];
-                const tf = TIMEFRAMES['1m'];
+                // Criar cena
+                const container = document.getElementById('world-screen');
                 
-                let symbol = 'BTCUSDT';
-                if (coinData.symbol === 'BTC') symbol = 'BTCUSDT';
-                else symbol = coinData.symbol + 'USDT';
+                scene = new THREE.Scene();
+                scene.background = new THREE.Color(0x0a0f1a);
+                scene.fog = new THREE.Fog(0x0a0f1a, 20, 40);
+
+                camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+                camera.position.set(0, 5, 15);
+
+                renderer = new THREE.WebGLRenderer({ antialias: true });
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.shadowMap.enabled = true;
+                renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+                container.appendChild(renderer.domElement);
+
+                labelRenderer = new CSS2DRenderer();
+                labelRenderer.setSize(window.innerWidth, window.innerHeight);
+                labelRenderer.domElement.style.position = 'absolute';
+                labelRenderer.domElement.style.top = '0px';
+                labelRenderer.domElement.style.left = '0px';
+                labelRenderer.domElement.style.pointerEvents = 'none';
+                container.appendChild(labelRenderer.domElement);
+
+                // Luzes
+                const ambientLight = new THREE.AmbientLight(0x404060);
+                scene.add(ambientLight);
+
+                const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
+                dirLight.position.set(10, 20, 10);
+                dirLight.castShadow = true;
+                dirLight.shadow.mapSize.width = 2048;
+                dirLight.shadow.mapSize.height = 2048;
+                scene.add(dirLight);
+
+                // Criar sala
+                createRoom();
                 
-                const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${tf.binance}&limit=${tf.limit}`;
+                // Criar personagem
+                character.position.set(0, 0, 0);
+                createCharacter();
                 
-                const response = await fetch(url);
-                const data = await response.json();
+                // Criar grupos do gráfico
+                candleGroup = new THREE.Group();
+                bollingerGroup = new THREE.Group();
+                smokeGroup = new THREE.Group();
                 
-                const formatted = data.map(k => ({
-                    time: k[0],
-                    open: parseFloat(k[1]),
-                    high: parseFloat(k[2]),
-                    low: parseFloat(k[3]),
-                    close: parseFloat(k[4]),
-                    volume: parseFloat(k[5]),
-                    isBuy: parseFloat(k[4]) >= parseFloat(k[1])
-                }));
+                candleGroup.position.set(0, 0, -5);
+                bollingerGroup.position.set(0, 0, -5);
+                smokeGroup.position.set(0, 0, -5);
                 
-                processHistoricalData(formatted);
-                connectWebSocket(symbol);
+                scene.add(candleGroup);
+                scene.add(bollingerGroup);
+                scene.add(smokeGroup);
+
+                // Label da sala
+                const labelDiv = document.createElement('div');
+                labelDiv.textContent = `${COINS[currentCoin].name} TRADING ROOM`;
+                labelDiv.style.color = COINS[currentCoin].color;
+                labelDiv.style.fontSize = '16px';
+                labelDiv.style.fontWeight = '300';
+                labelDiv.style.letterSpacing = '2px';
+                labelDiv.style.background = 'rgba(10,15,26,0.8)';
+                labelDiv.style.backdropFilter = 'blur(10px)';
+                labelDiv.style.padding = '8px 20px';
+                labelDiv.style.borderRadius = '30px';
+                labelDiv.style.border = '1px solid ' + COINS[currentCoin].color;
+                
+                const label = new CSS2DObject(labelDiv);
+                label.position.set(0, 8, -ROOM_SIZE + 2);
+                scene.add(label);
+
+                // GERAR DADOS MOCKADOS IMEDIATAMENTE
+                const mockData = generateMockData();
+                processHistoricalData(mockData);
+                
+                // Esconder loading
+                loadingEl.style.display = 'none';
+                
+                // Iniciar animação
+                animate();
+                
+                // Simular trades ao vivo
+                startSimulatedTrades();
                 
             } catch (error) {
-                console.error('Erro ao buscar dados:', error);
-                generateMockData();
+                console.error('Erro ao iniciar mundo:', error);
+                loadingEl.style.display = 'none';
+                errorMessage.style.display = 'block';
+                errorMessage.innerHTML = 'Erro ao carregar sala. Tente novamente.';
+                setTimeout(() => {
+                    errorMessage.style.display = 'none';
+                }, 3000);
             }
         }
 
@@ -1215,6 +1206,7 @@
             liveCandleData = { ...data[data.length - 1] };
             lastPrice = liveCandleData.close;
             
+            // Calcular min/max de volume
             minVolume = Infinity;
             maxVolume = -Infinity;
             
@@ -1232,60 +1224,25 @@
             
             dataLoaded = true;
             renderCandles();
-            createBollingerBands();
             updatePriceDisplay();
         }
 
-        function generateMockData() {
-            const tf = TIMEFRAMES['1m'];
-            const data = [];
-            let basePrice = lastPrice;
-            let time = Date.now() - tf.limit * tf.ms;
-            
-            for (let i = 0; i < tf.limit; i++) {
-                const isBuy = Math.random() > 0.5;
-                const open = basePrice;
-                const change = (Math.random() * 500) * (isBuy ? 1 : -1);
-                const close = open + change;
-                const high = Math.max(open, close) + Math.random() * 200;
-                const low = Math.min(open, close) - Math.random() * 200;
-                const volume = Math.random() * 1000 + 200;
+        function startSimulatedTrades() {
+            setInterval(() => {
+                if (!liveCandleData || !dataLoaded) return;
                 
-                data.push({ 
-                    time: time + i * tf.ms, 
-                    open, high, low, close, volume,
-                    isBuy 
+                const isBuy = Math.random() > 0.5;
+                const change = (Math.random() * 100) * (isBuy ? 1 : -1);
+                const newPrice = Math.max(0.01, lastPrice + change);
+                const volume = Math.random() * 200 + 50;
+                
+                processNewTrade({
+                    price: newPrice,
+                    time: Date.now(),
+                    volume: volume,
+                    isBuy: isBuy
                 });
-                basePrice = close;
-            }
-            
-            processHistoricalData(data);
-            startSimulatedTrades();
-        }
-
-        function connectWebSocket(symbol) {
-            if (binanceSocket) binanceSocket.close();
-            
-            const stream = `${symbol.toLowerCase()}@trade`;
-            const wsUrl = `wss://stream.binance.com:9443/ws/${stream}`;
-            
-            binanceSocket = new WebSocket(wsUrl);
-            
-            binanceSocket.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-                if (data.e === 'trade') {
-                    processNewTrade({
-                        price: parseFloat(data.p),
-                        time: data.T,
-                        volume: parseFloat(data.q),
-                        isBuy: data.m === false
-                    });
-                }
-            };
-            
-            binanceSocket.onerror = () => {
-                startSimulatedTrades();
-            };
+            }, 800);
         }
 
         function processNewTrade(trade) {
@@ -1335,24 +1292,6 @@
             updatePriceDisplay();
         }
 
-        function startSimulatedTrades() {
-            setInterval(() => {
-                if (!liveCandleData || !dataLoaded) return;
-                
-                const isBuy = Math.random() > 0.5;
-                const change = (Math.random() * 100) * (isBuy ? 1 : -1);
-                const newPrice = Math.max(0.01, lastPrice + change);
-                const volume = Math.random() * 200 + 50;
-                
-                processNewTrade({
-                    price: newPrice,
-                    time: Date.now(),
-                    volume: volume,
-                    isBuy: isBuy
-                });
-            }, 500);
-        }
-
         function updatePriceDisplay() {
             if (!liveCandleData) return;
             
@@ -1390,6 +1329,7 @@
             const group = new THREE.Group();
             group.position.set(xPos, 0, 0);
             
+            // Corpo do candle
             const bodyGeo = new THREE.CylinderGeometry(dimensions.radius, dimensions.radius, dimensions.height, 16);
             const bodyMat = new THREE.MeshStandardMaterial({ 
                 color: bodyColor,
@@ -1406,7 +1346,8 @@
             body.receiveShadow = true;
             group.add(body);
             
-            const wickHeight = Math.abs(mapPriceToY(high) - mapPriceToY(low));
+            // Pavio
+            const wickHeight = Math.abs(high - low) * 0.1; // Simplificado
             if (wickHeight > 0.5) {
                 const wickGeo = new THREE.CylinderGeometry(WICK_RADIUS, WICK_RADIUS, wickHeight, 8);
                 const wickMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8 });
@@ -1521,68 +1462,6 @@
             });
         }
 
-        function createBollingerBands() {
-            while(bollingerGroup.children.length) {
-                bollingerGroup.remove(bollingerGroup.children[0]);
-            }
-            
-            if (historicalCandles.length < BB_PERIOD) return;
-            
-            const total = historicalCandles.length + 1;
-            const points = [];
-            
-            for (let i = 0; i < total; i++) {
-                let candle;
-                if (i < historicalCandles.length) {
-                    candle = historicalCandles[i];
-                } else {
-                    candle = liveCandleData;
-                }
-                
-                const allCandles = [...historicalCandles, liveCandleData];
-                const startIdx = Math.max(0, i - BB_PERIOD + 1);
-                const windowCandles = allCandles.slice(startIdx, i + 1);
-                
-                if (windowCandles.length >= BB_PERIOD) {
-                    const closes = windowCandles.map(c => c.close);
-                    const mean = closes.reduce((a, b) => a + b, 0) / BB_PERIOD;
-                    const squaredDiffs = closes.map(p => Math.pow(p - mean, 2));
-                    const variance = squaredDiffs.reduce((a, b) => a + b, 0) / BB_PERIOD;
-                    const stdDev = Math.sqrt(variance);
-                    
-                    const xPos = (i - total/2) * SPACING;
-                    
-                    points.push({
-                        x: xPos,
-                        upper: mean + (stdDev * BB_STD),
-                        middle: mean,
-                        lower: mean - (stdDev * BB_STD)
-                    });
-                }
-            }
-            
-            if (points.length < 2) return;
-            
-            const upperMaterial = new THREE.LineBasicMaterial({ color: 0x8b5cf6 });
-            const middleMaterial = new THREE.LineBasicMaterial({ color: 0x60a5fa });
-            const lowerMaterial = new THREE.LineBasicMaterial({ color: 0x8b5cf6 });
-            
-            const upperPoints = points.map(p => new THREE.Vector3(p.x, p.upper * 0.1, 0));
-            const upperGeo = new THREE.BufferGeometry().setFromPoints(upperPoints);
-            const upperLine = new THREE.Line(upperGeo, upperMaterial);
-            bollingerGroup.add(upperLine);
-            
-            const middlePoints = points.map(p => new THREE.Vector3(p.x, p.middle * 0.1, 0));
-            const middleGeo = new THREE.BufferGeometry().setFromPoints(middlePoints);
-            const middleLine = new THREE.Line(middleGeo, middleMaterial);
-            bollingerGroup.add(middleLine);
-            
-            const lowerPoints = points.map(p => new THREE.Vector3(p.x, p.lower * 0.1, 0));
-            const lowerGeo = new THREE.BufferGeometry().setFromPoints(lowerPoints);
-            const lowerLine = new THREE.Line(lowerGeo, lowerMaterial);
-            bollingerGroup.add(lowerLine);
-        }
-
         function updateLiveCandle() {
             if (!liveCandleMesh || !liveCandleData) return;
             
@@ -1605,8 +1484,6 @@
             if (liveSmokeParticles.length > 0) {
                 updateSmoke(liveSmokeParticles, dimensions.height, isGreen, volume);
             }
-            
-            createBollingerBands();
         }
 
         function renderCandles() {
@@ -1642,27 +1519,23 @@
         function animate() {
             requestAnimationFrame(animate);
             
-            // Movimento do personagem com limites
+            // Movimento do personagem
             if (moveControl.active && (Math.abs(moveControl.worldX) > 0.1 || Math.abs(moveControl.worldZ) > 0.1)) {
                 
                 const angle = cameraAngle.horizontal;
                 
                 const forwardX = Math.sin(angle);
                 const forwardZ = Math.cos(angle);
-                
                 const rightX = Math.cos(angle);
                 const rightZ = -Math.sin(angle);
                 
-                // Calcular nova posição
                 const newX = character.position.x + (forwardX * moveControl.worldZ + rightX * moveControl.worldX) * moveSpeed;
                 const newZ = character.position.z + (forwardZ * moveControl.worldZ + rightZ * moveControl.worldX) * moveSpeed;
                 
-                // Verificar limites antes de mover
                 const limit = ROOM_SIZE - 1;
                 character.position.x = Math.max(-limit, Math.min(limit, newX));
                 character.position.z = Math.max(-limit, Math.min(limit, newZ));
                 
-                // Verificar se bateu no limite
                 if (Math.abs(newX) > limit || Math.abs(newZ) > limit) {
                     boundaryWarning.style.display = 'block';
                     setTimeout(() => {
@@ -1694,7 +1567,6 @@
                 const camZ = character.position.z + Math.cos(cameraAngle.horizontal) * cameraDistance;
                 const camY = character.position.y + cameraHeight * cameraAngle.vertical;
                 
-                // Limitar câmera dentro da sala
                 camera.position.set(
                     Math.max(-ROOM_SIZE + 2, Math.min(ROOM_SIZE - 2, camX)),
                     Math.max(2, Math.min(WALL_HEIGHT - 2, camY)),
@@ -1713,6 +1585,7 @@
             labelRenderer.render(scene, camera);
         }
 
+        // Inicializar
         setupControls();
 
         window.addEventListener('resize', () => {
