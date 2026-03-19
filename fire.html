@@ -1,0 +1,1526 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CryptoWorld - Controles Profissionais</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0f1a;
+            color: white;
+            overflow: hidden;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+        }
+
+        /* Tela inicial */
+        #home-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0a0f1a 0%, #1a1f2e 100%);
+            z-index: 1000;
+            overflow-y: auto;
+            transition: transform 0.3s ease;
+            padding-bottom: 20px;
+        }
+
+        #home-screen.hidden {
+            transform: translateX(-100%);
+        }
+
+        .header {
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #f7931a, #9945FF);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .coin-list {
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .coin-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 20px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            backdrop-filter: blur(10px);
+        }
+
+        .coin-card:active {
+            transform: scale(0.98);
+            background: rgba(255,255,255,0.08);
+        }
+
+        .coin-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .coin-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 24px;
+        }
+
+        .btc-icon { background: #f7931a; }
+        .siren-icon { background: #00ffff; }
+        .pippin-icon { background: #ff69b4; }
+        .tria-icon { background: #8b5cf6; }
+
+        .enter-world-btn {
+            background: linear-gradient(135deg, #f7931a, #9945FF);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 30px;
+            font-size: 16px;
+            font-weight: bold;
+            width: 100%;
+            margin-top: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .enter-world-btn:active {
+            transform: scale(0.95);
+            opacity: 0.8;
+        }
+
+        /* Tela do mundo - Controles Free Fire Style */
+        #world-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2000;
+            display: none;
+            touch-action: none;
+        }
+
+        #world-screen.active {
+            display: block;
+        }
+
+        /* HUD Superior */
+        #hud {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 2100;
+            padding: 12px 18px;
+            background: rgba(10,15,26,0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 30px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        #coin-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        #world-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        #price-value {
+            font-size: 22px;
+            font-weight: bold;
+            color: #f7931a;
+        }
+
+        #price-change {
+            font-size: 13px;
+        }
+
+        /* ===== CONTROLES FREE FIRE STYLE ===== */
+        
+        /* Zona esquerda - Movimento (joystick grande) */
+        #left-controls {
+            position: absolute;
+            bottom: 40px;
+            left: 20px;
+            width: 160px;
+            height: 160px;
+            z-index: 2100;
+            pointer-events: auto;
+        }
+
+        #move-joystick {
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(8px);
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 80px;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            transition: all 0.1s;
+            touch-action: none;
+        }
+
+        #move-joystick::before {
+            content: '';
+            position: absolute;
+            width: 70px;
+            height: 70px;
+            background: rgba(247, 147, 26, 0.9);
+            border-radius: 35px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 20px #f7931a;
+            border: 2px solid white;
+            transition: all 0.1s;
+        }
+
+        #move-joystick.active::before {
+            background: #f7931a;
+            width: 60px;
+            height: 60px;
+        }
+
+        #move-joystick .direction-indicator {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        #move-joystick.active .direction-indicator {
+            opacity: 1;
+        }
+
+        .direction-up {
+            top: 5px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .direction-down {
+            bottom: 5px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .direction-left {
+            left: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .direction-right {
+            right: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        /* Zona direita - Controles de ação */
+        #right-controls {
+            position: absolute;
+            bottom: 40px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            z-index: 2100;
+            pointer-events: auto;
+        }
+
+        /* Joystick de mira (menor) */
+        #aim-container {
+            width: 130px;
+            height: 130px;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(8px);
+            border: 3px solid rgba(153, 69, 255, 0.5);
+            border-radius: 65px;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            touch-action: none;
+        }
+
+        #aim-joystick {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            border-radius: 65px;
+        }
+
+        #aim-joystick::before {
+            content: '';
+            position: absolute;
+            width: 55px;
+            height: 55px;
+            background: rgba(153, 69, 255, 0.9);
+            border-radius: 27.5px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 20px #9945FF;
+            border: 2px solid white;
+            transition: all 0.1s;
+        }
+
+        #aim-joystick.active::before {
+            background: #9945FF;
+            width: 45px;
+            height: 45px;
+        }
+
+        /* Botões de ação estilo Free Fire */
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+        }
+
+        .action-btn {
+            width: 70px;
+            height: 70px;
+            border-radius: 35px;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            transition: all 0.1s;
+            touch-action: manipulation;
+        }
+
+        .action-btn:active {
+            transform: scale(0.9);
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        #jump-btn {
+            border-color: #22c55e;
+            color: #22c55e;
+        }
+
+        #jump-btn:active {
+            background: #22c55e;
+            color: white;
+        }
+
+        #run-btn {
+            border-color: #f7931a;
+            color: #f7931a;
+        }
+
+        #run-btn.active {
+            background: #f7931a;
+            color: white;
+        }
+
+        #crouch-btn {
+            border-color: #8b5cf6;
+            color: #8b5cf6;
+        }
+
+        #crouch-btn.active {
+            background: #8b5cf6;
+            color: white;
+        }
+
+        /* Botões de utilidade */
+        #utility-controls {
+            position: absolute;
+            top: 80px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 2100;
+        }
+
+        .utility-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 25px;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(8px);
+            border: 2px solid rgba(255,255,255,0.2);
+            color: white;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.1s;
+        }
+
+        .utility-btn:active {
+            background: rgba(255,255,255,0.3);
+        }
+
+        #exit-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 50px;
+            height: 50px;
+            border-radius: 25px;
+            background: rgba(239,68,68,0.2);
+            border: 2px solid #ef4444;
+            color: #ef4444;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2100;
+            backdrop-filter: blur(8px);
+        }
+
+        #exit-btn:active {
+            background: #ef4444;
+            color: white;
+        }
+
+        /* Indicador de corrida */
+        #sprint-indicator {
+            position: absolute;
+            bottom: 220px;
+            right: 40px;
+            width: 60px;
+            height: 60px;
+            border-radius: 30px;
+            background: rgba(247,147,26,0.3);
+            border: 3px solid #f7931a;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            animation: pulse 1s infinite;
+            z-index: 2100;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        #sprint-indicator.active {
+            display: flex;
+        }
+
+        /* Mini-mapa */
+        #minimap {
+            position: absolute;
+            top: 80px;
+            left: 20px;
+            width: 100px;
+            height: 100px;
+            background: rgba(0,0,0,0.6);
+            border: 2px solid #f7931a;
+            border-radius: 15px;
+            z-index: 2100;
+            backdrop-filter: blur(5px);
+            overflow: hidden;
+        }
+
+        #minimap-canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Loading */
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 16px;
+            z-index: 2200;
+            background: rgba(0,0,0,0.8);
+            padding: 20px 30px;
+            border-radius: 30px;
+            text-align: center;
+            border: 2px solid #f7931a;
+        }
+
+        /* Dica de controle */
+        #control-hint {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 40px;
+            font-size: 14px;
+            z-index: 2300;
+            border: 2px solid #f7931a;
+            text-align: center;
+            animation: fadeOut 3s forwards;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        @keyframes fadeOut {
+            0% { opacity: 1; }
+            70% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Tela inicial -->
+    <div id="home-screen">
+        <div class="header">
+            <div class="logo">🎮 CryptoWorld Mobile</div>
+        </div>
+
+        <div class="coin-list">
+            <!-- Bitcoin -->
+            <div class="coin-card" onclick="enterWorld('btc')">
+                <div class="coin-header">
+                    <div class="coin-icon btc-icon">₿</div>
+                    <div style="flex:1">
+                        <h2>Bitcoin</h2>
+                        <p style="color:#94a3b8;">BTC</p>
+                    </div>
+                </div>
+                <div style="font-size:22px; font-weight:bold;">$67,890</div>
+                <div style="color:#22c55e; margin:5px 0;">📈 +2.34%</div>
+                <button class="enter-world-btn">🎮 ENTRAR NO MUNDO</button>
+            </div>
+
+            <!-- Siren -->
+            <div class="coin-card" onclick="enterWorld('siren')">
+                <div class="coin-header">
+                    <div class="coin-icon siren-icon">🧜‍♀️</div>
+                    <div style="flex:1">
+                        <h2>Siren</h2>
+                        <p style="color:#94a3b8;">SIREN</p>
+                    </div>
+                </div>
+                <div style="font-size:22px; font-weight:bold;">$0.89</div>
+                <div style="color:#22c55e; margin:5px 0;">📈 +15.67%</div>
+                <button class="enter-world-btn">🎮 ENTRAR NO MUNDO</button>
+            </div>
+
+            <!-- Pippin -->
+            <div class="coin-card" onclick="enterWorld('pippin')">
+                <div class="coin-header">
+                    <div class="coin-icon pippin-icon">🐧</div>
+                    <div style="flex:1">
+                        <h2>Pippin</h2>
+                        <p style="color:#94a3b8;">PIPPIN</p>
+                    </div>
+                </div>
+                <div style="font-size:22px; font-weight:bold;">$0.0023</div>
+                <div style="color:#ef4444; margin:5px 0;">📉 -8.12%</div>
+                <button class="enter-world-btn">🎮 ENTRAR NO MUNDO</button>
+            </div>
+
+            <!-- Tria -->
+            <div class="coin-card" onclick="enterWorld('tria')">
+                <div class="coin-header">
+                    <div class="coin-icon tria-icon">🔺</div>
+                    <div style="flex:1">
+                        <h2>Tria</h2>
+                        <p style="color:#94a3b8;">TRIA</p>
+                    </div>
+                </div>
+                <div style="font-size:22px; font-weight:bold;">$12.45</div>
+                <div style="color:#22c55e; margin:5px 0;">📈 +5.23%</div>
+                <button class="enter-world-btn">🎮 ENTRAR NO MUNDO</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tela do mundo - Controles Free Fire Style -->
+    <div id="world-screen">
+        <!-- HUD -->
+        <div id="hud">
+            <div id="coin-info">
+                <div id="world-icon">₿</div>
+                <div>
+                    <div id="world-coin-name">Bitcoin</div>
+                    <div id="world-coin-symbol" style="color:#94a3b8;">BTC</div>
+                </div>
+            </div>
+            <div>
+                <div id="price-value">$67,890</div>
+                <div id="price-change">📈 +2.34%</div>
+            </div>
+        </div>
+
+        <!-- Mini-mapa -->
+        <div id="minimap">
+            <canvas id="minimap-canvas" width="100" height="100"></canvas>
+        </div>
+
+        <!-- Controle de saída -->
+        <button id="exit-btn">✕</button>
+
+        <!-- Zona Esquerda - Movimento (joystick grande Free Fire style) -->
+        <div id="left-controls">
+            <div id="move-joystick">
+                <div class="direction-indicator direction-up">▲</div>
+                <div class="direction-indicator direction-down">▼</div>
+                <div class="direction-indicator direction-left">◀</div>
+                <div class="direction-indicator direction-right">▶</div>
+            </div>
+        </div>
+
+        <!-- Zona Direita - Ações -->
+        <div id="right-controls">
+            <!-- Joystick de mira -->
+            <div id="aim-container">
+                <div id="aim-joystick"></div>
+            </div>
+
+            <!-- Botões de ação -->
+            <div class="action-buttons">
+                <button class="action-btn" id="jump-btn">⬆️</button>
+                <button class="action-btn" id="run-btn">🏃</button>
+                <button class="action-btn" id="crouch-btn">⬇️</button>
+            </div>
+        </div>
+
+        <!-- Botões de utilidade -->
+        <div id="utility-controls">
+            <button class="utility-btn" id="map-btn">🗺️</button>
+            <button class="utility-btn" id="reload-btn">🔄</button>
+            <button class="utility-btn" id="settings-btn">⚙️</button>
+        </div>
+
+        <!-- Indicador de corrida -->
+        <div id="sprint-indicator">🏃</div>
+
+        <!-- Loading -->
+        <div id="loading">🚀 Carregando mundo...</div>
+
+        <!-- Dica -->
+        <div id="control-hint">
+            👆 Use os joysticks como no Free Fire!
+        </div>
+    </div>
+
+    <!-- Three.js -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
+        // Configurações
+        const COINS = {
+            btc: { name: 'Bitcoin', symbol: 'BTC', binance: 'BTCUSDT', icon: '₿', color: '#f7931a', bgColor: 0xf7931a },
+            siren: { name: 'Siren', symbol: 'SIREN', binance: 'SIRENUSDT', icon: '🧜‍♀️', color: '#00ffff', bgColor: 0x00ffff },
+            pippin: { name: 'Pippin', symbol: 'PIPPIN', binance: 'PIPPINUSDT', icon: '🐧', color: '#ff69b4', bgColor: 0xff69b4 },
+            tria: { name: 'Tria', symbol: 'TRIA', binance: 'TRIAUSDT', icon: '🔺', color: '#8b5cf6', bgColor: 0x8b5cf6 }
+        };
+
+        let currentCoin = 'btc';
+        let scene, camera, renderer, labelRenderer;
+        let player = {
+            height: 2,
+            speed: 0.15,
+            position: new THREE.Vector3(0, 2, 10),
+            rotation: new THREE.Euler(0, 0, 0),
+            isRunning: false,
+            isCrouching: false
+        };
+        
+        // Elementos do gráfico
+        let candleGroup, bollingerGroup, smokeGroup;
+        let historicalCandles = [];
+        let liveCandleMesh = null;
+        let liveSmokeParticles = [];
+        let liveCandleData = null;
+        let minPrice, maxPrice, minVolume, maxVolume;
+        let lastPrice = 67000;
+        let binanceSocket = null;
+        let dataLoaded = false;
+        
+        // Controles touch Free Fire style
+        let moveJoystick = { active: false, x: 0, y: 0, startX: 0, startY: 0 };
+        let aimJoystick = { active: false, x: 0, y: 0, startX: 0, startY: 0 };
+        let moveSpeed = 0.15;
+        let lookSpeed = 0.02;
+        
+        // Parâmetros visuais
+        const WICK_RADIUS = 0.1;
+        const SPACING = 2.0;
+        const Y_RANGE = 20;
+        const GROUND_Y = 0;
+        const BB_PERIOD = 20;
+        const BB_STD = 2;
+        const MIN_RADIUS = 0.3;
+        const MAX_RADIUS = 1.0;
+
+        const TIMEFRAMES = { '1m': { binance: '1m', limit: 30, ms: 60 * 1000 } };
+
+        // Elementos DOM
+        const homeScreen = document.getElementById('home-screen');
+        const worldScreen = document.getElementById('world-screen');
+        const loadingEl = document.getElementById('loading');
+        const worldIcon = document.getElementById('world-icon');
+        const worldCoinName = document.getElementById('world-coin-name');
+        const worldCoinSymbol = document.getElementById('world-coin-symbol');
+        const priceValue = document.getElementById('price-value');
+        const priceChange = document.getElementById('price-change');
+        
+        // Joysticks
+        const moveJoystickEl = document.getElementById('move-joystick');
+        const aimJoystickEl = document.getElementById('aim-joystick');
+        const sprintIndicator = document.getElementById('sprint-indicator');
+
+        // Funções globais
+        window.enterWorld = (coin) => {
+            currentCoin = coin;
+            const coinData = COINS[coin];
+            
+            worldIcon.innerHTML = coinData.icon;
+            worldIcon.style.background = coinData.color;
+            worldCoinName.textContent = coinData.name;
+            worldCoinSymbol.textContent = coinData.symbol;
+            
+            homeScreen.classList.add('hidden');
+            worldScreen.classList.add('active');
+            
+            setTimeout(() => {
+                document.getElementById('control-hint').style.display = 'none';
+            }, 3000);
+            
+            initWorld();
+        };
+
+        window.exitWorld = () => {
+            worldScreen.classList.remove('active');
+            homeScreen.classList.remove('hidden');
+            
+            if (binanceSocket) binanceSocket.close();
+            if (renderer) {
+                renderer.dispose();
+                renderer = null;
+            }
+        };
+
+        // Configurar joysticks estilo Free Fire
+        function setupJoysticks() {
+            // Joystick de movimento (esquerdo)
+            moveJoystickEl.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const touch = e.touches[0];
+                const rect = moveJoystickEl.getBoundingClientRect();
+                
+                moveJoystick.active = true;
+                moveJoystick.startX = rect.left + rect.width/2;
+                moveJoystick.startY = rect.top + rect.height/2;
+                moveJoystickEl.classList.add('active');
+            });
+
+            moveJoystickEl.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                if (!moveJoystick.active) return;
+                
+                const touch = e.touches[0];
+                const dx = (touch.clientX - moveJoystick.startX) / 50;
+                const dy = (touch.clientY - moveJoystick.startY) / 50;
+                
+                // Limitar ao círculo
+                const distance = Math.sqrt(dx*dx + dy*dy);
+                if (distance > 1) {
+                    moveJoystick.x = dx / distance;
+                    moveJoystick.y = dy / distance;
+                } else {
+                    moveJoystick.x = dx;
+                    moveJoystick.y = dy;
+                }
+                
+                // Mover o thumb visualmente
+                const thumb = moveJoystickEl.querySelector('::before');
+                moveJoystickEl.style.setProperty('--thumb-x', `${moveJoystick.x * 40}px`);
+                moveJoystickEl.style.setProperty('--thumb-y', `${moveJoystick.y * 40}px`);
+            });
+
+            moveJoystickEl.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                moveJoystick.active = false;
+                moveJoystick.x = 0;
+                moveJoystick.y = 0;
+                moveJoystickEl.classList.remove('active');
+                moveJoystickEl.style.setProperty('--thumb-x', '0px');
+                moveJoystickEl.style.setProperty('--thumb-y', '0px');
+            });
+
+            // Joystick de mira (direito)
+            aimJoystickEl.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const touch = e.touches[0];
+                const rect = aimJoystickEl.getBoundingClientRect();
+                
+                aimJoystick.active = true;
+                aimJoystick.startX = rect.left + rect.width/2;
+                aimJoystick.startY = rect.top + rect.height/2;
+                aimJoystickEl.classList.add('active');
+            });
+
+            aimJoystickEl.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                if (!aimJoystick.active) return;
+                
+                const touch = e.touches[0];
+                const dx = (touch.clientX - aimJoystick.startX) / 40;
+                const dy = (touch.clientY - aimJoystick.startY) / 40;
+                
+                // Limitar ao círculo
+                const distance = Math.sqrt(dx*dx + dy*dy);
+                if (distance > 1) {
+                    aimJoystick.x = dx / distance;
+                    aimJoystick.y = dy / distance;
+                } else {
+                    aimJoystick.x = dx;
+                    aimJoystick.y = dy;
+                }
+                
+                aimJoystickEl.style.setProperty('--thumb-x', `${aimJoystick.x * 30}px`);
+                aimJoystickEl.style.setProperty('--thumb-y', `${aimJoystick.y * 30}px`);
+            });
+
+            aimJoystickEl.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                aimJoystick.active = false;
+                aimJoystick.x = 0;
+                aimJoystick.y = 0;
+                aimJoystickEl.classList.remove('active');
+                aimJoystickEl.style.setProperty('--thumb-x', '0px');
+                aimJoystickEl.style.setProperty('--thumb-y', '0px');
+            });
+
+            // Botões de ação
+            document.getElementById('jump-btn').addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                jump();
+            });
+
+            document.getElementById('run-btn').addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                toggleRun();
+            });
+
+            document.getElementById('crouch-btn').addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                toggleCrouch();
+            });
+
+            document.getElementById('exit-btn').addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                exitWorld();
+            });
+        }
+
+        function jump() {
+            if (player.position.y <= 2.1) {
+                player.position.y = 3;
+                setTimeout(() => {
+                    player.position.y = player.isCrouching ? 1.2 : 2;
+                }, 300);
+            }
+        }
+
+        function toggleRun() {
+            player.isRunning = !player.isRunning;
+            moveSpeed = player.isRunning ? 0.3 : 0.15;
+            document.getElementById('run-btn').classList.toggle('active');
+            
+            if (player.isRunning) {
+                sprintIndicator.classList.add('active');
+            } else {
+                sprintIndicator.classList.remove('active');
+            }
+        }
+
+        function toggleCrouch() {
+            player.isCrouching = !player.isCrouching;
+            player.position.y = player.isCrouching ? 1.2 : 2;
+            document.getElementById('crouch-btn').classList.toggle('active');
+        }
+
+        async function initWorld() {
+            loadingEl.style.display = 'block';
+            
+            const container = document.getElementById('world-screen');
+            
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0a0f1a);
+            scene.fog = new THREE.Fog(0x0a0f1a, 30, 100);
+
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.copy(player.position);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            container.appendChild(renderer.domElement);
+
+            labelRenderer = new CSS2DRenderer();
+            labelRenderer.setSize(window.innerWidth, window.innerHeight);
+            labelRenderer.domElement.style.position = 'absolute';
+            labelRenderer.domElement.style.top = '0px';
+            labelRenderer.domElement.style.left = '0px';
+            labelRenderer.domElement.style.pointerEvents = 'none';
+            container.appendChild(labelRenderer.domElement);
+
+            // Luzes
+            const ambientLight = new THREE.AmbientLight(0x404060);
+            scene.add(ambientLight);
+
+            const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
+            dirLight.position.set(20, 40, 20);
+            dirLight.castShadow = true;
+            scene.add(dirLight);
+
+            createWorld();
+            await fetchHistoricalData();
+            
+            loadingEl.style.display = 'none';
+            animate();
+        }
+
+        function createWorld() {
+            const coinData = COINS[currentCoin];
+            
+            // Chão
+            const gridHelper = new THREE.GridHelper(100, 50, coinData.bgColor, 0x2d3748);
+            gridHelper.position.y = GROUND_Y;
+            scene.add(gridHelper);
+
+            // Textura do chão
+            const canvas = document.createElement('canvas');
+            canvas.width = 1024;
+            canvas.height = 1024;
+            const ctx = canvas.getContext('2d');
+            
+            ctx.fillStyle = '#0a0f1a';
+            ctx.fillRect(0, 0, 1024, 1024);
+            
+            ctx.fillStyle = `rgba(${parseInt(coinData.color.slice(1,3), 16)}, ${parseInt(coinData.color.slice(3,5), 16)}, ${parseInt(coinData.color.slice(5,7), 16)}, 0.15)`;
+            ctx.font = 'bold 150px "Segoe UI", Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            for(let i = 0; i < 7; i++) {
+                for(let j = 0; j < 7; j++) {
+                    ctx.fillText(coinData.icon, 150 + i*300, 150 + j*300);
+                }
+            }
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            const groundMaterial = new THREE.MeshStandardMaterial({ map: texture, roughness: 0.8 });
+            
+            const groundGeometry = new THREE.PlaneGeometry(100, 100);
+            const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+            ground.rotation.x = -Math.PI / 2;
+            ground.position.y = GROUND_Y + 0.01;
+            ground.receiveShadow = true;
+            scene.add(ground);
+
+            // Gráfico
+            candleGroup = new THREE.Group();
+            bollingerGroup = new THREE.Group();
+            smokeGroup = new THREE.Group();
+            
+            candleGroup.position.set(0, 0, -20);
+            bollingerGroup.position.set(0, 0, -20);
+            smokeGroup.position.set(0, 0, -20);
+            
+            scene.add(candleGroup);
+            scene.add(bollingerGroup);
+            scene.add(smokeGroup);
+
+            // Label
+            const labelDiv = document.createElement('div');
+            labelDiv.textContent = `${coinData.name} WORLD`;
+            labelDiv.style.color = coinData.color;
+            labelDiv.style.fontSize = '20px';
+            labelDiv.style.fontWeight = 'bold';
+            labelDiv.style.textShadow = `0 0 10px ${coinData.color}`;
+            labelDiv.style.background = 'rgba(0,0,0,0.7)';
+            labelDiv.style.padding = '8px 20px';
+            labelDiv.style.borderRadius = '30px';
+            labelDiv.style.border = `2px solid ${coinData.color}`;
+            
+            const label = new CSS2DObject(labelDiv);
+            label.position.set(0, 15, -20);
+            scene.add(label);
+        }
+
+        // Funções de dados (mantidas iguais)
+        async function fetchHistoricalData() {
+            try {
+                const coinData = COINS[currentCoin];
+                const tf = TIMEFRAMES['1m'];
+                
+                let symbol = 'BTCUSDT';
+                if (coinData.symbol === 'BTC') symbol = 'BTCUSDT';
+                else symbol = coinData.symbol + 'USDT';
+                
+                const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${tf.binance}&limit=${tf.limit}`;
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                const formatted = data.map(k => ({
+                    time: k[0],
+                    open: parseFloat(k[1]),
+                    high: parseFloat(k[2]),
+                    low: parseFloat(k[3]),
+                    close: parseFloat(k[4]),
+                    volume: parseFloat(k[5])
+                }));
+                
+                processHistoricalData(formatted);
+                connectWebSocket(symbol);
+                
+            } catch (error) {
+                console.error('Erro ao buscar dados:', error);
+                generateMockData();
+            }
+        }
+
+        function processHistoricalData(data) {
+            historicalCandles = data.slice(0, -1);
+            liveCandleData = { ...data[data.length - 1] };
+            lastPrice = liveCandleData.close;
+            
+            minPrice = Infinity;
+            maxPrice = -Infinity;
+            minVolume = Infinity;
+            maxVolume = -Infinity;
+            
+            [...historicalCandles, liveCandleData].forEach(c => {
+                minPrice = Math.min(minPrice, c.low);
+                maxPrice = Math.max(maxPrice, c.high);
+                if (c.volume) {
+                    minVolume = Math.min(minVolume, c.volume);
+                    maxVolume = Math.max(maxVolume, c.volume);
+                }
+            });
+            
+            const priceRange = maxPrice - minPrice;
+            minPrice -= priceRange * 0.1;
+            maxPrice += priceRange * 0.1;
+            
+            if (minVolume === Infinity || minVolume === maxVolume) {
+                minVolume = 100;
+                maxVolume = 1000;
+            }
+            
+            dataLoaded = true;
+            renderCandles();
+            createBollingerBands();
+            updatePriceDisplay();
+        }
+
+        function generateMockData() {
+            const tf = TIMEFRAMES['1m'];
+            const data = [];
+            let basePrice = lastPrice;
+            let time = Date.now() - tf.limit * tf.ms;
+            
+            for (let i = 0; i < tf.limit; i++) {
+                const open = basePrice + (Math.random() - 0.5) * 800;
+                const close = open + (Math.random() - 0.5) * 600;
+                const high = Math.max(open, close) + Math.random() * 300;
+                const low = Math.min(open, close) - Math.random() * 300;
+                const volume = Math.random() * 1000 + 200;
+                
+                data.push({ time: time + i * tf.ms, open, high, low, close, volume });
+                basePrice = close;
+            }
+            
+            processHistoricalData(data);
+            startSimulatedTrades();
+        }
+
+        function connectWebSocket(symbol) {
+            if (binanceSocket) binanceSocket.close();
+            
+            const stream = `${symbol.toLowerCase()}@trade`;
+            const wsUrl = `wss://stream.binance.com:9443/ws/${stream}`;
+            
+            binanceSocket = new WebSocket(wsUrl);
+            
+            binanceSocket.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.e === 'trade') {
+                    processNewTrade({
+                        price: parseFloat(data.p),
+                        time: data.T,
+                        volume: parseFloat(data.q)
+                    });
+                }
+            };
+            
+            binanceSocket.onerror = () => {
+                startSimulatedTrades();
+            };
+        }
+
+        function processNewTrade(trade) {
+            if (!liveCandleData || !dataLoaded) return;
+            
+            const tf = TIMEFRAMES['1m'];
+            const periodStart = Math.floor(liveCandleData.time / tf.ms) * tf.ms;
+            const tradePeriodStart = Math.floor(trade.time / tf.ms) * tf.ms;
+            
+            if (tradePeriodStart > periodStart) {
+                historicalCandles.push({ ...liveCandleData });
+                
+                if (historicalCandles.length > tf.limit) {
+                    historicalCandles.shift();
+                }
+                
+                liveCandleData = {
+                    time: trade.time,
+                    open: trade.price,
+                    high: trade.price,
+                    low: trade.price,
+                    close: trade.price,
+                    volume: trade.volume || 100
+                };
+                
+                minPrice = Math.min(minPrice, trade.price);
+                maxPrice = Math.max(maxPrice, trade.price);
+                const priceRange = maxPrice - minPrice;
+                minPrice -= priceRange * 0.1;
+                maxPrice += priceRange * 0.1;
+                
+                renderCandles();
+                return;
+            }
+            
+            if (liveCandleData.open === 0) liveCandleData.open = trade.price;
+            liveCandleData.high = Math.max(liveCandleData.high, trade.price);
+            liveCandleData.low = Math.min(liveCandleData.low, trade.price);
+            liveCandleData.close = trade.price;
+            
+            if (trade.volume) {
+                liveCandleData.volume = (liveCandleData.volume || 0) + trade.volume;
+                if (liveCandleData.volume > maxVolume) {
+                    maxVolume = liveCandleData.volume;
+                }
+            }
+            
+            lastPrice = trade.price;
+            updateLiveCandle();
+            updatePriceDisplay();
+        }
+
+        function startSimulatedTrades() {
+            setInterval(() => {
+                if (!liveCandleData || !dataLoaded) return;
+                
+                const change = (Math.random() - 0.5) * 200;
+                const newPrice = Math.max(0.01, lastPrice + change);
+                const volume = Math.random() * 200 + 50;
+                
+                processNewTrade({
+                    price: newPrice,
+                    time: Date.now(),
+                    volume: volume
+                });
+            }, 800);
+        }
+
+        function updatePriceDisplay() {
+            if (!liveCandleData) return;
+            
+            priceValue.textContent = `$${liveCandleData.close.toFixed(2)}`;
+            const change = ((liveCandleData.close - liveCandleData.open) / liveCandleData.open * 100).toFixed(2);
+            const changeClass = change >= 0 ? '📈' : '📉';
+            priceChange.textContent = `${changeClass} ${Math.abs(change)}%`;
+            priceChange.style.color = change >= 0 ? '#22c55e' : '#ef4444';
+        }
+
+        // Funções 3D
+        function mapPriceToY(price) {
+            if (maxPrice === minPrice) return 0;
+            return ((price - minPrice) / (maxPrice - minPrice)) * Y_RANGE;
+        }
+
+        function mapVolumeToRadius(volume) {
+            if (maxVolume === minVolume) return (MIN_RADIUS + MAX_RADIUS) / 2;
+            const normalized = (volume - minVolume) / (maxVolume - minVolume);
+            return MIN_RADIUS + normalized * (MAX_RADIUS - MIN_RADIUS);
+        }
+
+        function createBollingerBands() {
+            while(bollingerGroup.children.length) {
+                bollingerGroup.remove(bollingerGroup.children[0]);
+            }
+            
+            if (historicalCandles.length < BB_PERIOD) return;
+            
+            const total = historicalCandles.length + 1;
+            const points = [];
+            
+            for (let i = 0; i < total; i++) {
+                let candle;
+                if (i < historicalCandles.length) {
+                    candle = historicalCandles[i];
+                } else {
+                    candle = liveCandleData;
+                }
+                
+                const allCandles = [...historicalCandles, liveCandleData];
+                const startIdx = Math.max(0, i - BB_PERIOD + 1);
+                const windowCandles = allCandles.slice(startIdx, i + 1);
+                
+                if (windowCandles.length >= BB_PERIOD) {
+                    const closes = windowCandles.map(c => c.close);
+                    const mean = closes.reduce((a, b) => a + b, 0) / BB_PERIOD;
+                    const squaredDiffs = closes.map(p => Math.pow(p - mean, 2));
+                    const variance = squaredDiffs.reduce((a, b) => a + b, 0) / BB_PERIOD;
+                    const stdDev = Math.sqrt(variance);
+                    
+                    const xPos = (i - total/2) * SPACING;
+                    
+                    points.push({
+                        x: xPos,
+                        upper: mapPriceToY(mean + (stdDev * BB_STD)),
+                        middle: mapPriceToY(mean),
+                        lower: mapPriceToY(mean - (stdDev * BB_STD))
+                    });
+                }
+            }
+            
+            if (points.length < 2) return;
+            
+            const upperMaterial = new THREE.LineBasicMaterial({ color: 0x8b5cf6 });
+            const middleMaterial = new THREE.LineBasicMaterial({ color: 0x60a5fa });
+            const lowerMaterial = new THREE.LineBasicMaterial({ color: 0x8b5cf6 });
+            
+            const upperPoints = points.map(p => new THREE.Vector3(p.x, p.upper, 0));
+            const upperGeo = new THREE.BufferGeometry().setFromPoints(upperPoints);
+            const upperLine = new THREE.Line(upperGeo, upperMaterial);
+            bollingerGroup.add(upperLine);
+            
+            const middlePoints = points.map(p => new THREE.Vector3(p.x, p.middle, 0));
+            const middleGeo = new THREE.BufferGeometry().setFromPoints(middlePoints);
+            const middleLine = new THREE.Line(middleGeo, middleMaterial);
+            bollingerGroup.add(middleLine);
+            
+            const lowerPoints = points.map(p => new THREE.Vector3(p.x, p.lower, 0));
+            const lowerGeo = new THREE.BufferGeometry().setFromPoints(lowerPoints);
+            const lowerLine = new THREE.Line(lowerGeo, lowerMaterial);
+            bollingerGroup.add(lowerLine);
+        }
+
+        function createCandle(data, index, total, isLive = false) {
+            const { open, high, low, close, volume } = data;
+            
+            const isGreen = close >= open;
+            const bodyColor = isGreen ? 0x22c55e : 0xef4444;
+            
+            const yOpen = mapPriceToY(open);
+            const yClose = mapPriceToY(close);
+            const yHigh = mapPriceToY(high);
+            const yLow = mapPriceToY(low);
+            
+            const xPos = (index - total/2) * SPACING;
+            const radius = mapVolumeToRadius(volume);
+            
+            const group = new THREE.Group();
+            group.position.set(xPos, 0, 0);
+            
+            // Corpo
+            const bodyHeight = Math.abs(yClose - yOpen) || 0.1;
+            const bodyGeo = new THREE.CylinderGeometry(radius, radius, bodyHeight, 16);
+            const bodyMat = new THREE.MeshStandardMaterial({ 
+                color: bodyColor,
+                roughness: 0.3,
+                metalness: 0.2,
+                emissive: bodyColor,
+                emissiveIntensity: isLive ? 0.8 : 0.2
+            });
+            const body = new THREE.Mesh(bodyGeo, bodyMat);
+            body.position.y = (yOpen + yClose) / 2;
+            body.castShadow = true;
+            body.receiveShadow = true;
+            group.add(body);
+            
+            // Pavios
+            const wickMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
+            
+            if (yHigh > Math.max(yOpen, yClose)) {
+                const wickHeight = yHigh - Math.max(yOpen, yClose);
+                const wickGeo = new THREE.CylinderGeometry(WICK_RADIUS, WICK_RADIUS, wickHeight, 8);
+                const wick = new THREE.Mesh(wickGeo, wickMat);
+                wick.position.y = Math.max(yOpen, yClose) + wickHeight/2;
+                wick.castShadow = true;
+                group.add(wick);
+            }
+            
+            if (yLow < Math.min(yOpen, yClose)) {
+                const wickHeight = Math.min(yOpen, yClose) - yLow;
+                const wickGeo = new THREE.CylinderGeometry(WICK_RADIUS, WICK_RADIUS, wickHeight, 8);
+                const wick = new THREE.Mesh(wickGeo, wickMat);
+                wick.position.y = Math.min(yOpen, yClose) - wickHeight/2;
+                wick.castShadow = true;
+                group.add(wick);
+            }
+            
+            if (isLive) {
+                group.userData = { body };
+            }
+            
+            return group;
+        }
+
+        function createSmokeParticles(color, count = 15) {
+            const particles = [];
+            const particleGroup = new THREE.Group();
+            
+            const geometry = new THREE.SphereGeometry(0.2, 6, 6);
+            
+            for (let i = 0; i < count; i++) {
+                const material = new THREE.MeshStandardMaterial({
+                    color: color,
+                    emissive: color,
+                    emissiveIntensity: 0.8,
+                    transparent: true,
+                    opacity: 0.6
+                });
+                
+                const particle = new THREE.Mesh(geometry, material);
+                
+                const angle = (i / count) * Math.PI * 2;
+                const radius = 1.2;
+                particle.position.set(
+                    Math.cos(angle) * radius,
+                    2.5,
+                    Math.sin(angle) * radius
+                );
+                
+                particle.userData = {
+                    baseY: 2.5,
+                    speed: 0.04 + Math.random() * 0.05,
+                    angle: angle,
+                    radius: radius,
+                    phase: Math.random() * Math.PI * 2
+                };
+                
+                particleGroup.add(particle);
+                particles.push(particle);
+            }
+            
+            return { group: particleGroup, particles };
+        }
+
+        function updateSmoke(particles, candleY, isGreen) {
+            if (!particles) return;
+            
+            const time = Date.now() * 0.004;
+            const color = isGreen ? 0x22c55e : 0xef4444;
+            
+            particles.forEach((particle, i) => {
+                const data = particle.userData;
+                
+                data.angle += 0.04;
+                particle.position.x = Math.cos(data.angle + data.phase) * data.radius;
+                particle.position.z = Math.sin(data.angle + data.phase) * data.radius;
+                particle.position.y = candleY + 1.5 + Math.sin(time + i) * 0.8;
+                
+                particle.material.opacity = 0.4 + Math.sin(time * 2 + i) * 0.3;
+                particle.material.emissiveIntensity = 0.5 + Math.sin(time) * 0.3;
+                
+                data.radius += 0.004;
+                if (data.radius > 2.5) data.radius = 1.2;
+                
+                particle.material.color.setHex(color);
+                particle.material.emissive.setHex(color);
+            });
+        }
+
+        function updateLiveCandle() {
+            if (!liveCandleMesh || !liveCandleData) return;
+            
+            const { body } = liveCandleMesh.userData;
+            const { open, high, low, close, volume } = liveCandleData;
+            
+            const yOpen = mapPriceToY(open);
+            const yClose = mapPriceToY(close);
+            
+            const isGreen = close >= open;
+            const bodyColor = isGreen ? 0x22c55e : 0xef4444;
+            
+            const bodyHeight = Math.abs(yClose - yOpen) || 0.1;
+            const radius = mapVolumeToRadius(volume || 100);
+            
+            body.scale.x = radius / MIN_RADIUS;
+            body.scale.z = radius / MIN_RADIUS;
+            body.scale.y = bodyHeight;
+            body.position.y = (yOpen + yClose) / 2;
+            body.material.color.setHex(bodyColor);
+            body.material.emissive.setHex(bodyColor);
+            body.material.emissiveIntensity = 0.8 + Math.sin(Date.now() * 0.01) * 0.3;
+            
+            if (liveSmokeParticles.length > 0) {
+                updateSmoke(liveSmokeParticles, (yOpen + yClose) / 2, isGreen);
+            }
+            
+            createBollingerBands();
+        }
+
+        function renderCandles() {
+            while(candleGroup.children.length) {
+                candleGroup.remove(candleGroup.children[0]);
+            }
+            
+            while(smokeGroup.children.length) {
+                smokeGroup.remove(smokeGroup.children[0]);
+            }
+            
+            liveSmokeParticles = [];
+            
+            const total = historicalCandles.length + 1;
+            
+            historicalCandles.forEach((candle, index) => {
+                const staticCandle = createCandle(candle, index, total, false);
+                candleGroup.add(staticCandle);
+            });
+            
+            const liveIndex = historicalCandles.length;
+            liveCandleMesh = createCandle(liveCandleData, liveIndex, total, true);
+            candleGroup.add(liveCandleMesh);
+            
+            const isGreen = liveCandleData.close >= liveCandleData.open;
+            const smokeColor = isGreen ? 0x22c55e : 0xef4444;
+            const smoke = createSmokeParticles(smokeColor, 20);
+            smoke.group.position.set(liveCandleMesh.position.x, 0, 0);
+            smokeGroup.add(smoke.group);
+            liveSmokeParticles = smoke.particles;
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Movimento com joystick esquerdo (Free Fire style)
+            if (moveJoystick.active) {
+                const moveX = moveJoystick.x * moveSpeed;
+                const moveZ = moveJoystick.y * moveSpeed;
+                
+                const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+                forward.y = 0;
+                forward.normalize();
+                
+                const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
+                right.y = 0;
+                right.normalize();
+                
+                camera.position.addScaledVector(forward, -moveZ);
+                camera.position.addScaledVector(right, moveX);
+            }
+            
+            // Rotação com joystick direito (Free Fire style)
+            if (aimJoystick.active) {
+                camera.rotation.y -= aimJoystick.x * lookSpeed;
+                camera.rotation.x -= aimJoystick.y * lookSpeed * 0.5;
+                camera.rotation.x = Math.max(-Math.PI/3, Math.min(Math.PI/3, camera.rotation.x));
+            }
+            
+            // Atualizar elementos
+            if (dataLoaded && liveCandleMesh && liveSmokeParticles.length > 0) {
+                updateLiveCandle();
+            }
+            
+            renderer.render(scene, camera);
+            labelRenderer.render(scene, camera);
+        }
+
+        // Inicializar
+        setupJoysticks();
+
+        // Resize
+        window.addEventListener('resize', () => {
+            if (camera && renderer && labelRenderer) {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                labelRenderer.setSize(window.innerWidth, window.innerHeight);
+            }
+        });
+
+        // Prevenir scroll
+        document.addEventListener('touchmove', (e) => {
+            if (moveJoystick.active || aimJoystick.active) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+    </script>
+</body>
+</html>
