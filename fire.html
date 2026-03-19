@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Crypto Realm - Experiência Imersiva</title>
+    <title>Crypto Realm - Modo Terceira Pessoa</title>
     <style>
         * {
             margin: 0;
@@ -23,7 +23,7 @@
             touch-action: none;
         }
 
-        /* Tela inicial - Luxuosa e sofisticada */
+        /* Tela inicial */
         #home-screen {
             position: fixed;
             top: 0;
@@ -126,7 +126,7 @@
         }
 
         .btc-icon { background: #f7931a; }
-        .siren-icon { background: #00ffff; box-shadow: 0 10px 20px rgba(0,255,255,0.2); }
+        .siren-icon { background: #00ffff; }
         .pippin-icon { background: #ff69b4; }
         .tria-icon { background: #8b5cf6; }
 
@@ -183,7 +183,7 @@
             opacity: 0.5;
         }
 
-        /* Tela do mundo - Design minimalista e realista */
+        /* Tela do mundo */
         #world-screen {
             position: fixed;
             top: 0;
@@ -198,7 +198,7 @@
             display: block;
         }
 
-        /* HUD Superior - Informações essenciais */
+        /* HUD */
         #hud {
             position: absolute;
             top: 30px;
@@ -223,26 +223,8 @@
             align-items: center;
             justify-content: center;
             font-size: 18px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
         }
 
-        #coin-info-compact {
-            line-height: 1.4;
-        }
-
-        #world-coin-name {
-            font-size: 14px;
-            font-weight: 400;
-            letter-spacing: 0.5px;
-        }
-
-        #world-coin-symbol {
-            font-size: 11px;
-            color: #94a3b8;
-            letter-spacing: 0.5px;
-        }
-
-        /* Preço em destaque */
         #price-container {
             position: absolute;
             top: 30px;
@@ -270,16 +252,13 @@
             margin-top: 2px;
         }
 
-        /* ===== CONTROLES REALISTAS ===== */
-        /* Design minimalista, botões pequenos e elegantes */
-
-        /* Área de movimento - Toque duplo sutil */
+        /* Controles */
         #move-area {
             position: absolute;
             bottom: 40px;
             left: 40px;
-            width: 80px;
-            height: 80px;
+            width: 100px;
+            height: 100px;
             z-index: 2100;
             opacity: 0.3;
             transition: opacity 0.3s;
@@ -301,8 +280,8 @@
         }
 
         .move-dot {
-            width: 20px;
-            height: 20px;
+            width: 24px;
+            height: 24px;
             background: rgba(247,147,26,0.8);
             border-radius: 50%;
             position: absolute;
@@ -313,41 +292,23 @@
             transition: all 0.1s;
         }
 
-        /* Indicadores direcionais sutis */
-        .direction-hint {
-            position: absolute;
-            color: rgba(255,255,255,0.3);
-            font-size: 12px;
-            transition: color 0.2s;
-        }
-
-        .hint-up { top: 5px; left: 50%; transform: translateX(-50%); }
-        .hint-down { bottom: 5px; left: 50%; transform: translateX(-50%); }
-        .hint-left { left: 5px; top: 50%; transform: translateY(-50%); }
-        .hint-right { right: 5px; top: 50%; transform: translateY(-50%); }
-
-        #move-area.active .direction-hint {
-            color: rgba(247,147,26,0.6);
-        }
-
-        /* Área de olhar - Toque duplo sutil */
-        #look-area {
+        #camera-area {
             position: absolute;
             bottom: 40px;
             right: 40px;
-            width: 70px;
-            height: 70px;
+            width: 90px;
+            height: 90px;
             z-index: 2100;
             opacity: 0.3;
             transition: opacity 0.3s;
             pointer-events: auto;
         }
 
-        #look-area.active {
+        #camera-area.active {
             opacity: 0.8;
         }
 
-        .look-ring {
+        .camera-ring {
             width: 100%;
             height: 100%;
             border: 1px solid rgba(255,255,255,0.2);
@@ -357,9 +318,9 @@
             backdrop-filter: blur(5px);
         }
 
-        .look-dot {
-            width: 16px;
-            height: 16px;
+        .camera-dot {
+            width: 20px;
+            height: 20px;
             background: rgba(153,69,255,0.8);
             border-radius: 50%;
             position: absolute;
@@ -370,11 +331,10 @@
             transition: all 0.1s;
         }
 
-        /* Botões de ação - Ícones minimalistas */
         #action-controls {
             position: absolute;
             bottom: 40px;
-            right: 140px;
+            right: 160px;
             display: flex;
             gap: 15px;
             z-index: 2100;
@@ -382,71 +342,42 @@
         }
 
         .action-btn {
-            width: 44px;
-            height: 44px;
+            width: 50px;
+            height: 50px;
             border-radius: 50%;
             background: rgba(10,15,26,0.3);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255,255,255,0.05);
             color: rgba(255,255,255,0.6);
-            font-size: 16px;
+            font-size: 18px;
             display: flex;
             align-items: center;
             justify-content: center;
             transition: all 0.2s;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
         }
 
         .action-btn:active {
-            background: rgba(255,255,255,0.05);
+            background: rgba(255,255,255,0.1);
             color: white;
-            border-color: rgba(255,255,255,0.2);
             transform: scale(0.95);
         }
 
-        #jump-btn:active { color: #22c55e; border-color: #22c55e; }
-        #run-btn.active { color: #f7931a; border-color: #f7931a; background: rgba(247,147,26,0.1); }
-        #crouch-btn:active { color: #8b5cf6; border-color: #8b5cf6; }
-
-        /* Mini-mapa - Elegante e discreto */
-        #minimap {
-            position: absolute;
-            top: 100px;
-            left: 30px;
-            width: 120px;
-            height: 120px;
-            border-radius: 20px;
-            background: rgba(10,15,26,0.3);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.03);
-            z-index: 2100;
-            overflow: hidden;
-            opacity: 0.5;
-            transition: opacity 0.3s;
-            pointer-events: none;
+        #run-btn.active {
+            color: #f7931a;
+            border-color: #f7931a;
         }
 
-        #minimap:hover {
-            opacity: 0.8;
-        }
-
-        #minimap-canvas {
-            width: 100%;
-            height: 100%;
-        }
-
-        /* Botão sair - Discreto */
         #exit-btn {
             position: absolute;
             top: 30px;
             right: 30px;
-            width: 36px;
-            height: 36px;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
             background: rgba(239,68,68,0.1);
             border: 1px solid rgba(239,68,68,0.2);
             color: rgba(239,68,68,0.6);
-            font-size: 16px;
+            font-size: 18px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -460,10 +391,8 @@
         #exit-btn:active {
             background: rgba(239,68,68,0.2);
             color: #ef4444;
-            border-color: #ef4444;
         }
 
-        /* Loading */
         #loading {
             position: absolute;
             top: 50%;
@@ -477,10 +406,8 @@
             padding: 16px 32px;
             border-radius: 50px;
             border: 1px solid rgba(255,255,255,0.05);
-            letter-spacing: 1px;
         }
 
-        /* Dica inicial - Discreta */
         #hint {
             position: absolute;
             bottom: 150px;
@@ -494,9 +421,8 @@
             padding: 8px 20px;
             border-radius: 50px;
             border: 1px solid rgba(255,255,255,0.03);
-            letter-spacing: 0.5px;
-            pointer-events: none;
             animation: fadeOut 3s forwards;
+            pointer-events: none;
         }
 
         @keyframes fadeOut {
@@ -507,11 +433,10 @@
     </style>
 </head>
 <body>
-    <!-- Tela inicial -->
     <div id="home-screen">
         <div class="header">
             <div class="logo">CRYPTO REALM</div>
-            <div class="subtitle">EXPERIÊNCIA IMERSIVA</div>
+            <div class="subtitle">MODO TERCEIRA PESSOA</div>
         </div>
 
         <div class="coin-list">
@@ -581,14 +506,12 @@
         </div>
     </div>
 
-    <!-- Tela do mundo -->
     <div id="world-screen">
-        <!-- HUD Superior -->
         <div id="hud">
             <div id="world-icon">₿</div>
-            <div id="coin-info-compact">
+            <div>
                 <div id="world-coin-name">Bitcoin</div>
-                <div id="world-coin-symbol">BTC</div>
+                <div id="world-coin-symbol" style="color:#94a3b8; font-size:11px;">BTC</div>
             </div>
         </div>
 
@@ -597,40 +520,28 @@
             <div id="price-change">+2.34%</div>
         </div>
 
-        <!-- Mini-mapa -->
-        <div id="minimap">
-            <canvas id="minimap-canvas" width="120" height="120"></canvas>
-        </div>
-
-        <!-- Controles minimalistas -->
         <div id="move-area">
             <div class="move-ring">
                 <div class="move-dot" id="move-dot"></div>
-                <span class="direction-hint hint-up">▲</span>
-                <span class="direction-hint hint-down">▼</span>
-                <span class="direction-hint hint-left">◀</span>
-                <span class="direction-hint hint-right">▶</span>
             </div>
         </div>
 
-        <div id="look-area">
-            <div class="look-ring">
-                <div class="look-dot" id="look-dot"></div>
+        <div id="camera-area">
+            <div class="camera-ring">
+                <div class="camera-dot" id="camera-dot"></div>
             </div>
         </div>
 
         <div id="action-controls">
             <button class="action-btn" id="jump-btn">↑</button>
             <button class="action-btn" id="run-btn">→</button>
-            <button class="action-btn" id="crouch-btn">↓</button>
         </div>
 
         <button id="exit-btn">✕</button>
         <div id="loading">CARREGANDO MUNDO</div>
-        <div id="hint">TOQUE DUPLO NOS CÍRCULOS PARA ANDAR E OLHAR</div>
+        <div id="hint">USE OS CONTROLES PARA EXPLORAR</div>
     </div>
 
-    <!-- Three.js -->
     <script type="importmap">
         {
             "imports": {
@@ -642,9 +553,9 @@
 
     <script type="module">
         import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
         import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 
-        // Configuração das moedas
         const COINS = {
             btc: { name: 'Bitcoin', symbol: 'BTC', binance: 'BTCUSDT', icon: '₿', color: '#f7931a', bgColor: 0xf7931a },
             siren: { name: 'Siren', symbol: 'SIREN', binance: 'SIRENUSDT', icon: '🧜‍♀️', color: '#00ffff', bgColor: 0x00ffff },
@@ -654,13 +565,16 @@
 
         let currentCoin = 'btc';
         let scene, camera, renderer, labelRenderer;
-        let player = {
+        
+        // Personagem
+        let character = {
+            mesh: null,
+            position: new THREE.Vector3(0, 0, 10),
+            rotation: 0,
             height: 2,
-            speed: 0.15,
-            position: new THREE.Vector3(0, 2, 10),
-            rotation: new THREE.Euler(0, 0, 0),
             isRunning: false,
-            isCrouching: false
+            mixer: null,
+            animations: {}
         };
         
         // Elementos do gráfico
@@ -674,11 +588,13 @@
         let binanceSocket = null;
         let dataLoaded = false;
         
-        // Controles realistas
+        // Controles
         let moveControl = { active: false, startX: 0, startY: 0, currentX: 0, currentY: 0 };
-        let lookControl = { active: false, startX: 0, startY: 0, currentX: 0, currentY: 0 };
-        let moveSpeed = 0.15;
-        let lookSpeed = 0.01;
+        let cameraControl = { active: false, startX: 0, startY: 0, currentX: 0, currentY: 0 };
+        let cameraAngle = { horizontal: 0, vertical: 0.5 };
+        let moveSpeed = 0.1;
+        let cameraDistance = 8;
+        let cameraHeight = 3;
         
         // Parâmetros visuais
         const WICK_RADIUS = 0.1;
@@ -702,18 +618,14 @@
         const priceValue = document.getElementById('price-value');
         const priceChange = document.getElementById('price-change');
         
-        // Elementos de controle
         const moveArea = document.getElementById('move-area');
-        const lookArea = document.getElementById('look-area');
+        const cameraArea = document.getElementById('camera-area');
         const moveDot = document.getElementById('move-dot');
-        const lookDot = document.getElementById('look-dot');
+        const cameraDot = document.getElementById('camera-dot');
         const runBtn = document.getElementById('run-btn');
         const jumpBtn = document.getElementById('jump-btn');
-        const crouchBtn = document.getElementById('crouch-btn');
         const exitBtn = document.getElementById('exit-btn');
-        const hint = document.getElementById('hint');
 
-        // Funções globais
         window.enterWorld = (coin) => {
             currentCoin = coin;
             const coinData = COINS[coin];
@@ -725,10 +637,6 @@
             
             homeScreen.classList.add('hidden');
             worldScreen.classList.add('active');
-            
-            setTimeout(() => {
-                if (hint) hint.style.display = 'none';
-            }, 3000);
             
             initWorld();
         };
@@ -744,9 +652,8 @@
             }
         };
 
-        // Configurar controles realistas
         function setupControls() {
-            // Controle de movimento - toque e arrasto
+            // Controle de movimento
             moveArea.addEventListener('touchstart', (e) => {
                 e.preventDefault();
                 const touch = e.touches[0];
@@ -769,7 +676,6 @@
                 const dx = (touch.clientX - moveControl.startX) / 30;
                 const dy = (touch.clientY - moveControl.startY) / 30;
                 
-                // Limitar distância
                 const distance = Math.sqrt(dx*dx + dy*dy);
                 if (distance > 1) {
                     moveControl.currentX = dx / distance;
@@ -779,8 +685,7 @@
                     moveControl.currentY = dy;
                 }
                 
-                // Mover o dot visualmente
-                moveDot.style.transform = `translate(calc(-50% + ${moveControl.currentX * 20}px), calc(-50% + ${moveControl.currentY * 20}px))`;
+                moveDot.style.transform = `translate(calc(-50% + ${moveControl.currentX * 25}px), calc(-50% + ${moveControl.currentY * 25}px))`;
             });
 
             moveArea.addEventListener('touchend', (e) => {
@@ -792,54 +697,51 @@
                 moveDot.style.transform = 'translate(-50%, -50%)';
             });
 
-            // Controle de olhar - toque e arrasto
-            lookArea.addEventListener('touchstart', (e) => {
+            // Controle de câmera
+            cameraArea.addEventListener('touchstart', (e) => {
                 e.preventDefault();
                 const touch = e.touches[0];
-                const rect = lookArea.getBoundingClientRect();
+                const rect = cameraArea.getBoundingClientRect();
                 
-                lookControl.active = true;
-                lookControl.startX = rect.left + rect.width/2;
-                lookControl.startY = rect.top + rect.height/2;
-                lookControl.currentX = 0;
-                lookControl.currentY = 0;
+                cameraControl.active = true;
+                cameraControl.startX = rect.left + rect.width/2;
+                cameraControl.startY = rect.top + rect.height/2;
+                cameraControl.currentX = 0;
+                cameraControl.currentY = 0;
                 
-                lookArea.classList.add('active');
+                cameraArea.classList.add('active');
             });
 
-            lookArea.addEventListener('touchmove', (e) => {
+            cameraArea.addEventListener('touchmove', (e) => {
                 e.preventDefault();
-                if (!lookControl.active) return;
+                if (!cameraControl.active) return;
                 
                 const touch = e.touches[0];
-                const dx = (touch.clientX - lookControl.startX) / 30;
-                const dy = (touch.clientY - lookControl.startY) / 30;
+                const dx = (touch.clientX - cameraControl.startX) / 30;
+                const dy = (touch.clientY - cameraControl.startY) / 30;
                 
                 const distance = Math.sqrt(dx*dx + dy*dy);
                 if (distance > 1) {
-                    lookControl.currentX = dx / distance;
-                    lookControl.currentY = dy / distance;
+                    cameraControl.currentX = dx / distance;
+                    cameraControl.currentY = dy / distance;
                 } else {
-                    lookControl.currentX = dx;
-                    lookControl.currentY = dy;
+                    cameraControl.currentX = dx;
+                    cameraControl.currentY = dy;
                 }
                 
-                lookDot.style.transform = `translate(calc(-50% + ${lookControl.currentX * 15}px), calc(-50% + ${lookControl.currentY * 15}px))`;
+                cameraDot.style.transform = `translate(calc(-50% + ${cameraControl.currentX * 20}px), calc(-50% + ${cameraControl.currentY * 20}px))`;
+                
+                cameraAngle.horizontal += cameraControl.currentX * 0.02;
+                cameraAngle.vertical = Math.max(0.2, Math.min(1, cameraAngle.vertical - cameraControl.currentY * 0.02));
             });
 
-            lookArea.addEventListener('touchend', (e) => {
+            cameraArea.addEventListener('touchend', (e) => {
                 e.preventDefault();
-                lookControl.active = false;
-                lookControl.currentX = 0;
-                lookControl.currentY = 0;
-                lookArea.classList.remove('active');
-                lookDot.style.transform = 'translate(-50%, -50%)';
-            });
-
-            // Botões de ação
-            jumpBtn.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                jump();
+                cameraControl.active = false;
+                cameraControl.currentX = 0;
+                cameraControl.currentY = 0;
+                cameraArea.classList.remove('active');
+                cameraDot.style.transform = 'translate(-50%, -50%)';
             });
 
             runBtn.addEventListener('touchstart', (e) => {
@@ -847,9 +749,9 @@
                 toggleRun();
             });
 
-            crouchBtn.addEventListener('touchstart', (e) => {
+            jumpBtn.addEventListener('touchstart', (e) => {
                 e.preventDefault();
-                toggleCrouch();
+                jump();
             });
 
             exitBtn.addEventListener('touchstart', (e) => {
@@ -858,25 +760,95 @@
             });
         }
 
-        function jump() {
-            if (player.position.y <= 2.1) {
-                player.position.y = 3;
-                setTimeout(() => {
-                    player.position.y = player.isCrouching ? 1.2 : 2;
-                }, 300);
-            }
-        }
-
         function toggleRun() {
-            player.isRunning = !player.isRunning;
-            moveSpeed = player.isRunning ? 0.3 : 0.15;
+            character.isRunning = !character.isRunning;
+            moveSpeed = character.isRunning ? 0.2 : 0.1;
             runBtn.classList.toggle('active');
         }
 
-        function toggleCrouch() {
-            player.isCrouching = !player.isCrouching;
-            player.position.y = player.isCrouching ? 1.2 : 2;
-            crouchBtn.classList.toggle('active');
+        function jump() {
+            if (character.position.y <= 0.1) {
+                character.position.y = 1;
+                setTimeout(() => {
+                    character.position.y = 0;
+                }, 400);
+            }
+        }
+
+        function createCharacter() {
+            const group = new THREE.Group();
+            
+            // Corpo (torso)
+            const torsoGeo = new THREE.CylinderGeometry(0.4, 0.4, 1.2, 8);
+            const torsoMat = new THREE.MeshStandardMaterial({ 
+                color: 0x2d3748,
+                emissive: COINS[currentCoin].bgColor,
+                emissiveIntensity: 0.2
+            });
+            const torso = new THREE.Mesh(torsoGeo, torsoMat);
+            torso.position.y = 0.6;
+            torso.castShadow = true;
+            torso.receiveShadow = true;
+            group.add(torso);
+            
+            // Cabeça
+            const headGeo = new THREE.SphereGeometry(0.3, 16);
+            const headMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8 });
+            const head = new THREE.Mesh(headGeo, headMat);
+            head.position.y = 1.4;
+            head.castShadow = true;
+            head.receiveShadow = true;
+            group.add(head);
+            
+            // Braços
+            const armGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.8, 6);
+            const armMat = new THREE.MeshStandardMaterial({ color: 0x2d3748 });
+            
+            const leftArm = new THREE.Mesh(armGeo, armMat);
+            leftArm.position.set(-0.5, 0.8, 0);
+            leftArm.rotation.z = 0.2;
+            leftArm.castShadow = true;
+            group.add(leftArm);
+            
+            const rightArm = new THREE.Mesh(armGeo, armMat);
+            rightArm.position.set(0.5, 0.8, 0);
+            rightArm.rotation.z = -0.2;
+            rightArm.castShadow = true;
+            group.add(rightArm);
+            
+            // Pernas
+            const legGeo = new THREE.CylinderGeometry(0.15, 0.15, 0.8, 6);
+            const legMat = new THREE.MeshStandardMaterial({ color: 0x1e2a3a });
+            
+            const leftLeg = new THREE.Mesh(legGeo, legMat);
+            leftLeg.position.set(-0.25, 0.2, 0);
+            leftLeg.castShadow = true;
+            group.add(leftLeg);
+            
+            const rightLeg = new THREE.Mesh(legGeo, legMat);
+            rightLeg.position.set(0.25, 0.2, 0);
+            rightLeg.castShadow = true;
+            group.add(rightLeg);
+            
+            // Efeito de brilho (aura)
+            const auraGeo = new THREE.SphereGeometry(0.5, 8);
+            const auraMat = new THREE.MeshStandardMaterial({
+                color: COINS[currentCoin].bgColor,
+                emissive: COINS[currentCoin].bgColor,
+                emissiveIntensity: 0.2,
+                transparent: true,
+                opacity: 0.3
+            });
+            const aura = new THREE.Mesh(auraGeo, auraMat);
+            aura.position.y = 0.8;
+            group.add(aura);
+            
+            group.position.copy(character.position);
+            group.castShadow = true;
+            group.receiveShadow = true;
+            
+            character.mesh = group;
+            scene.add(group);
         }
 
         async function initWorld() {
@@ -888,8 +860,7 @@
             scene.background = new THREE.Color(0x0a0f1a);
             scene.fog = new THREE.Fog(0x0a0f1a, 30, 100);
 
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.copy(player.position);
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
 
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
@@ -912,9 +883,16 @@
             const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
             dirLight.position.set(20, 40, 20);
             dirLight.castShadow = true;
+            dirLight.shadow.mapSize.width = 2048;
+            dirLight.shadow.mapSize.height = 2048;
             scene.add(dirLight);
 
+            const backLight = new THREE.PointLight(0x9945FF, 0.5);
+            backLight.position.set(-10, 10, -20);
+            scene.add(backLight);
+
             createWorld();
+            createCharacter();
             await fetchHistoricalData();
             
             loadingEl.style.display = 'none';
@@ -924,12 +902,12 @@
         function createWorld() {
             const coinData = COINS[currentCoin];
             
-            // Chão com grid elegante
+            // Chão
             const gridHelper = new THREE.GridHelper(100, 50, coinData.bgColor, 0x2d3748);
             gridHelper.position.y = GROUND_Y;
             scene.add(gridHelper);
 
-            // Textura sofisticada do chão
+            // Textura do chão
             const canvas = document.createElement('canvas');
             canvas.width = 1024;
             canvas.height = 1024;
@@ -994,7 +972,6 @@
             scene.add(label);
         }
 
-        // Funções de dados (mantidas do código anterior)
         async function fetchHistoricalData() {
             try {
                 const coinData = COINS[currentCoin];
@@ -1182,7 +1159,6 @@
             priceChange.style.color = change >= 0 ? '#22c55e' : '#ef4444';
         }
 
-        // Funções 3D
         function mapPriceToY(price) {
             if (maxPrice === minPrice) return 0;
             return ((price - minPrice) / (maxPrice - minPrice)) * Y_RANGE;
@@ -1273,7 +1249,6 @@
             const group = new THREE.Group();
             group.position.set(xPos, 0, 0);
             
-            // Corpo
             const bodyHeight = Math.abs(yClose - yOpen) || 0.1;
             const bodyGeo = new THREE.CylinderGeometry(radius, radius, bodyHeight, 16);
             const bodyMat = new THREE.MeshStandardMaterial({ 
@@ -1289,7 +1264,6 @@
             body.receiveShadow = true;
             group.add(body);
             
-            // Pavios
             const wickMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8 });
             
             if (yHigh > Math.max(yOpen, yClose)) {
@@ -1443,28 +1417,38 @@
         function animate() {
             requestAnimationFrame(animate);
             
-            // Movimento realista baseado no joystick
+            // Movimento do personagem
             if (moveControl.active) {
                 const moveX = moveControl.currentX * moveSpeed;
                 const moveZ = moveControl.currentY * moveSpeed;
                 
-                const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
-                forward.y = 0;
-                forward.normalize();
+                // Rotacionar personagem na direção do movimento
+                if (Math.abs(moveX) > 0.1 || Math.abs(moveZ) > 0.1) {
+                    character.rotation = Math.atan2(moveX, -moveZ);
+                    
+                    // Mover personagem
+                    character.position.x += Math.sin(character.rotation) * moveSpeed * Math.abs(moveZ);
+                    character.position.z += Math.cos(character.rotation) * moveSpeed * Math.abs(moveZ);
+                    
+                    // Movimento lateral
+                    character.position.x += Math.cos(character.rotation) * moveX * moveSpeed;
+                    character.position.z += -Math.sin(character.rotation) * moveX * moveSpeed;
+                }
                 
-                const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
-                right.y = 0;
-                right.normalize();
-                
-                camera.position.addScaledVector(forward, -moveZ);
-                camera.position.addScaledVector(right, moveX);
+                if (character.mesh) {
+                    character.mesh.position.copy(character.position);
+                    character.mesh.rotation.y = character.rotation;
+                }
             }
             
-            // Rotação realista baseada no joystick de olhar
-            if (lookControl.active) {
-                camera.rotation.y -= lookControl.currentX * lookSpeed;
-                camera.rotation.x -= lookControl.currentY * lookSpeed * 0.5;
-                camera.rotation.x = Math.max(-Math.PI/4, Math.min(Math.PI/4, camera.rotation.x));
+            // Posicionar câmera atrás do personagem
+            if (character.mesh) {
+                const camX = character.position.x + Math.sin(cameraAngle.horizontal) * cameraDistance;
+                const camZ = character.position.z + Math.cos(cameraAngle.horizontal) * cameraDistance;
+                const camY = character.position.y + cameraHeight * cameraAngle.vertical;
+                
+                camera.position.set(camX, camY, camZ);
+                camera.lookAt(character.position.x, character.position.y + 1, character.position.z);
             }
             
             // Atualizar elementos
@@ -1476,10 +1460,8 @@
             labelRenderer.render(scene, camera);
         }
 
-        // Inicializar
         setupControls();
 
-        // Resize
         window.addEventListener('resize', () => {
             if (camera && renderer && labelRenderer) {
                 camera.aspect = window.innerWidth / window.innerHeight;
@@ -1489,9 +1471,8 @@
             }
         });
 
-        // Prevenir scroll
         document.addEventListener('touchmove', (e) => {
-            if (moveControl.active || lookControl.active) {
+            if (moveControl.active || cameraControl.active) {
                 e.preventDefault();
             }
         }, { passive: false });
