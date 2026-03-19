@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Crypto Realm - Modo Terceira Pessoa</title>
+    <title>Crypto Realm - Candles Realistas</title>
     <style>
         * {
             margin: 0;
@@ -437,7 +437,6 @@
             100% { opacity: 0; }
         }
 
-        /* Posição do personagem */
         #debug-info {
             position: absolute;
             bottom: 200px;
@@ -457,7 +456,7 @@
     <div id="home-screen">
         <div class="header">
             <div class="logo">CRYPTO REALM</div>
-            <div class="subtitle">MODO TERCEIRA PESSOA</div>
+            <div class="subtitle">CANDLES REALISTAS</div>
         </div>
 
         <div class="coin-list">
@@ -593,8 +592,7 @@
             position: new THREE.Vector3(0, 0, 10),
             rotation: 0,
             height: 2,
-            isRunning: false,
-            mixer: null
+            isRunning: false
         };
         
         // Elementos do gráfico
@@ -632,15 +630,18 @@
         let cameraDistance = 8;
         let cameraHeight = 3;
         
-        // Parâmetros visuais
-        const WICK_RADIUS = 0.1;
-        const SPACING = 2.0;
-        const Y_RANGE = 20;
+        // Parâmetros visuais - NOVOS
+        const WICK_RADIUS = 0.08;
+        const SPACING = 2.5;
         const GROUND_Y = 0;
         const BB_PERIOD = 20;
         const BB_STD = 2;
+        
+        // Parâmetros de volume - MODIFICADOS
+        const MIN_HEIGHT = 0.5;
+        const MAX_HEIGHT = 8.0;
         const MIN_RADIUS = 0.3;
-        const MAX_RADIUS = 1.0;
+        const MAX_RADIUS = 1.5;
 
         const TIMEFRAMES = { '1m': { binance: '1m', limit: 30, ms: 60 * 1000 } };
 
@@ -705,8 +706,6 @@
                 moveControl.worldZ = 0;
                 
                 moveArea.classList.add('active');
-                
-                // Reset dot position
                 moveDot.style.transform = 'translate(-50%, -50%)';
             });
 
@@ -716,13 +715,11 @@
                 
                 const touch = e.touches[0];
                 
-                // Calcular distância do centro
                 const dx = touch.clientX - moveControl.startX;
                 const dy = touch.clientY - moveControl.startY;
                 
-                // Limitar ao raio do joystick (60px)
-                const distance = Math.sqrt(dx*dx + dy*dy);
                 const maxDistance = 50;
+                const distance = Math.sqrt(dx*dx + dy*dy);
                 
                 if (distance > maxDistance) {
                     moveControl.currentX = (dx / distance) * maxDistance;
@@ -732,11 +729,8 @@
                     moveControl.currentY = dy;
                 }
                 
-                // Mover o dot visualmente
                 moveDot.style.transform = `translate(calc(-50% + ${moveControl.currentX}px), calc(-50% + ${moveControl.currentY}px))`;
                 
-                // Calcular direção do movimento no mundo
-                // Normalizar para valores entre -1 e 1
                 moveControl.worldX = moveControl.currentX / maxDistance;
                 moveControl.worldZ = moveControl.currentY / maxDistance;
             });
@@ -790,7 +784,6 @@
                 
                 cameraDot.style.transform = `translate(calc(-50% + ${cameraControl.currentX}px), calc(-50% + ${cameraControl.currentY}px))`;
                 
-                // Ajustar ângulo da câmera
                 cameraAngle.horizontal += (cameraControl.currentX / maxDistance) * 0.05;
                 cameraAngle.vertical = Math.max(0.2, Math.min(1, cameraAngle.vertical - (cameraControl.currentY / maxDistance) * 0.05));
             });
@@ -838,7 +831,7 @@
         function createCharacter() {
             const group = new THREE.Group();
             
-            // Corpo (torso)
+            // Corpo
             const torsoGeo = new THREE.CylinderGeometry(0.4, 0.4, 1.2, 8);
             const torsoMat = new THREE.MeshStandardMaterial({ 
                 color: 0x2d3748,
@@ -890,7 +883,7 @@
             rightLeg.castShadow = true;
             group.add(rightLeg);
             
-            // Efeito de brilho (aura)
+            // Aura
             const auraGeo = new THREE.SphereGeometry(0.6, 8);
             const auraMat = new THREE.MeshStandardMaterial({
                 color: COINS[currentCoin].bgColor,
@@ -909,8 +902,6 @@
             
             character.mesh = group;
             scene.add(group);
-            
-            console.log('Personagem criado na posição:', character.position);
         }
 
         async function initWorld() {
@@ -959,7 +950,6 @@
             
             loadingEl.style.display = 'none';
             
-            // Esconder hint após 4 segundos
             setTimeout(() => {
                 document.getElementById('hint').style.opacity = '0';
             }, 4000);
@@ -970,7 +960,7 @@
         function createWorld() {
             const coinData = COINS[currentCoin];
             
-            // Chão
+            // Chão com grid
             const gridHelper = new THREE.GridHelper(100, 50, coinData.bgColor, 0x2d3748);
             gridHelper.position.y = GROUND_Y;
             scene.add(gridHelper);
@@ -1060,7 +1050,8 @@
                     high: parseFloat(k[2]),
                     low: parseFloat(k[3]),
                     close: parseFloat(k[4]),
-                    volume: parseFloat(k[5])
+                    volume: parseFloat(k[5]),
+                    isBuy: parseFloat(k[4]) >= parseFloat(k[1]) // Compra se close >= open
                 }));
                 
                 processHistoricalData(formatted);
@@ -1077,23 +1068,16 @@
             liveCandleData = { ...data[data.length - 1] };
             lastPrice = liveCandleData.close;
             
-            minPrice = Infinity;
-            maxPrice = -Infinity;
+            // Calcular min/max de volume
             minVolume = Infinity;
             maxVolume = -Infinity;
             
             [...historicalCandles, liveCandleData].forEach(c => {
-                minPrice = Math.min(minPrice, c.low);
-                maxPrice = Math.max(maxPrice, c.high);
                 if (c.volume) {
                     minVolume = Math.min(minVolume, c.volume);
                     maxVolume = Math.max(maxVolume, c.volume);
                 }
             });
-            
-            const priceRange = maxPrice - minPrice;
-            minPrice -= priceRange * 0.1;
-            maxPrice += priceRange * 0.1;
             
             if (minVolume === Infinity || minVolume === maxVolume) {
                 minVolume = 100;
@@ -1113,13 +1097,19 @@
             let time = Date.now() - tf.limit * tf.ms;
             
             for (let i = 0; i < tf.limit; i++) {
-                const open = basePrice + (Math.random() - 0.5) * 800;
-                const close = open + (Math.random() - 0.5) * 600;
-                const high = Math.max(open, close) + Math.random() * 300;
-                const low = Math.min(open, close) - Math.random() * 300;
+                const isBuy = Math.random() > 0.5;
+                const open = basePrice;
+                const change = (Math.random() * 500) * (isBuy ? 1 : -1);
+                const close = open + change;
+                const high = Math.max(open, close) + Math.random() * 200;
+                const low = Math.min(open, close) - Math.random() * 200;
                 const volume = Math.random() * 1000 + 200;
                 
-                data.push({ time: time + i * tf.ms, open, high, low, close, volume });
+                data.push({ 
+                    time: time + i * tf.ms, 
+                    open, high, low, close, volume,
+                    isBuy 
+                });
                 basePrice = close;
             }
             
@@ -1141,7 +1131,8 @@
                     processNewTrade({
                         price: parseFloat(data.p),
                         time: data.T,
-                        volume: parseFloat(data.q)
+                        volume: parseFloat(data.q),
+                        isBuy: data.m === false // true se for comprador agressor
                     });
                 }
             };
@@ -1171,14 +1162,9 @@
                     high: trade.price,
                     low: trade.price,
                     close: trade.price,
-                    volume: trade.volume || 100
+                    volume: trade.volume || 100,
+                    isBuy: trade.isBuy
                 };
-                
-                minPrice = Math.min(minPrice, trade.price);
-                maxPrice = Math.max(maxPrice, trade.price);
-                const priceRange = maxPrice - minPrice;
-                minPrice -= priceRange * 0.1;
-                maxPrice += priceRange * 0.1;
                 
                 renderCandles();
                 return;
@@ -1189,12 +1175,16 @@
             liveCandleData.low = Math.min(liveCandleData.low, trade.price);
             liveCandleData.close = trade.price;
             
+            // Acumular volume
             if (trade.volume) {
                 liveCandleData.volume = (liveCandleData.volume || 0) + trade.volume;
                 if (liveCandleData.volume > maxVolume) {
                     maxVolume = liveCandleData.volume;
                 }
             }
+            
+            // Atualizar tendência baseada no último trade
+            liveCandleData.isBuy = trade.isBuy;
             
             lastPrice = trade.price;
             updateLiveCandle();
@@ -1205,16 +1195,18 @@
             setInterval(() => {
                 if (!liveCandleData || !dataLoaded) return;
                 
-                const change = (Math.random() - 0.5) * 200;
+                const isBuy = Math.random() > 0.5;
+                const change = (Math.random() * 100) * (isBuy ? 1 : -1);
                 const newPrice = Math.max(0.01, lastPrice + change);
                 const volume = Math.random() * 200 + 50;
                 
                 processNewTrade({
                     price: newPrice,
                     time: Date.now(),
-                    volume: volume
+                    volume: volume,
+                    isBuy: isBuy
                 });
-            }, 800);
+            }, 500);
         }
 
         function updatePriceDisplay() {
@@ -1227,15 +1219,173 @@
             priceChange.style.color = change >= 0 ? '#22c55e' : '#ef4444';
         }
 
-        function mapPriceToY(price) {
-            if (maxPrice === minPrice) return 0;
-            return ((price - minPrice) / (maxPrice - minPrice)) * Y_RANGE;
+        // NOVAS FUNÇÕES PARA CANDLES REALISTAS
+        function calculateCandleDimensions(volume, isBuy) {
+            // Normalizar volume entre 0 e 1
+            const normalizedVolume = (volume - minVolume) / (maxVolume - minVolume);
+            
+            if (isBuy) {
+                // COMPRA: Quanto mais volume, mais ALTO e mais FINO
+                const height = MIN_HEIGHT + normalizedVolume * (MAX_HEIGHT - MIN_HEIGHT);
+                const radius = MAX_RADIUS - normalizedVolume * (MAX_RADIUS - MIN_RADIUS);
+                return { height, radius };
+            } else {
+                // VENDA: Quanto mais volume, mais LARGO e mais BAIXO
+                const height = MAX_HEIGHT - normalizedVolume * (MAX_HEIGHT - MIN_HEIGHT);
+                const radius = MIN_RADIUS + normalizedVolume * (MAX_RADIUS - MIN_RADIUS);
+                return { height, radius };
+            }
         }
 
-        function mapVolumeToRadius(volume) {
-            if (maxVolume === minVolume) return (MIN_RADIUS + MAX_RADIUS) / 2;
-            const normalized = (volume - minVolume) / (maxVolume - minVolume);
-            return MIN_RADIUS + normalized * (MAX_RADIUS - MIN_RADIUS);
+        function createCandle(data, index, total, isLive = false) {
+            const { open, high, low, close, volume, isBuy } = data;
+            
+            const isGreen = close >= open;
+            const bodyColor = isGreen ? 0x22c55e : 0xef4444;
+            
+            // Calcular dimensões baseado no volume e tipo
+            const dimensions = calculateCandleDimensions(volume, isBuy);
+            
+            const xPos = (index - total/2) * SPACING;
+            
+            const group = new THREE.Group();
+            group.position.set(xPos, 0, 0);
+            
+            // Corpo do candle (começa do chão)
+            const bodyGeo = new THREE.CylinderGeometry(dimensions.radius, dimensions.radius, dimensions.height, 16);
+            const bodyMat = new THREE.MeshStandardMaterial({ 
+                color: bodyColor,
+                roughness: 0.3,
+                metalness: 0.2,
+                emissive: bodyColor,
+                emissiveIntensity: isLive ? 0.8 : 0.2,
+                transparent: true,
+                opacity: 0.9
+            });
+            const body = new THREE.Mesh(bodyGeo, bodyMat);
+            body.position.y = dimensions.height / 2; // Começa do chão
+            body.castShadow = true;
+            body.receiveShadow = true;
+            group.add(body);
+            
+            // Pavio (só se tiver diferença significativa)
+            const wickHeight = Math.abs(mapPriceToY(high) - mapPriceToY(low));
+            if (wickHeight > 0.5) {
+                const wickGeo = new THREE.CylinderGeometry(WICK_RADIUS, WICK_RADIUS, wickHeight, 8);
+                const wickMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8 });
+                const wick = new THREE.Mesh(wickGeo, wickMat);
+                wick.position.y = mapPriceToY((high + low) / 2);
+                wick.castShadow = true;
+                group.add(wick);
+            }
+            
+            // Efeito de brilho para candle ao vivo
+            if (isLive) {
+                const glowGeo = new THREE.SphereGeometry(dimensions.radius * 2, 8);
+                const glowMat = new THREE.MeshStandardMaterial({
+                    color: bodyColor,
+                    emissive: bodyColor,
+                    emissiveIntensity: 0.3,
+                    transparent: true,
+                    opacity: 0.2
+                });
+                const glow = new THREE.Mesh(glowGeo, glowMat);
+                glow.position.y = dimensions.height / 2;
+                group.add(glow);
+                
+                group.userData = { body, dimensions };
+            }
+            
+            return group;
+        }
+
+        function createSmokeParticles(color, count = 15) {
+            const particles = [];
+            const particleGroup = new THREE.Group();
+            
+            const geometry = new THREE.SphereGeometry(0.2, 5, 5);
+            
+            for (let i = 0; i < count; i++) {
+                const material = new THREE.MeshStandardMaterial({
+                    color: color,
+                    emissive: color,
+                    emissiveIntensity: 0.6,
+                    transparent: true,
+                    opacity: 0.5
+                });
+                
+                const particle = new THREE.Mesh(geometry, material);
+                
+                const angle = (i / count) * Math.PI * 2;
+                const radius = 0.8;
+                particle.position.set(
+                    Math.cos(angle) * radius,
+                    1.0,
+                    Math.sin(angle) * radius
+                );
+                
+                particle.userData = {
+                    baseY: 1.0,
+                    speed: 0.03 + Math.random() * 0.04,
+                    angle: angle,
+                    radius: radius,
+                    phase: Math.random() * Math.PI * 2,
+                    velocity: new THREE.Vector3(
+                        (Math.random() - 0.5) * 0.02,
+                        Math.random() * 0.03,
+                        (Math.random() - 0.5) * 0.02
+                    )
+                };
+                
+                particleGroup.add(particle);
+                particles.push(particle);
+            }
+            
+            return { group: particleGroup, particles };
+        }
+
+        function updateSmoke(particles, candleY, isGreen, volume) {
+            if (!particles) return;
+            
+            const time = Date.now() * 0.003;
+            const color = isGreen ? 0x22c55e : 0xef4444;
+            const intensity = Math.min(1, volume / 500); // Mais partículas com mais volume
+            
+            particles.forEach((particle, i) => {
+                const data = particle.userData;
+                
+                // Movimento caótico
+                data.angle += 0.02 + Math.random() * 0.01;
+                particle.position.x += data.velocity.x;
+                particle.position.z += data.velocity.z;
+                particle.position.y += data.velocity.y;
+                
+                // Reset quando sai da área
+                if (Math.abs(particle.position.x) > 2 || 
+                    Math.abs(particle.position.z) > 2 || 
+                    particle.position.y > candleY + 3) {
+                    
+                    const angle = Math.random() * Math.PI * 2;
+                    particle.position.set(
+                        Math.cos(angle) * 0.8,
+                        candleY,
+                        Math.sin(angle) * 0.8
+                    );
+                    
+                    data.velocity.set(
+                        (Math.random() - 0.5) * 0.03,
+                        Math.random() * 0.04,
+                        (Math.random() - 0.5) * 0.03
+                    );
+                }
+                
+                // Opacidade pulsante
+                particle.material.opacity = 0.3 + Math.sin(time * 3 + i) * 0.2;
+                particle.material.emissiveIntensity = intensity * (0.3 + Math.sin(time * 2) * 0.2);
+                
+                particle.material.color.setHex(color);
+                particle.material.emissive.setHex(color);
+            });
         }
 
         function createBollingerBands() {
@@ -1271,9 +1421,9 @@
                     
                     points.push({
                         x: xPos,
-                        upper: mapPriceToY(mean + (stdDev * BB_STD)),
-                        middle: mapPriceToY(mean),
-                        lower: mapPriceToY(mean - (stdDev * BB_STD))
+                        upper: mean + (stdDev * BB_STD),
+                        middle: mean,
+                        lower: mean - (stdDev * BB_STD)
                     });
                 }
             }
@@ -1284,169 +1434,46 @@
             const middleMaterial = new THREE.LineBasicMaterial({ color: 0x60a5fa });
             const lowerMaterial = new THREE.LineBasicMaterial({ color: 0x8b5cf6 });
             
-            const upperPoints = points.map(p => new THREE.Vector3(p.x, p.upper, 0));
+            const upperPoints = points.map(p => new THREE.Vector3(p.x, p.upper * 0.1, 0));
             const upperGeo = new THREE.BufferGeometry().setFromPoints(upperPoints);
             const upperLine = new THREE.Line(upperGeo, upperMaterial);
             bollingerGroup.add(upperLine);
             
-            const middlePoints = points.map(p => new THREE.Vector3(p.x, p.middle, 0));
+            const middlePoints = points.map(p => new THREE.Vector3(p.x, p.middle * 0.1, 0));
             const middleGeo = new THREE.BufferGeometry().setFromPoints(middlePoints);
             const middleLine = new THREE.Line(middleGeo, middleMaterial);
             bollingerGroup.add(middleLine);
             
-            const lowerPoints = points.map(p => new THREE.Vector3(p.x, p.lower, 0));
+            const lowerPoints = points.map(p => new THREE.Vector3(p.x, p.lower * 0.1, 0));
             const lowerGeo = new THREE.BufferGeometry().setFromPoints(lowerPoints);
             const lowerLine = new THREE.Line(lowerGeo, lowerMaterial);
             bollingerGroup.add(lowerLine);
-        }
-
-        function createCandle(data, index, total, isLive = false) {
-            const { open, high, low, close, volume } = data;
-            
-            const isGreen = close >= open;
-            const bodyColor = isGreen ? 0x22c55e : 0xef4444;
-            
-            const yOpen = mapPriceToY(open);
-            const yClose = mapPriceToY(close);
-            const yHigh = mapPriceToY(high);
-            const yLow = mapPriceToY(low);
-            
-            const xPos = (index - total/2) * SPACING;
-            const radius = mapVolumeToRadius(volume);
-            
-            const group = new THREE.Group();
-            group.position.set(xPos, 0, 0);
-            
-            const bodyHeight = Math.abs(yClose - yOpen) || 0.1;
-            const bodyGeo = new THREE.CylinderGeometry(radius, radius, bodyHeight, 16);
-            const bodyMat = new THREE.MeshStandardMaterial({ 
-                color: bodyColor,
-                roughness: 0.4,
-                metalness: 0.3,
-                emissive: bodyColor,
-                emissiveIntensity: isLive ? 0.6 : 0.1
-            });
-            const body = new THREE.Mesh(bodyGeo, bodyMat);
-            body.position.y = (yOpen + yClose) / 2;
-            body.castShadow = true;
-            body.receiveShadow = true;
-            group.add(body);
-            
-            const wickMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8 });
-            
-            if (yHigh > Math.max(yOpen, yClose)) {
-                const wickHeight = yHigh - Math.max(yOpen, yClose);
-                const wickGeo = new THREE.CylinderGeometry(WICK_RADIUS, WICK_RADIUS, wickHeight, 8);
-                const wick = new THREE.Mesh(wickGeo, wickMat);
-                wick.position.y = Math.max(yOpen, yClose) + wickHeight/2;
-                wick.castShadow = true;
-                group.add(wick);
-            }
-            
-            if (yLow < Math.min(yOpen, yClose)) {
-                const wickHeight = Math.min(yOpen, yClose) - yLow;
-                const wickGeo = new THREE.CylinderGeometry(WICK_RADIUS, WICK_RADIUS, wickHeight, 8);
-                const wick = new THREE.Mesh(wickGeo, wickMat);
-                wick.position.y = Math.min(yOpen, yClose) - wickHeight/2;
-                wick.castShadow = true;
-                group.add(wick);
-            }
-            
-            if (isLive) {
-                group.userData = { body };
-            }
-            
-            return group;
-        }
-
-        function createSmokeParticles(color, count = 12) {
-            const particles = [];
-            const particleGroup = new THREE.Group();
-            
-            const geometry = new THREE.SphereGeometry(0.15, 5, 5);
-            
-            for (let i = 0; i < count; i++) {
-                const material = new THREE.MeshStandardMaterial({
-                    color: color,
-                    emissive: color,
-                    emissiveIntensity: 0.4,
-                    transparent: true,
-                    opacity: 0.3
-                });
-                
-                const particle = new THREE.Mesh(geometry, material);
-                
-                const angle = (i / count) * Math.PI * 2;
-                const radius = 1.0;
-                particle.position.set(
-                    Math.cos(angle) * radius,
-                    2.0,
-                    Math.sin(angle) * radius
-                );
-                
-                particle.userData = {
-                    baseY: 2.0,
-                    speed: 0.02 + Math.random() * 0.03,
-                    angle: angle,
-                    radius: radius,
-                    phase: Math.random() * Math.PI * 2
-                };
-                
-                particleGroup.add(particle);
-                particles.push(particle);
-            }
-            
-            return { group: particleGroup, particles };
-        }
-
-        function updateSmoke(particles, candleY, isGreen) {
-            if (!particles) return;
-            
-            const time = Date.now() * 0.003;
-            const color = isGreen ? 0x22c55e : 0xef4444;
-            
-            particles.forEach((particle, i) => {
-                const data = particle.userData;
-                
-                data.angle += 0.02;
-                particle.position.x = Math.cos(data.angle + data.phase) * data.radius;
-                particle.position.z = Math.sin(data.angle + data.phase) * data.radius;
-                particle.position.y = candleY + 1.2 + Math.sin(time + i) * 0.3;
-                
-                particle.material.opacity = 0.2 + Math.sin(time + i) * 0.1;
-                data.radius += 0.001;
-                if (data.radius > 1.8) data.radius = 1.0;
-                
-                particle.material.color.setHex(color);
-                particle.material.emissive.setHex(color);
-            });
         }
 
         function updateLiveCandle() {
             if (!liveCandleMesh || !liveCandleData) return;
             
             const { body } = liveCandleMesh.userData;
-            const { open, high, low, close, volume } = liveCandleData;
-            
-            const yOpen = mapPriceToY(open);
-            const yClose = mapPriceToY(close);
+            const { open, close, volume, isBuy } = liveCandleData;
             
             const isGreen = close >= open;
             const bodyColor = isGreen ? 0x22c55e : 0xef4444;
             
-            const bodyHeight = Math.abs(yClose - yOpen) || 0.1;
-            const radius = mapVolumeToRadius(volume || 100);
+            // Recalcular dimensões baseado no volume atual
+            const dimensions = calculateCandleDimensions(volume || 100, isBuy);
             
-            body.scale.x = radius / MIN_RADIUS;
-            body.scale.z = radius / MIN_RADIUS;
-            body.scale.y = bodyHeight;
-            body.position.y = (yOpen + yClose) / 2;
+            // Atualizar corpo do candle
+            body.scale.x = dimensions.radius / MIN_RADIUS;
+            body.scale.z = dimensions.radius / MIN_RADIUS;
+            body.scale.y = dimensions.height;
+            body.position.y = dimensions.height / 2;
             body.material.color.setHex(bodyColor);
             body.material.emissive.setHex(bodyColor);
-            body.material.emissiveIntensity = 0.5 + Math.sin(Date.now() * 0.01) * 0.2;
+            body.material.emissiveIntensity = 0.8 + Math.sin(Date.now() * 0.01) * 0.3;
             
+            // Atualizar partículas
             if (liveSmokeParticles.length > 0) {
-                updateSmoke(liveSmokeParticles, (yOpen + yClose) / 2, isGreen);
+                updateSmoke(liveSmokeParticles, dimensions.height, isGreen, volume);
             }
             
             createBollingerBands();
@@ -1474,9 +1501,10 @@
             liveCandleMesh = createCandle(liveCandleData, liveIndex, total, true);
             candleGroup.add(liveCandleMesh);
             
+            // Criar partículas para o candle ao vivo
             const isGreen = liveCandleData.close >= liveCandleData.open;
             const smokeColor = isGreen ? 0x22c55e : 0xef4444;
-            const smoke = createSmokeParticles(smokeColor, 15);
+            const smoke = createSmokeParticles(smokeColor, 20);
             smoke.group.position.set(liveCandleMesh.position.x, 0, 0);
             smokeGroup.add(smoke.group);
             liveSmokeParticles = smoke.particles;
@@ -1485,24 +1513,20 @@
         function animate() {
             requestAnimationFrame(animate);
             
-            // MOVIMENTO DO PERSONAGEM - CORRIGIDO
+            // Movimento do personagem
             if (moveControl.active && (Math.abs(moveControl.worldX) > 0.1 || Math.abs(moveControl.worldZ) > 0.1)) {
                 
-                // Calcular direção do movimento baseada na rotação da câmera
                 const angle = cameraAngle.horizontal;
                 
-                // Vetores de direção baseados no ângulo da câmera
                 const forwardX = Math.sin(angle);
                 const forwardZ = Math.cos(angle);
                 
                 const rightX = Math.cos(angle);
                 const rightZ = -Math.sin(angle);
                 
-                // Mover personagem
                 character.position.x += (forwardX * moveControl.worldZ + rightX * moveControl.worldX) * moveSpeed;
                 character.position.z += (forwardZ * moveControl.worldZ + rightZ * moveControl.worldX) * moveSpeed;
                 
-                // Rotacionar personagem na direção do movimento
                 if (Math.abs(moveControl.worldX) > 0.1 || Math.abs(moveControl.worldZ) > 0.1) {
                     character.rotation = Math.atan2(
                         forwardX * moveControl.worldZ + rightX * moveControl.worldX,
@@ -1510,20 +1534,18 @@
                     );
                 }
                 
-                // Atualizar mesh do personagem
                 if (character.mesh) {
                     character.mesh.position.copy(character.position);
                     character.mesh.rotation.y = character.rotation;
                 }
                 
-                // Debug
                 debugInfo.style.display = 'block';
-                debugInfo.innerHTML = `Pos: ${character.position.x.toFixed(1)}, ${character.position.z.toFixed(1)} | Vel: ${moveControl.worldX.toFixed(2)}, ${moveControl.worldZ.toFixed(2)}`;
+                debugInfo.innerHTML = `Pos: ${character.position.x.toFixed(1)}, ${character.position.z.toFixed(1)}`;
             } else {
                 debugInfo.style.display = 'none';
             }
             
-            // Posicionar câmera atrás do personagem
+            // Posicionar câmera
             if (character.mesh) {
                 const camX = character.position.x + Math.sin(cameraAngle.horizontal) * cameraDistance;
                 const camZ = character.position.z + Math.cos(cameraAngle.horizontal) * cameraDistance;
@@ -1533,7 +1555,7 @@
                 camera.lookAt(character.position.x, character.position.y + 1, character.position.z);
             }
             
-            // Atualizar elementos do gráfico
+            // Atualizar elementos
             if (dataLoaded && liveCandleMesh && liveSmokeParticles.length > 0) {
                 updateLiveCandle();
             }
@@ -1542,7 +1564,6 @@
             labelRenderer.render(scene, camera);
         }
 
-        // Inicializar controles
         setupControls();
 
         window.addEventListener('resize', () => {
