@@ -257,84 +257,86 @@
             position: absolute;
             bottom: 40px;
             left: 40px;
-            width: 100px;
-            height: 100px;
+            width: 120px;
+            height: 120px;
             z-index: 2100;
-            opacity: 0.3;
+            opacity: 0.4;
             transition: opacity 0.3s;
             pointer-events: auto;
         }
 
         #move-area.active {
-            opacity: 0.8;
+            opacity: 1;
         }
 
         .move-ring {
             width: 100%;
             height: 100%;
-            border: 1px solid rgba(255,255,255,0.2);
+            border: 2px solid rgba(247,147,26,0.5);
             border-radius: 50%;
             position: relative;
-            background: rgba(10,15,26,0.2);
+            background: rgba(10,15,26,0.3);
             backdrop-filter: blur(5px);
         }
 
         .move-dot {
-            width: 24px;
-            height: 24px;
-            background: rgba(247,147,26,0.8);
+            width: 40px;
+            height: 40px;
+            background: rgba(247,147,26,0.9);
             border-radius: 50%;
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            box-shadow: 0 0 20px rgba(247,147,26,0.3);
-            transition: all 0.1s;
+            box-shadow: 0 0 30px rgba(247,147,26,0.5);
+            transition: transform 0.1s ease;
+            pointer-events: none;
         }
 
         #camera-area {
             position: absolute;
             bottom: 40px;
             right: 40px;
-            width: 90px;
-            height: 90px;
+            width: 100px;
+            height: 100px;
             z-index: 2100;
-            opacity: 0.3;
+            opacity: 0.4;
             transition: opacity 0.3s;
             pointer-events: auto;
         }
 
         #camera-area.active {
-            opacity: 0.8;
+            opacity: 1;
         }
 
         .camera-ring {
             width: 100%;
             height: 100%;
-            border: 1px solid rgba(255,255,255,0.2);
+            border: 2px solid rgba(153,69,255,0.5);
             border-radius: 50%;
             position: relative;
-            background: rgba(10,15,26,0.2);
+            background: rgba(10,15,26,0.3);
             backdrop-filter: blur(5px);
         }
 
         .camera-dot {
-            width: 20px;
-            height: 20px;
-            background: rgba(153,69,255,0.8);
+            width: 30px;
+            height: 30px;
+            background: rgba(153,69,255,0.9);
             border-radius: 50%;
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            box-shadow: 0 0 20px rgba(153,69,255,0.3);
-            transition: all 0.1s;
+            box-shadow: 0 0 30px rgba(153,69,255,0.5);
+            transition: transform 0.1s ease;
+            pointer-events: none;
         }
 
         #action-controls {
             position: absolute;
             bottom: 40px;
-            right: 160px;
+            right: 180px;
             display: flex;
             gap: 15px;
             z-index: 2100;
@@ -342,42 +344,44 @@
         }
 
         .action-btn {
-            width: 50px;
-            height: 50px;
+            width: 60px;
+            height: 60px;
             border-radius: 50%;
-            background: rgba(10,15,26,0.3);
+            background: rgba(10,15,26,0.6);
             backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.05);
-            color: rgba(255,255,255,0.6);
-            font-size: 18px;
+            border: 2px solid rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.8);
+            font-size: 24px;
             display: flex;
             align-items: center;
             justify-content: center;
             transition: all 0.2s;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
         }
 
         .action-btn:active {
-            background: rgba(255,255,255,0.1);
+            transform: scale(0.9);
+            background: rgba(255,255,255,0.2);
             color: white;
-            transform: scale(0.95);
         }
 
         #run-btn.active {
-            color: #f7931a;
+            background: rgba(247,147,26,0.3);
             border-color: #f7931a;
+            color: #f7931a;
         }
 
         #exit-btn {
             position: absolute;
             top: 30px;
             right: 30px;
-            width: 40px;
-            height: 40px;
+            width: 50px;
+            height: 50px;
             border-radius: 50%;
-            background: rgba(239,68,68,0.1);
-            border: 1px solid rgba(239,68,68,0.2);
-            color: rgba(239,68,68,0.6);
-            font-size: 18px;
+            background: rgba(239,68,68,0.2);
+            border: 2px solid rgba(239,68,68,0.3);
+            color: rgba(239,68,68,0.8);
+            font-size: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -389,8 +393,9 @@
         }
 
         #exit-btn:active {
-            background: rgba(239,68,68,0.2);
+            background: rgba(239,68,68,0.4);
             color: #ef4444;
+            transform: scale(0.9);
         }
 
         #loading {
@@ -410,25 +415,41 @@
 
         #hint {
             position: absolute;
-            bottom: 150px;
+            bottom: 180px;
             left: 50%;
             transform: translateX(-50%);
-            color: rgba(255,255,255,0.3);
-            font-size: 12px;
+            color: rgba(255,255,255,0.5);
+            font-size: 14px;
             z-index: 2100;
-            background: rgba(10,15,26,0.3);
+            background: rgba(10,15,26,0.4);
             backdrop-filter: blur(10px);
-            padding: 8px 20px;
+            padding: 10px 25px;
             border-radius: 50px;
-            border: 1px solid rgba(255,255,255,0.03);
-            animation: fadeOut 3s forwards;
+            border: 1px solid rgba(255,255,255,0.05);
+            animation: fadeOut 4s forwards;
             pointer-events: none;
+            white-space: nowrap;
         }
 
         @keyframes fadeOut {
             0% { opacity: 1; }
             70% { opacity: 1; }
             100% { opacity: 0; }
+        }
+
+        /* Posição do personagem */
+        #debug-info {
+            position: absolute;
+            bottom: 200px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #94a3b8;
+            font-size: 12px;
+            background: rgba(0,0,0,0.5);
+            padding: 5px 10px;
+            border-radius: 20px;
+            z-index: 2200;
+            display: none;
         }
     </style>
 </head>
@@ -540,6 +561,7 @@
         <button id="exit-btn">✕</button>
         <div id="loading">CARREGANDO MUNDO</div>
         <div id="hint">USE OS CONTROLES PARA EXPLORAR</div>
+        <div id="debug-info"></div>
     </div>
 
     <script type="importmap">
@@ -553,7 +575,6 @@
 
     <script type="module">
         import * as THREE from 'three';
-        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
         import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 
         const COINS = {
@@ -573,8 +594,7 @@
             rotation: 0,
             height: 2,
             isRunning: false,
-            mixer: null,
-            animations: {}
+            mixer: null
         };
         
         // Elementos do gráfico
@@ -589,10 +609,26 @@
         let dataLoaded = false;
         
         // Controles
-        let moveControl = { active: false, startX: 0, startY: 0, currentX: 0, currentY: 0 };
-        let cameraControl = { active: false, startX: 0, startY: 0, currentX: 0, currentY: 0 };
+        let moveControl = { 
+            active: false, 
+            startX: 0, 
+            startY: 0, 
+            currentX: 0, 
+            currentY: 0,
+            worldX: 0,
+            worldZ: 0
+        };
+        
+        let cameraControl = { 
+            active: false, 
+            startX: 0, 
+            startY: 0, 
+            currentX: 0, 
+            currentY: 0 
+        };
+        
         let cameraAngle = { horizontal: 0, vertical: 0.5 };
-        let moveSpeed = 0.1;
+        let moveSpeed = 0.15;
         let cameraDistance = 8;
         let cameraHeight = 3;
         
@@ -617,6 +653,7 @@
         const worldCoinSymbol = document.getElementById('world-coin-symbol');
         const priceValue = document.getElementById('price-value');
         const priceChange = document.getElementById('price-change');
+        const debugInfo = document.getElementById('debug-info');
         
         const moveArea = document.getElementById('move-area');
         const cameraArea = document.getElementById('camera-area');
@@ -664,8 +701,13 @@
                 moveControl.startY = rect.top + rect.height/2;
                 moveControl.currentX = 0;
                 moveControl.currentY = 0;
+                moveControl.worldX = 0;
+                moveControl.worldZ = 0;
                 
                 moveArea.classList.add('active');
+                
+                // Reset dot position
+                moveDot.style.transform = 'translate(-50%, -50%)';
             });
 
             moveArea.addEventListener('touchmove', (e) => {
@@ -673,19 +715,30 @@
                 if (!moveControl.active) return;
                 
                 const touch = e.touches[0];
-                const dx = (touch.clientX - moveControl.startX) / 30;
-                const dy = (touch.clientY - moveControl.startY) / 30;
                 
+                // Calcular distância do centro
+                const dx = touch.clientX - moveControl.startX;
+                const dy = touch.clientY - moveControl.startY;
+                
+                // Limitar ao raio do joystick (60px)
                 const distance = Math.sqrt(dx*dx + dy*dy);
-                if (distance > 1) {
-                    moveControl.currentX = dx / distance;
-                    moveControl.currentY = dy / distance;
+                const maxDistance = 50;
+                
+                if (distance > maxDistance) {
+                    moveControl.currentX = (dx / distance) * maxDistance;
+                    moveControl.currentY = (dy / distance) * maxDistance;
                 } else {
                     moveControl.currentX = dx;
                     moveControl.currentY = dy;
                 }
                 
-                moveDot.style.transform = `translate(calc(-50% + ${moveControl.currentX * 25}px), calc(-50% + ${moveControl.currentY * 25}px))`;
+                // Mover o dot visualmente
+                moveDot.style.transform = `translate(calc(-50% + ${moveControl.currentX}px), calc(-50% + ${moveControl.currentY}px))`;
+                
+                // Calcular direção do movimento no mundo
+                // Normalizar para valores entre -1 e 1
+                moveControl.worldX = moveControl.currentX / maxDistance;
+                moveControl.worldZ = moveControl.currentY / maxDistance;
             });
 
             moveArea.addEventListener('touchend', (e) => {
@@ -693,6 +746,8 @@
                 moveControl.active = false;
                 moveControl.currentX = 0;
                 moveControl.currentY = 0;
+                moveControl.worldX = 0;
+                moveControl.worldZ = 0;
                 moveArea.classList.remove('active');
                 moveDot.style.transform = 'translate(-50%, -50%)';
             });
@@ -710,6 +765,7 @@
                 cameraControl.currentY = 0;
                 
                 cameraArea.classList.add('active');
+                cameraDot.style.transform = 'translate(-50%, -50%)';
             });
 
             cameraArea.addEventListener('touchmove', (e) => {
@@ -717,22 +773,26 @@
                 if (!cameraControl.active) return;
                 
                 const touch = e.touches[0];
-                const dx = (touch.clientX - cameraControl.startX) / 30;
-                const dy = (touch.clientY - cameraControl.startY) / 30;
                 
+                const dx = touch.clientX - cameraControl.startX;
+                const dy = touch.clientY - cameraControl.startY;
+                
+                const maxDistance = 40;
                 const distance = Math.sqrt(dx*dx + dy*dy);
-                if (distance > 1) {
-                    cameraControl.currentX = dx / distance;
-                    cameraControl.currentY = dy / distance;
+                
+                if (distance > maxDistance) {
+                    cameraControl.currentX = (dx / distance) * maxDistance;
+                    cameraControl.currentY = (dy / distance) * maxDistance;
                 } else {
                     cameraControl.currentX = dx;
                     cameraControl.currentY = dy;
                 }
                 
-                cameraDot.style.transform = `translate(calc(-50% + ${cameraControl.currentX * 20}px), calc(-50% + ${cameraControl.currentY * 20}px))`;
+                cameraDot.style.transform = `translate(calc(-50% + ${cameraControl.currentX}px), calc(-50% + ${cameraControl.currentY}px))`;
                 
-                cameraAngle.horizontal += cameraControl.currentX * 0.02;
-                cameraAngle.vertical = Math.max(0.2, Math.min(1, cameraAngle.vertical - cameraControl.currentY * 0.02));
+                // Ajustar ângulo da câmera
+                cameraAngle.horizontal += (cameraControl.currentX / maxDistance) * 0.05;
+                cameraAngle.vertical = Math.max(0.2, Math.min(1, cameraAngle.vertical - (cameraControl.currentY / maxDistance) * 0.05));
             });
 
             cameraArea.addEventListener('touchend', (e) => {
@@ -762,7 +822,7 @@
 
         function toggleRun() {
             character.isRunning = !character.isRunning;
-            moveSpeed = character.isRunning ? 0.2 : 0.1;
+            moveSpeed = character.isRunning ? 0.3 : 0.15;
             runBtn.classList.toggle('active');
         }
 
@@ -831,7 +891,7 @@
             group.add(rightLeg);
             
             // Efeito de brilho (aura)
-            const auraGeo = new THREE.SphereGeometry(0.5, 8);
+            const auraGeo = new THREE.SphereGeometry(0.6, 8);
             const auraMat = new THREE.MeshStandardMaterial({
                 color: COINS[currentCoin].bgColor,
                 emissive: COINS[currentCoin].bgColor,
@@ -849,6 +909,8 @@
             
             character.mesh = group;
             scene.add(group);
+            
+            console.log('Personagem criado na posição:', character.position);
         }
 
         async function initWorld() {
@@ -896,6 +958,12 @@
             await fetchHistoricalData();
             
             loadingEl.style.display = 'none';
+            
+            // Esconder hint após 4 segundos
+            setTimeout(() => {
+                document.getElementById('hint').style.opacity = '0';
+            }, 4000);
+            
             animate();
         }
 
@@ -1417,28 +1485,42 @@
         function animate() {
             requestAnimationFrame(animate);
             
-            // Movimento do personagem
-            if (moveControl.active) {
-                const moveX = moveControl.currentX * moveSpeed;
-                const moveZ = moveControl.currentY * moveSpeed;
+            // MOVIMENTO DO PERSONAGEM - CORRIGIDO
+            if (moveControl.active && (Math.abs(moveControl.worldX) > 0.1 || Math.abs(moveControl.worldZ) > 0.1)) {
+                
+                // Calcular direção do movimento baseada na rotação da câmera
+                const angle = cameraAngle.horizontal;
+                
+                // Vetores de direção baseados no ângulo da câmera
+                const forwardX = Math.sin(angle);
+                const forwardZ = Math.cos(angle);
+                
+                const rightX = Math.cos(angle);
+                const rightZ = -Math.sin(angle);
+                
+                // Mover personagem
+                character.position.x += (forwardX * moveControl.worldZ + rightX * moveControl.worldX) * moveSpeed;
+                character.position.z += (forwardZ * moveControl.worldZ + rightZ * moveControl.worldX) * moveSpeed;
                 
                 // Rotacionar personagem na direção do movimento
-                if (Math.abs(moveX) > 0.1 || Math.abs(moveZ) > 0.1) {
-                    character.rotation = Math.atan2(moveX, -moveZ);
-                    
-                    // Mover personagem
-                    character.position.x += Math.sin(character.rotation) * moveSpeed * Math.abs(moveZ);
-                    character.position.z += Math.cos(character.rotation) * moveSpeed * Math.abs(moveZ);
-                    
-                    // Movimento lateral
-                    character.position.x += Math.cos(character.rotation) * moveX * moveSpeed;
-                    character.position.z += -Math.sin(character.rotation) * moveX * moveSpeed;
+                if (Math.abs(moveControl.worldX) > 0.1 || Math.abs(moveControl.worldZ) > 0.1) {
+                    character.rotation = Math.atan2(
+                        forwardX * moveControl.worldZ + rightX * moveControl.worldX,
+                        forwardZ * moveControl.worldZ + rightZ * moveControl.worldX
+                    );
                 }
                 
+                // Atualizar mesh do personagem
                 if (character.mesh) {
                     character.mesh.position.copy(character.position);
                     character.mesh.rotation.y = character.rotation;
                 }
+                
+                // Debug
+                debugInfo.style.display = 'block';
+                debugInfo.innerHTML = `Pos: ${character.position.x.toFixed(1)}, ${character.position.z.toFixed(1)} | Vel: ${moveControl.worldX.toFixed(2)}, ${moveControl.worldZ.toFixed(2)}`;
+            } else {
+                debugInfo.style.display = 'none';
             }
             
             // Posicionar câmera atrás do personagem
@@ -1451,7 +1533,7 @@
                 camera.lookAt(character.position.x, character.position.y + 1, character.position.z);
             }
             
-            // Atualizar elementos
+            // Atualizar elementos do gráfico
             if (dataLoaded && liveCandleMesh && liveSmokeParticles.length > 0) {
                 updateLiveCandle();
             }
@@ -1460,6 +1542,7 @@
             labelRenderer.render(scene, camera);
         }
 
+        // Inicializar controles
         setupControls();
 
         window.addEventListener('resize', () => {
