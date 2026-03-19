@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Crypto Realm - Sala de Trading</title>
+    <title>Crypto Realm - Gráfico em Movimento</title>
     <style>
         * {
             margin: 0;
@@ -183,7 +183,7 @@
             opacity: 0.5;
         }
 
-        /* Tela do mundo - SALA LIMITADA */
+        /* Tela do mundo */
         #world-screen {
             position: fixed;
             top: 0;
@@ -499,7 +499,7 @@
     <div id="home-screen">
         <div class="header">
             <div class="logo">CRYPTO REALM</div>
-            <div class="subtitle">SALA DE TRADING</div>
+            <div class="subtitle">GRÁFICO EM MOVIMENTO</div>
         </div>
 
         <div class="coin-list">
@@ -602,7 +602,7 @@
 
         <button id="exit-btn">✕</button>
         <div id="loading">CARREGANDO SALA</div>
-        <div id="hint">USE OS CONTROLES PARA EXPLORAR A SALA</div>
+        <div id="hint">O GRÁFICO SE MOVE! FIQUE NA FRENTE</div>
         <div id="debug-info"></div>
         <div id="boundary-warning">🚫 LIMITE DA SALA</div>
         <div id="error-message"></div>
@@ -634,7 +634,7 @@
         // Personagem
         let character = {
             mesh: null,
-            position: new THREE.Vector3(0, 0, 0),
+            position: new THREE.Vector3(0, 0, 10), // Começa na frente do gráfico
             rotation: 0,
             height: 2,
             isRunning: false
@@ -650,6 +650,14 @@
         let lastPrice = 67000;
         let binanceSocket = null;
         let dataLoaded = false;
+        
+        // NOVO: Posição do gráfico
+        let graphPosition = {
+            x: 0,
+            z: -5, // Posição inicial
+            targetZ: -5,
+            speed: 0.1
+        };
         
         // Controles
         let moveControl = { 
@@ -692,6 +700,7 @@
         const MAX_HEIGHT = 8.0;
         const MIN_RADIUS = 0.3;
         const MAX_RADIUS = 1.5;
+        const MAX_CANDLES = 20; // Número de candles visíveis
 
         const TIMEFRAMES = { '1m': { binance: '1m', limit: 30, ms: 60 * 1000 } };
 
@@ -728,10 +737,8 @@
             homeScreen.classList.add('hidden');
             worldScreen.classList.add('active');
             
-            // Mostrar loading
             loadingEl.style.display = 'block';
             
-            // Inicializar mundo imediatamente
             setTimeout(() => {
                 initWorld();
             }, 100);
@@ -749,7 +756,6 @@
         };
 
         function setupControls() {
-            // Controle de movimento
             moveArea.addEventListener('touchstart', (e) => {
                 e.preventDefault();
                 moveControl.active = true;
@@ -800,7 +806,6 @@
                 moveDot.style.transform = 'translate(-50%, -50%)';
             });
 
-            // Controle de câmera
             cameraArea.addEventListener('touchstart', (e) => {
                 e.preventDefault();
                 cameraControl.active = true;
@@ -1077,7 +1082,6 @@
             scene.add(signSouth);
         }
 
-        // GERAR DADOS MOCKADOS IMEDIATAMENTE
         function generateMockData() {
             const data = [];
             let basePrice = lastPrice;
@@ -1105,7 +1109,6 @@
 
         function initWorld() {
             try {
-                // Criar cena
                 const container = document.getElementById('world-screen');
                 
                 scene = new THREE.Scene();
@@ -1113,7 +1116,6 @@
                 scene.fog = new THREE.Fog(0x0a0f1a, 20, 40);
 
                 camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-                camera.position.set(0, 5, 15);
 
                 renderer = new THREE.WebGLRenderer({ antialias: true });
                 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -1143,8 +1145,8 @@
                 // Criar sala
                 createRoom();
                 
-                // Criar personagem
-                character.position.set(0, 0, 0);
+                // Posicionar personagem NA FRENTE do gráfico
+                character.position.set(0, 0, 10);
                 createCharacter();
                 
                 // Criar grupos do gráfico
@@ -1152,9 +1154,14 @@
                 bollingerGroup = new THREE.Group();
                 smokeGroup = new THREE.Group();
                 
-                candleGroup.position.set(0, 0, -5);
-                bollingerGroup.position.set(0, 0, -5);
-                smokeGroup.position.set(0, 0, -5);
+                // Posição inicial do gráfico
+                graphPosition.x = 0;
+                graphPosition.z = -5;
+                graphPosition.targetZ = -5;
+                
+                candleGroup.position.set(graphPosition.x, 0, graphPosition.z);
+                bollingerGroup.position.set(graphPosition.x, 0, graphPosition.z);
+                smokeGroup.position.set(graphPosition.x, 0, graphPosition.z);
                 
                 scene.add(candleGroup);
                 scene.add(bollingerGroup);
@@ -1177,17 +1184,14 @@
                 label.position.set(0, 8, -ROOM_SIZE + 2);
                 scene.add(label);
 
-                // GERAR DADOS MOCKADOS IMEDIATAMENTE
+                // GERAR DADOS MOCKADOS
                 const mockData = generateMockData();
                 processHistoricalData(mockData);
                 
-                // Esconder loading
                 loadingEl.style.display = 'none';
                 
-                // Iniciar animação
                 animate();
                 
-                // Simular trades ao vivo
                 startSimulatedTrades();
                 
             } catch (error) {
@@ -1202,6 +1206,11 @@
         }
 
         function processHistoricalData(data) {
+            // Manter apenas os últimos MAX_CANDLES
+            if (data.length > MAX_CANDLES) {
+                data = data.slice(-MAX_CANDLES);
+            }
+            
             historicalCandles = data.slice(0, -1);
             liveCandleData = { ...data[data.length - 1] };
             lastPrice = liveCandleData.close;
@@ -1253,11 +1262,19 @@
             const tradePeriodStart = Math.floor(trade.time / tf.ms) * tf.ms;
             
             if (tradePeriodStart > periodStart) {
+                // NOVO CANDLE - Mover o gráfico para trás
                 historicalCandles.push({ ...liveCandleData });
                 
-                if (historicalCandles.length > tf.limit) {
+                // Manter apenas os últimos MAX_CANDLES
+                if (historicalCandles.length > MAX_CANDLES) {
                     historicalCandles.shift();
                 }
+                
+                // Mover o gráfico para trás para dar espaço
+                graphPosition.targetZ -= SPACING * 0.5;
+                
+                // Limitar para não sair da sala
+                graphPosition.targetZ = Math.max(-ROOM_SIZE + 10, graphPosition.targetZ);
                 
                 liveCandleData = {
                     time: trade.time,
@@ -1324,6 +1341,7 @@
             
             const dimensions = calculateCandleDimensions(volume, isBuy);
             
+            // Posição X baseada no índice, mas centralizada
             const xPos = (index - total/2) * SPACING;
             
             const group = new THREE.Group();
@@ -1347,7 +1365,7 @@
             group.add(body);
             
             // Pavio
-            const wickHeight = Math.abs(high - low) * 0.1; // Simplificado
+            const wickHeight = Math.abs(high - low) * 0.1;
             if (wickHeight > 0.5) {
                 const wickGeo = new THREE.CylinderGeometry(WICK_RADIUS, WICK_RADIUS, wickHeight, 8);
                 const wickMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8 });
@@ -1519,6 +1537,13 @@
         function animate() {
             requestAnimationFrame(animate);
             
+            // Movimento suave do gráfico
+            graphPosition.z += (graphPosition.targetZ - graphPosition.z) * 0.05;
+            
+            candleGroup.position.z = graphPosition.z;
+            bollingerGroup.position.z = graphPosition.z;
+            smokeGroup.position.z = graphPosition.z;
+            
             // Movimento do personagem
             if (moveControl.active && (Math.abs(moveControl.worldX) > 0.1 || Math.abs(moveControl.worldZ) > 0.1)) {
                 
@@ -1556,7 +1581,7 @@
                 }
                 
                 debugInfo.style.display = 'block';
-                debugInfo.innerHTML = `Sala: ${character.position.x.toFixed(1)} / ${character.position.z.toFixed(1)}`;
+                debugInfo.innerHTML = `Pos: ${character.position.x.toFixed(1)}/${character.position.z.toFixed(1)} | Gráfico: ${graphPosition.z.toFixed(1)}`;
             } else {
                 debugInfo.style.display = 'none';
             }
@@ -1585,7 +1610,6 @@
             labelRenderer.render(scene, camera);
         }
 
-        // Inicializar
         setupControls();
 
         window.addEventListener('resize', () => {
