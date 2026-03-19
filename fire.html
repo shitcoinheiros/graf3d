@@ -170,51 +170,83 @@
             position: absolute;
             bottom: 100px;
             left: 30px;
-            width: 100px;
-            height: 100px;
+            width: 120px;
+            height: 120px;
             border-radius: 50%;
-            background: rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.15);
             backdrop-filter: blur(8px);
-            border: 2px solid rgba(247,147,26,0.5);
+            border: 2px solid rgba(247,147,26,0.6);
             z-index: 1000;
-            pointer-events: none;
+            pointer-events: auto;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
         }
         
-        #joystick-area::after {
-            content: "🕹️ ANDAR";
-            position: absolute;
-            bottom: -25px;
-            left: 15px;
-            color: white;
-            font-size: 10px;
-            white-space: nowrap;
+        #joystick-area::before {
+            content: "🕹️";
+            font-size: 32px;
+            opacity: 0.8;
+        }
+        
+        #joystick-area.active {
+            background: rgba(247,147,26,0.3);
+            border-color: #f7931a;
+            transform: scale(1.05);
         }
         
         #camera-hint {
             position: absolute;
             bottom: 100px;
             right: 30px;
-            width: 100px;
-            height: 100px;
+            width: 120px;
+            height: 120px;
             border-radius: 50%;
-            background: rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.15);
             backdrop-filter: blur(8px);
-            border: 2px solid rgba(59,130,246,0.5);
+            border: 2px solid rgba(59,130,246,0.6);
             z-index: 1000;
-            pointer-events: none;
+            pointer-events: auto;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 12px;
-            text-align: center;
-        }
-        
-        #camera-hint::after {
-            content: "👆 ARRASTE\nPARA OLHAR";
-            white-space: pre;
+            font-size: 14px;
+            font-weight: bold;
             text-align: center;
             line-height: 1.4;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        
+        #camera-hint::before {
+            content: "👆👆";
+            font-size: 24px;
+            display: block;
+            margin-bottom: 4px;
+        }
+        
+        #camera-hint span {
+            display: block;
+            font-size: 12px;
+            opacity: 0.9;
+        }
+        
+        .debug-info {
+            position: absolute;
+            top: 150px;
+            left: 20px;
+            color: #94a3b8;
+            font-size: 10px;
+            background: rgba(0,0,0,0.5);
+            padding: 4px 8px;
+            border-radius: 4px;
+            z-index: 1000;
         }
     </style>
 </head>
@@ -237,12 +269,14 @@
         <button class="timeframe-btn" data-tf="1d">1D</button>
     </div>
 
-    <div id="controls-hint">👆 Arraste para olhar 360° • Joystick para andar</div>
+    <div id="controls-hint">👆 Arraste a tela para olhar 360° • Joystick para andar</div>
     <div id="stats">Conectando à Binance...</div>
     <div id="position-indicator">📍 Posição: 0, 0, 0</div>
     
     <div id="joystick-area"></div>
-    <div id="camera-hint"></div>
+    <div id="camera-hint"><span>Arraste aqui<br>para olhar</span></div>
+    
+    <div class="debug-info" id="debug">Pronto</div>
 
     <!-- Three.js -->
     <script type="importmap">
@@ -285,18 +319,23 @@
         let moveBackward = false;
         let moveLeft = false;
         let moveRight = false;
-        let characterSpeed = 0.2;
+        let characterSpeed = 0.25;
         
         // Controles da câmera (360°)
         let cameraAngle = 0;          // Rotação horizontal (esquerda/direita)
-        let cameraPitch = 0.2;         // Inclinação vertical (cima/baixo)
-        const CAMERA_HEIGHT = 2.5;      // Altura base da câmera
-        const CAMERA_DISTANCE = 5;       // Distância do personagem
+        let cameraPitch = 0.3;         // Inclinação vertical (cima/baixo) - um pouco para baixo para ver melhor
+        const CAMERA_HEIGHT = 2.8;      // Altura base da câmera
+        const CAMERA_DISTANCE = 6;       // Distância do personagem
         
         // Joystick virtual
         let joystickActive = false;
         let joystickStart = { x: 0, y: 0 };
         let joystickVector = { x: 0, y: 0 };
+        
+        // Controle de olhar
+        let lookActive = false;
+        let lastTouchX = 0;
+        let lastTouchY = 0;
         
         // Parâmetros visuais
         const CANDLE_RADIUS = 0.45;
@@ -360,9 +399,12 @@
             
             setupControls();
             setupJoystick();
+            setupLookControls();
             setupTimeframeButtons();
             
             fetchHistoricalData();
+            
+            document.getElementById('debug').textContent = 'Inicializado';
         }
 
         // --- CHÃO COM LOGO BTC ---
@@ -459,6 +501,17 @@
             cape.rotation.x = 0.2;
             cape.castShadow = true;
             character.add(cape);
+            
+            // Adicionar uma seta indicando a frente do personagem
+            const arrowGroup = new THREE.Group();
+            const arrowGeo = new THREE.ConeGeometry(0.1, 0.3, 6);
+            const arrowMat = new THREE.MeshStandardMaterial({ color: 0xffaa00 });
+            const arrow = new THREE.Mesh(arrowGeo, arrowMat);
+            arrow.position.y = 0.2;
+            arrow.position.z = 0.5;
+            arrow.rotation.x = Math.PI / 2;
+            arrowGroup.add(arrow);
+            character.add(arrowGroup);
             
             scene.add(character);
         }
@@ -632,86 +685,73 @@
             // Posicionar personagem no último candle
             const lastX = (liveIndex - total/2) * SPACING;
             character.position.set(lastX, getGroundHeight(lastX, 0), 0);
+            
+            // Fazer o personagem olhar para frente (direção positiva do eixo X)
+            character.rotation.y = 0;
+            
+            // Posicionar câmera atrás do personagem
+            cameraAngle = 0; // Olhando para frente
+            cameraPitch = 0.3; // Levemente para baixo
+            updateCamera();
         }
 
-        // --- CONTROLES DE OLHAR 360° ---
+        // --- CONTROLES DE TECLADO (DESKTOP) ---
         function setupControls() {
             // Teclado (para desktop)
             window.addEventListener('keydown', (e) => {
-                switch(e.key) {
-                    case 'w': case 'W': moveForward = true; break;
-                    case 's': case 'S': moveBackward = true; break;
-                    case 'a': case 'A': moveLeft = true; break;
-                    case 'd': case 'D': moveRight = true; break;
+                switch(e.key.toLowerCase()) {
+                    case 'w': 
+                        moveForward = true; 
+                        document.getElementById('debug').textContent = 'W pressionado';
+                        break;
+                    case 's': 
+                        moveBackward = true;
+                        document.getElementById('debug').textContent = 'S pressionado';
+                        break;
+                    case 'a': 
+                        moveLeft = true;
+                        document.getElementById('debug').textContent = 'A pressionado';
+                        break;
+                    case 'd': 
+                        moveRight = true;
+                        document.getElementById('debug').textContent = 'D pressionado';
+                        break;
                 }
             });
             
             window.addEventListener('keyup', (e) => {
-                switch(e.key) {
-                    case 'w': case 'W': moveForward = false; break;
-                    case 's': case 'S': moveBackward = false; break;
-                    case 'a': case 'A': moveLeft = false; break;
-                    case 'd': case 'D': moveRight = false; break;
+                switch(e.key.toLowerCase()) {
+                    case 'w': moveForward = false; break;
+                    case 's': moveBackward = false; break;
+                    case 'a': moveLeft = false; break;
+                    case 'd': moveRight = false; break;
                 }
-            });
-            
-            // Arrastar para olhar 360° (mobile)
-            let lastTouchX = 0;
-            let lastTouchY = 0;
-            
-            renderer.domElement.addEventListener('touchstart', (e) => {
-                if (e.touches.length === 1 && !joystickActive) {
-                    lastTouchX = e.touches[0].clientX;
-                    lastTouchY = e.touches[0].clientY;
-                }
-            });
-            
-            renderer.domElement.addEventListener('touchmove', (e) => {
-                if (e.touches.length === 1 && !joystickActive) {
-                    const deltaX = e.touches[0].clientX - lastTouchX;
-                    const deltaY = e.touches[0].clientY - lastTouchY;
-                    
-                    // Atualizar ângulos da câmera (horizontal e vertical)
-                    cameraAngle += deltaX * 0.005;
-                    cameraPitch += deltaY * 0.005;
-                    
-                    // Limitar pitch para não virar de cabeça para baixo
-                    cameraPitch = Math.max(-0.8, Math.min(1.2, cameraPitch));
-                    
-                    lastTouchX = e.touches[0].clientX;
-                    lastTouchY = e.touches[0].clientY;
-                }
-            });
-            
-            // Duplo toque para resetar câmera
-            let lastTap = 0;
-            renderer.domElement.addEventListener('touchend', (e) => {
-                const currentTime = new Date().getTime();
-                if (currentTime - lastTap < 300) {
-                    cameraAngle = 0;
-                    cameraPitch = 0.2;
-                }
-                lastTap = currentTime;
             });
         }
 
-        // --- JOYSTICK VIRTUAL ---
+        // --- JOYSTICK VIRTUAL (ANDAR) ---
         function setupJoystick() {
             const joystickArea = document.getElementById('joystick-area');
             
             joystickArea.addEventListener('touchstart', (e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 joystickActive = true;
+                joystickArea.classList.add('active');
+                
                 const touch = e.touches[0];
                 const rect = joystickArea.getBoundingClientRect();
                 joystickStart = {
                     x: rect.left + rect.width/2,
                     y: rect.top + rect.height/2
                 };
+                
+                document.getElementById('debug').textContent = 'Joystick ativado';
             });
             
             joystickArea.addEventListener('touchmove', (e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 if (!joystickActive) return;
                 
                 const touch = e.touches[0];
@@ -724,20 +764,127 @@
                     joystickVector.x = (deltaX / dist) * normDist;
                     joystickVector.y = (deltaY / dist) * normDist;
                     
-                    // Atualizar direções baseado no joystick
+                    // Limiar para evitar movimentos muito pequenos
                     moveForward = joystickVector.y < -0.2;
                     moveBackward = joystickVector.y > 0.2;
                     moveLeft = joystickVector.x < -0.2;
                     moveRight = joystickVector.x > 0.2;
+                    
+                    document.getElementById('debug').textContent = `Joy: ${joystickVector.x.toFixed(2)}, ${joystickVector.y.toFixed(2)}`;
                 }
             });
             
             joystickArea.addEventListener('touchend', (e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 joystickActive = false;
+                joystickArea.classList.remove('active');
                 joystickVector.x = 0;
                 joystickVector.y = 0;
-                moveForward = moveBackward = moveLeft = moveRight = false;
+                moveForward = false;
+                moveBackward = false;
+                moveLeft = false;
+                moveRight = false;
+                document.getElementById('debug').textContent = 'Joystick desativado';
+            });
+            
+            joystickArea.addEventListener('touchcancel', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                joystickActive = false;
+                joystickArea.classList.remove('active');
+                joystickVector.x = 0;
+                joystickVector.y = 0;
+                moveForward = false;
+                moveBackward = false;
+                moveLeft = false;
+                moveRight = false;
+            });
+        }
+
+        // --- CONTROLE DE OLHAR 360° ---
+        function setupLookControls() {
+            const cameraHint = document.getElementById('camera-hint');
+            
+            cameraHint.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                lookActive = true;
+                
+                const touch = e.touches[0];
+                lastTouchX = touch.clientX;
+                lastTouchY = touch.clientY;
+                
+                cameraHint.style.borderColor = '#f7931a';
+                document.getElementById('debug').textContent = 'Look ativado';
+            });
+            
+            cameraHint.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (!lookActive) return;
+                
+                const touch = e.touches[0];
+                const deltaX = touch.clientX - lastTouchX;
+                const deltaY = touch.clientY - lastTouchY;
+                
+                // Ajustar ângulos da câmera
+                cameraAngle += deltaX * 0.01;
+                cameraPitch += deltaY * 0.01;
+                
+                // Limitar pitch para não virar de cabeça para baixo
+                cameraPitch = Math.max(-0.5, Math.min(1.2, cameraPitch));
+                
+                lastTouchX = touch.clientX;
+                lastTouchY = touch.clientY;
+                
+                updateCamera();
+                document.getElementById('debug').textContent = `Ang: ${cameraAngle.toFixed(2)}, Pitch: ${cameraPitch.toFixed(2)}`;
+            });
+            
+            cameraHint.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                lookActive = false;
+                cameraHint.style.borderColor = 'rgba(59,130,246,0.6)';
+            });
+            
+            cameraHint.addEventListener('touchcancel', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                lookActive = false;
+                cameraHint.style.borderColor = 'rgba(59,130,246,0.6)';
+            });
+            
+            // Suporte para mouse (desktop)
+            renderer.domElement.addEventListener('mousedown', (e) => {
+                if (e.button === 0) { // Botão esquerdo
+                    lookActive = true;
+                    lastTouchX = e.clientX;
+                    lastTouchY = e.clientY;
+                    renderer.domElement.style.cursor = 'grabbing';
+                }
+            });
+            
+            window.addEventListener('mousemove', (e) => {
+                if (lookActive) {
+                    const deltaX = e.clientX - lastTouchX;
+                    const deltaY = e.clientY - lastTouchY;
+                    
+                    cameraAngle += deltaX * 0.005;
+                    cameraPitch += deltaY * 0.005;
+                    cameraPitch = Math.max(-0.5, Math.min(1.2, cameraPitch));
+                    
+                    lastTouchX = e.clientX;
+                    lastTouchY = e.clientY;
+                    
+                    updateCamera();
+                }
+            });
+            
+            window.addEventListener('mouseup', () => {
+                lookActive = false;
+                renderer.domElement.style.cursor = 'default';
             });
         }
 
@@ -760,6 +907,7 @@
                 moveZ /= length;
                 
                 // Mover na direção que a câmera está olhando (horizontalmente)
+                // Importante: queremos que frente seja a direção da câmera, não do personagem
                 const forwardX = Math.sin(cameraAngle) * moveZ;
                 const forwardZ = Math.cos(cameraAngle) * moveZ;
                 const rightX = Math.cos(cameraAngle) * moveX;
@@ -775,14 +923,14 @@
                 character.position.z = newZ;
                 character.position.y = groundY;
                 
-                // Rotacionar personagem na direção do movimento
+                // Rotacionar personagem na direção do movimento (opcional - pode remover se preferir)
                 if (moveZ !== 0 || moveX !== 0) {
                     const moveAngle = Math.atan2(moveX, moveZ);
-                    character.rotation.y = moveAngle + cameraAngle;
+                    // character.rotation.y = moveAngle + cameraAngle; // Descomente se quiser que o personagem gire
                 }
             }
             
-            // Atualizar posição da câmera em relação ao personagem
+            // Atualizar posição da câmera
             updateCamera();
             
             // Atualizar UI
@@ -804,10 +952,10 @@
             
             camera.position.set(camX, camY, camZ);
             
-            // Olhar para o personagem
+            // Olhar para o personagem (um pouco acima do chão)
             camera.lookAt(
                 character.position.x,
-                character.position.y + 1, // Olhar para o torso
+                character.position.y + 1.2,
                 character.position.z
             );
         }
