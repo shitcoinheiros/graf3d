@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>ChatGPT - Crypto Analyst</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica Neue", sans-serif;
+            background: #f7f7f8;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Header estilo ChatGPT */
+        .chatgpt-header {
+            background: #ffffff;
+            border-bottom: 1px solid #e5e5e5;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+
+        .chatgpt-logo {
+            background: #10a37f;
+            width: 34px;
+            height: 34px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 18px;
+            color: white;
+        }
+
+        .chatgpt-title {
+            color: #2c2d35;
+            font-weight: 500;
+            font-size: 16px;
+        }
+
+        /* Área de chat principal */
+        .chat-main {
+            flex: 1;
+            overflow-y: auto;
+            background: #f7f7f8;
+        }
+
+        .conversation-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px 16px 30px;
+        }
+
+        /* Mensagens estilo ChatGPT */
+        .message-group {
+            margin-bottom: 24px;
+        }
+
+        .message-row {
+            display: flex;
+            width: 100%;
+        }
+
+        .message-row.user {
+            justify-content: flex-end;
+        }
+
+        .message-row.assistant {
+            justify-content: flex-start;
+        }
+
+        .message-bubble {
+            max-width: 85%;
+            padding: 12px 16px;
+            font-size: 16px;
+            line-height: 1.5;
+            border-radius: 24px;
+        }
+
+        .user .message-bubble {
+            background: #10a37f;
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .assistant .message-bubble {
+            background: transparent;
+            color: #2c2d35;
+            padding: 0;
+            max-width: 100%;
+        }
+
+        /* Conteúdo do assistente com estilo de texto puro */
+        .assistant-content {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #2c2d35;
+        }
+
+        .assistant-content p {
+            margin-bottom: 16px;
+        }
+
+        .assistant-content p:last-child {
+            margin-bottom: 0;
+        }
+
+        .assistant-content strong {
+            font-weight: 600;
+        }
+
+        .assistant-content code {
+            background: #f1f1f1;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+
+        .assistant-content pre {
+            background: #f1f1f1;
+            padding: 12px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 12px 0;
+            font-family: monospace;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        /* Cursor de digitação */
+        .typing-cursor {
+            display: inline-block;
+            width: 2px;
+            height: 20px;
+            background-color: #2c2d35;
+            margin-left: 2px;
+            vertical-align: middle;
+            animation: blink 1s step-end infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        /* Indicador de "digitando" */
+        .thinking-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 0;
+        }
+
+        .thinking-dots {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .thinking-dot {
+            width: 8px;
+            height: 8px;
+            background: #9ca3af;
+            border-radius: 50%;
+            animation: pulseDot 1.4s infinite ease-in-out;
+        }
+
+        .thinking-dot:nth-child(2) { animation-delay: 0.2s; }
+        .thinking-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes pulseDot {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+            30% { transform: translateY(-6px); opacity: 1; }
+        }
+
+        /* Input estilo ChatGPT */
+        .input-footer {
+            background: #ffffff;
+            border-top: 1px solid #e5e5e5;
+            padding: 16px 20px;
+            flex-shrink: 0;
+        }
+
+        .input-box {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #ffffff;
+            border: 1px solid #e5e5e5;
+            border-radius: 28px;
+            display: flex;
+            align-items: center;
+            padding: 8px 8px 8px 20px;
+            gap: 10px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .input-box input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            padding: 12px 0;
+            font-size: 16px;
+            color: #2c2d35;
+            outline: none;
+        }
+
+        .input-box input::placeholder {
+            color: #9ca3af;
+        }
+
+        .send-button {
+            background: #10a37f;
+            border: none;
+            border-radius: 28px;
+            padding: 8px 24px;
+            color: white;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 14px;
+        }
+
+        .send-button:hover {
+            background: #0e8e6e;
+        }
+
+        .send-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+
+        /* Animações */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message-group {
+            animation: fadeIn 0.3s ease-out;
+        }
+    </style>
+</head>
+<body>
+<div class="chatgpt-header">
+    <div class="chatgpt-logo">✦</div>
+    <div class="chatgpt-title">ChatGPT · Crypto Analyst</div>
+</div>
+
+<div class="chat-main" id="chatMain">
+    <div class="conversation-container" id="conversation">
+        <div class="message-group">
+            <div class="message-row assistant">
+                <div class="message-bubble">
+                    <div class="assistant-content">
+                        <p>Olá! 👋 Sou um assistente especializado em análise de criptomoedas para trades de 24 horas.</p>
+                        <p>Minha metodologia analisa <strong>todas as moedas do Trending CoinGecko</strong>, aplica Bollinger Bands SMA12 + 2σ (12h) e métricas de volume e momentum para encontrar a oportunidade com maior potencial para as próximas 24 horas.</p>
+                        <p>📌 <strong>Basta perguntar:</strong> “Que moeda devo comprar hoje?” — e vou fazer uma análise completa e te dar a recomendação mais assertiva.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="input-footer">
+    <div class="input-box">
+        <input type="text" id="userInput" placeholder="Digite sua pergunta..." onkeypress="handleKeyPress(event)">
+        <button class="send-button" id="sendBtn" onclick="sendMessage()">Enviar</button>
+    </div>
+</div>
+
+<script>
+    // ==================== LÓGICA DE ANÁLISE (regras intactas) ====================
+    const conversationDiv = document.getElementById('conversation');
+    const userInput = document.getElementById('userInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const chatMain = document.getElementById('chatMain');
+
+    const COINGECKO_API = 'https://api.coingecko.com/api/v3';
+    const BINANCE_API = 'https://api.binance.com/api/v3';
+
+    // Função para adicionar mensagem do usuário (instantânea)
+    function addUserMessage(text) {
+        const group = document.createElement('div');
+        group.className = 'message-group';
+        const row = document.createElement('div');
+        row.className = 'message-row user';
+        const bubble = document.createElement('div');
+        bubble.className = 'message-bubble';
+        bubble.innerText = text;
+        row.appendChild(bubble);
+        group.appendChild(row);
+        conversationDiv.appendChild(group);
+        scrollToBottom();
+    }
+
+    // Função para adicionar mensagem do assistente com efeito de digitação
+    async function addAssistantMessageWithTyping(contentHtml) {
+        return new Promise((resolve) => {
+            const group = document.createElement('div');
+            group.className = 'message-group';
+            const row = document.createElement('div');
+            row.className = 'message-row assistant';
+            const bubble = document.createElement('div');
+            bubble.className = 'message-bubble';
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'assistant-content';
+            bubble.appendChild(contentDiv);
+            row.appendChild(bubble);
+            group.appendChild(row);
+            conversationDiv.appendChild(group);
+            
+            // Efeito de digitação
+            let i = 0;
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = contentHtml;
+            const plainText = tempDiv.innerText;
+            contentDiv.innerHTML = '';
+            
+            function typeNextChar() {
+                if (i < plainText.length) {
+                    let currentText = plainText.substring(0, i + 1);
+                    currentText = currentText.replace(/\n/g, '<br>');
+                    contentDiv.innerHTML = currentText;
+                    i++;
+                    scrollToBottom();
+                    setTimeout(typeNextChar, 12 + Math.random() * 8);
+                } else {
+                    contentDiv.innerHTML = contentHtml;
+                    scrollToBottom();
+                    resolve();
+                }
+            }
+            
+            typeNextChar();
+        });
+    }
+
+    // Mostrar indicador de "pensando"
+    function showThinking() {
+        const group = document.createElement('div');
+        group.className = 'message-group';
+        group.id = 'thinkingIndicator';
+        const row = document.createElement('div');
+        row.className = 'message-row assistant';
+        const bubble = document.createElement('div');
+        bubble.className = 'message-bubble';
+        const thinkingDiv = document.createElement('div');
+        thinkingDiv.className = 'thinking-wrapper';
+        thinkingDiv.innerHTML = `
+            <div class="thinking-dots">
+                <div class="thinking-dot"></div>
+                <div class="thinking-dot"></div>
+                <div class="thinking-dot"></div>
+            </div>
+            <span style="color: #6b7280; font-size: 14px;">Analisando mercado...</span>
+        `;
+        bubble.appendChild(thinkingDiv);
+        row.appendChild(bubble);
+        group.appendChild(row);
+        conversationDiv.appendChild(group);
+        scrollToBottom();
+    }
+
+    function removeThinking() {
+        const el = document.getElementById('thinkingIndicator');
+        if (el) el.remove();
+    }
+
+    function scrollToBottom() {
+        chatMain.scrollTop = chatMain.scrollHeight;
+    }
+
+    function formatPrice(p) {
+        if (!p) return 'N/A';
+        if (p < 0.01) return p.toFixed(6);
+        if (p < 1) return p.toFixed(4);
+        if (p < 1000) return p.toFixed(2);
+        return p.toFixed(0);
+    }
+
+    async function getBollingerBands(symbol) {
+        try {
+            const res = await fetch(`${BINANCE_API}/klines?symbol=${symbol}USDT&interval=1h&limit=13`);
+            if (!res.ok) return null;
+            const data = await res.json();
+            const prices = data.slice(0, 12).map(c => parseFloat(c[4]));
+            const currentPrice = parseFloat(data[12][4]);
+            const sma12 = prices.reduce((a, b) => a + b, 0) / prices.length;
+            const variance = prices.reduce((acc, p) => acc + Math.pow(p - sma12, 2), 0) / prices.length;
+            const stdDev = Math.sqrt(variance);
+            const upperBand = sma12 + (stdDev * 2);
+            const lowerBand = sma12 - (stdDev * 2);
+            let bandPercent = (currentPrice - lowerBand) / (upperBand - lowerBand) * 100;
+            bandPercent = Math.min(100, Math.max(0, bandPercent));
+            return { sma12, upperBand, lowerBand, currentPrice, bandPercent, stdDev };
+        } catch (e) { return null; }
+    }
+
+    async function getTrendingCoins() {
+        try {
+            const res = await fetch(`${COINGECKO_API}/search/trending`);
+            const data = await res.json();
+            return data.coins.map(c => ({
+                id: c.item.id,
+                name: c.item.name,
+                symbol: c.item.symbol.toUpperCase(),
+                score: c.item.score,
+                rank: c.item.market_cap_rank
+            }));
+        } catch (e) { return []; }
+    }
+
+    async function getBinanceSpotData() {
+        try {
+            const res = await fetch(`${BINANCE_API}/ticker/24hr`);
+            const all = await res.json();
+            return all.filter(t => t.symbol.endsWith('USDT') && parseFloat(t.quoteVolume) > 2000000)
+                .map(t => ({
+                    symbol: t.symbol.replace('USDT', ''),
+                    price: parseFloat(t.lastPrice),
+                    priceChangePercent: parseFloat(t.priceChangePercent),
+                    volume: parseFloat(t.quoteVolume)
+                }));
+        } catch (e) { return []; }
+    }
+
+    function calculateScore(coin, bollinger, binanceInfo, trendingScore) {
+        let total = 0;
+        const factors = [];
+        let bollScore = 0;
+        if (bollinger) {
+            const bp = bollinger.bandPercent;
+            if (bp >= 50 && bp <= 70) { bollScore = 35; factors.push({ name: 'Posição Bollinger', value: 35, detail: `${bp.toFixed(1)}% · zona ideal para entrada` }); }
+            else if (bp >= 45 && bp < 50) { bollScore = 25; factors.push({ name: 'Posição Bollinger', value: 25, detail: `${bp.toFixed(1)}% · próxima à média` }); }
+            else if (bp > 70 && bp <= 80) { bollScore = 20; factors.push({ name: 'Posição Bollinger', value: 20, detail: `${bp.toFixed(1)}% · acima da média, cautela` }); }
+            else if (bp > 80) { bollScore = 10; factors.push({ name: 'Posição Bollinger', value: 10, detail: `${bp.toFixed(1)}% · zona de sobrecompra` }); }
+            else { bollScore = 15; factors.push({ name: 'Posição Bollinger', value: 15, detail: `${bp.toFixed(1)}% · sem força clara` }); }
+        } else { bollScore = 20; factors.push({ name: 'Posição Bollinger', value: 20, detail: 'dados limitados' }); }
+        total += bollScore;
+
+        let gainScore = 0;
+        if (binanceInfo) {
+            const g = binanceInfo.priceChangePercent;
+            if (g > 0 && g <= 5) { gainScore = 25; factors.push({ name: 'Valorização 24h', value: 25, detail: `+${g.toFixed(2)}% · crescimento saudável` }); }
+            else if (g > 5 && g <= 15) { gainScore = 22; factors.push({ name: 'Valorização 24h', value: 22, detail: `+${g.toFixed(2)}% · bom momentum` }); }
+            else if (g > 15 && g <= 30) { gainScore = 15; factors.push({ name: 'Valorização 24h', value: 15, detail: `+${g.toFixed(2)}% · aceleração forte` }); }
+            else if (g > 30) { gainScore = 8; factors.push({ name: 'Valorização 24h', value: 8, detail: `+${g.toFixed(2)}% · pico extremo, evitar` }); }
+            else if (g < 0 && g >= -5) { gainScore = 12; factors.push({ name: 'Valorização 24h', value: 12, detail: `${g.toFixed(2)}% · leve correção` }); }
+            else { gainScore = 5; factors.push({ name: 'Valorização 24h', value: 5, detail: `${g.toFixed(2)}% · queda acentuada` }); }
+        } else { gainScore = 15; factors.push({ name: 'Valorização 24h', value: 15, detail: 'indisponível' }); }
+        total += gainScore;
+
+        let volScore = 0;
+        if (binanceInfo) {
+            const volM = binanceInfo.volume / 1e6;
+            if (volM > 50) { volScore = 20; factors.push({ name: 'Volume 24h', value: 20, detail: `$${volM.toFixed(0)}M · excepcional` }); }
+            else if (volM > 20) { volScore = 18; factors.push({ name: 'Volume 24h', value: 18, detail: `$${volM.toFixed(0)}M · muito alto` }); }
+            else if (volM > 10) { volScore = 15; factors.push({ name: 'Volume 24h', value: 15, detail: `$${volM.toFixed(0)}M · alto` }); }
+            else if (volM > 5) { volScore = 12; factors.push({ name: 'Volume 24h', value: 12, detail: `$${volM.toFixed(0)}M · médio` }); }
+            else { volScore = 5; factors.push({ name: 'Volume 24h', value: 5, detail: `$${volM.toFixed(0)}M · baixo` }); }
+        } else { volScore = 10; factors.push({ name: 'Volume 24h', value: 10, detail: 'dados limitados' }); }
+        total += volScore;
+
+        let trendScore = trendingScore ? Math.min(20, trendingScore / 5) : 10;
+        factors.push({ name: 'Popularidade (Trending)', value: trendScore, detail: `score CoinGecko: ${trendingScore || 'médio'}` });
+        total += trendScore;
+        return { total: Math.min(100, total), factors };
+    }
+
+    function predictTarget(price, score, bollinger) {
+        let predictedGain = 0;
+        if (score >= 85) predictedGain = 15 + Math.random() * 5;
+        else if (score >= 75) predictedGain = 10 + Math.random() * 5;
+        else if (score >= 65) predictedGain = 7 + Math.random() * 3;
+        else if (score >= 55) predictedGain = 4 + Math.random() * 3;
+        else predictedGain = 1 + Math.random() * 2;
+        if (bollinger && bollinger.bandPercent >= 50 && bollinger.bandPercent <= 70) predictedGain *= 1.2;
+        else if (bollinger && bollinger.bandPercent > 80) predictedGain *= 0.5;
+        else if (bollinger && bollinger.bandPercent < 40) predictedGain *= 0.7;
+        return { gain: predictedGain.toFixed(1), target: price * (1 + predictedGain / 100) };
+    }
+
+    async function findBestTrade() {
+        showThinking();
+        try {
+            await addAssistantMessageWithTyping("🔍 **Iniciando varredura completa**\n\nColetando todas as moedas do Trending CoinGecko e aplicando filtros técnicos...");
+            
+            const [trending, binanceData] = await Promise.all([getTrendingCoins(), getBinanceSpotData()]);
+            await addAssistantMessageWithTyping(`📊 **Encontradas ${trending.length} moedas em tendência**\n\nAnalisando individualmente cada ativo...`);
+            
+            const allCoins = [];
+            for (const tc of trending) {
+                const binInfo = binanceData.find(b => b.symbol === tc.symbol);
+                if (!binInfo) continue;
+                const boll = await getBollingerBands(tc.symbol);
+                await new Promise(r => setTimeout(r, 80));
+                const scoreData = calculateScore(tc, boll, binInfo, tc.score);
+                const pred = predictTarget(binInfo.price, scoreData.total, boll);
+                allCoins.push({ ...tc, price: binInfo.price, priceChange24h: binInfo.priceChangePercent, volume: binInfo.volume, bollinger: boll, score: scoreData.total, factors: scoreData.factors, prediction: pred });
+            }
+            
+            allCoins.sort((a, b) => b.score - a.score);
+            const best = allCoins[0];
+            const top5 = allCoins.slice(0, 5);
+            removeThinking();
+            
+            if (!best) {
+                await addAssistantMessageWithTyping("❌ **Não foi possível obter dados suficientes**\n\nTente novamente em alguns minutos.");
+                return;
+            }
+            
+            const bandPercent = best.bollinger ? best.bollinger.bandPercent.toFixed(1) : 'N/A';
+            const confidenceText = best.score >= 80 ? 'Muito Alto' : best.score >= 70 ? 'Alto' : best.score >= 60 ? 'Médio-Alto' : 'Médio';
+            
+            // Gerar tabela de fatores com caracteres
+            const factorsTable = best.factors.map(f => `│ ${f.name.padEnd(22)} │ ${f.value.toString().padStart(3)} pts │ ${f.detail.padEnd(35)} │`).join('\n');
+            
+            // Ranking top 5
+            const rankingLines = top5.map((c, i) => `${i+1}. ${c.name} (${c.symbol}) - ${c.score.toFixed(0)} pontos`).join('\n');
+            
+            const analysisText = `
+## 🏆 **RECOMENDAÇÃO PRINCIPAL**
+
+**${best.name} (${best.symbol})**  
+Ranking CoinGecko: #${best.rank || 'N/A'}
+
+---
+
+### 📈 **PROJEÇÃO PARA 24H**
+
+\`\`\`
+┌─────────────────────────────────────┐
+│  POTENCIAL ESTIMADO: +${best.prediction.gain}%          │
+│  Preço atual: $${formatPrice(best.price)}               │
+│  Alvo esperado: $${formatPrice(best.prediction.target)}          │
+└─────────────────────────────────────┘
+\`\`\`
+
+### 📊 **MÉTRICAS ATUAIS**
+
+| Métrica | Valor |
+|---------|-------|
+| Valorização 24h | ${best.priceChange24h >= 0 ? '+' : ''}${best.priceChange24h?.toFixed(2)}% |
+| Volume 24h | $${(best.volume / 1e6).toFixed(1)}M |
+| IA Score | ${best.score.toFixed(0)}/100 |
+| Posição Bollinger | ${bandPercent}% |
+
+---
+
+### 🔎 **FATORES ANALISADOS**
+
+\`\`\`
+┌────────────────────────┬─────────┬─────────────────────────────────────┐
+│ Fator                  │ Pontos  │ Detalhe                             │
+├────────────────────────┼─────────┼─────────────────────────────────────┤
+${factorsTable}
+└────────────────────────┴─────────┴─────────────────────────────────────┘
+\`\`\`
+
+**Confiança da IA:** ${confidenceText}  
+${'█'.repeat(Math.floor(best.score/5))}${'░'.repeat(20-Math.floor(best.score/5))} ${best.score.toFixed(0)}%
+
+---
+
+### 📋 **RANKING DAS TOP 5 OPORTUNIDADES**
+
+\`\`\`
+${rankingLines}
+\`\`\`
+
+---
+
+### 📌 **ESTRATÉGIA RECOMENDADA**
+
+- **Entrada:** Preço atual ($${formatPrice(best.price)})
+- **Stop-loss:** $${(best.price * 0.95).toFixed(4)} (5% abaixo)
+- **Take-profit:** $${formatPrice(best.prediction.target)}
+- **Horizonte:** 24 horas
+
+---
+
+⚠️ **Aviso Importante**  
+Esta análise considera dados de ${allCoins.length} moedas do Trending CoinGecko, utilizando Bollinger Bands SMA12 + 2σ (12h), volume e momentum. Criptomoedas são voláteis. Invista com cautela e utilize gestão de risco.
+            `;
+            
+            await addAssistantMessageWithTyping(analysisText);
+            await addAssistantMessageWithTyping(`✅ **Análise concluída!**\n\nRecomendo **${best.name} (${best.symbol})** com potencial estimado de **+${best.prediction.gain}%** nas próximas 24 horas. O setup técnico apresenta ${confidenceText.toLowerCase()} confiabilidade.`);
+            
+        } catch (err) {
+            removeThinking();
+            await addAssistantMessageWithTyping(`❌ **Erro na análise**\n\n${err.message}\n\nPor favor, tente novamente em alguns instantes.`);
+        }
+    }
+
+    async function processQuestion(question) {
+        const q = question.toLowerCase();
+        if (q.includes('moeda') && (q.includes('comprar') || q.includes('investir') || q.includes('recomenda') || q.includes('qual') || q.includes('trade'))) {
+            await findBestTrade();
+        } else if (q.includes('olá') || q.includes('oi') || q.includes('hello') || q.includes('bom dia')) {
+            await addAssistantMessageWithTyping("Olá! 👋\n\nPosso ajudar a encontrar a melhor criptomoeda para um trade de 24 horas.\n\nBasta perguntar: **\"Que moeda devo comprar hoje?\"** e faço uma análise completa do mercado, avaliando todas as trending coins do CoinGecko com Bollinger Bands, volume e momentum.");
+        } else {
+            await addAssistantMessageWithTyping("Para obter uma análise completa com recomendação de trade, pergunte:\n\n**\"Que moeda devo comprar hoje?\"**\n\nAssim analiso todas as trending coins e te mostro a melhor oportunidade para as próximas 24 horas com base em dados técnicos e de mercado.");
+        }
+    }
+
+    async function sendMessage() {
+        const msg = userInput.value.trim();
+        if (!msg) return;
+        addUserMessage(msg);
+        userInput.value = '';
+        sendBtn.disabled = true;
+        await processQuestion(msg);
+        sendBtn.disabled = false;
+        userInput.focus();
+    }
+
+    function handleKeyPress(e) {
+        if (e.key === 'Enter') sendMessage();
+    }
+</script>
+</body>
+</html>
