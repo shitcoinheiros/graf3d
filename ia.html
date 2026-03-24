@@ -135,8 +135,10 @@
         <div class="message-wrapper assistant">
             <div class="avatar">🤖</div>
             <div class="text-box">
-                <p>Configurado: Filtro de compra entre <strong>51% e 60%</strong> da Banda de Bollinger.</p>
-                <p>Pronto para escanear moedas em tendência na CoinGecko.</p>
+                <p>Estratégia Ativada:</p>
+                <p>• <strong>Entrada:</strong> Range 51%-63% da banda.<br>
+                • <strong>Alvo:</strong> Topo da Banda Superior.<br>
+                • <strong>Stop:</strong> 5% abaixo da Banda Central.</p>
             </div>
         </div>
     </div>
@@ -201,7 +203,7 @@
 
     async function performAnalysis() {
         const liveEl = appendMessage('assistant', '', true);
-        liveEl.innerHTML = '<div class="flex items-center gap-2"><div class="flex gap-1"><div class="typing-dot"></div><div class="typing-dot" style="animation-delay: 0.2s"></div><div class="typing-dot" style="animation-delay: 0.4s"></div></div> <span class="text-xs text-gray-400">Verificando Regras (51%-60% Bollinger)...</span></div>';
+        liveEl.innerHTML = '<div class="flex items-center gap-2"><div class="flex gap-1"><div class="typing-dot"></div><div class="typing-dot" style="animation-delay: 0.2s"></div><div class="typing-dot" style="animation-delay: 0.4s"></div></div> <span class="text-xs text-gray-400">Calculando Alvos e Stop...</span></div>';
 
         try {
             const trendingRes = await fetch(`${COINGECKO_API}/search/trending`);
@@ -221,27 +223,32 @@
                     if (klines.length < 20) continue;
 
                     const prices = klines.map(k => parseFloat(k[4]));
-                    const sma = prices.reduce((a, b) => a + b, 0) / 20;
+                    const sma = prices.reduce((a, b) => a + b, 0) / 20; // Média Central (Banda Central)
                     const variance = prices.reduce((a, b) => a + Math.pow(b - sma, 2), 0) / 20;
                     const stdDev = Math.sqrt(variance);
-                    const lastPrice = prices[prices.length - 1];
                     
-                    // bPercent: 0% = Banda Inferior, 50% = Média Central, 100% = Banda Superior
+                    const upperBand = sma + (2 * stdDev);
+                    const lastPrice = prices[prices.length - 1];
                     const bPercent = ((lastPrice - (sma - 2*stdDev)) / (4*stdDev)) * 100;
 
-                    // APLICANDO SUAS REGRAS ESTRITAS:
-                    // 1. Deve estar acima da média central (> 50%)
-                    // 2. Ideal entre 51% e 60%
-                    // 3. Máximo absoluto de 63%
-                    // 4. Preço deve estar positivo (priceChange > 0)
+                    // REGRA DE COMPRA REFINADA
                     if (bPercent >= 51 && bPercent <= 63 && priceChange > 0) {
-                        candidates.push({ sym, price: lastPrice, bPercent, change: priceChange, vol: tick.quoteVolume });
+                        candidates.push({ 
+                            sym, 
+                            price: lastPrice, 
+                            bPercent, 
+                            change: priceChange, 
+                            vol: tick.quoteVolume,
+                            sma,         // Central
+                            upperBand,   // Alvo
+                            stopLoss: sma * 0.95 // 5% abaixo da central
+                        });
                     }
                 }
             }
 
             if (candidates.length === 0) {
-                liveEl.innerHTML = "Nenhuma moeda em tendência atende aos critérios de 51%-60% da banda no momento.";
+                liveEl.innerHTML = "Aguardando moedas entrarem no range de 51%-63% com volume positivo.";
                 return;
             }
 
@@ -249,27 +256,26 @@
             const best = candidates[0];
 
             const report = `
-## 🎯 Oportunidade Detectada: **${best.sym}/USDT**
+## 🚀 SINAL DE TRADE: **${best.sym}/USDT**
 
-Ativo filtrado seguindo a regra de leve alta acima da média central.
+**Execução Baseada em Bandas de Bollinger:**
 
-**Métricas de Execução:**
-- **Preço Atual:** ${formatCurrency(best.price)}
-- **Posição na Banda:** ${best.bPercent.toFixed(2)}% (Ideal: 51-60%)
-- **Variação 24h:** +${best.change}%
+- **🛒 COMPRA:** ${formatCurrency(best.price)} (Região da Média Central)
+- **🎯 ALVO:** ${formatCurrency(best.upperBand)} (Topo da Banda Superior)
+- **🛡️ STOP:** ${formatCurrency(best.stopLoss)} (5% abaixo da Banda Central)
 
-**Por que comprar?**
-O ativo está em **leve alta** e acabou de cruzar a média central das Bandas de Bollinger, sem atingir a zona de exaustão (>63%). Isso indica um pivô de alta com espaço para buscar a banda superior.
-
-| Parâmetro | Valor |
+**Análise Técnica:**
+| Indicador | Status |
 | :--- | :--- |
-| **Setup** | Pullback na Média |
-| **Volume 24h** | $${(best.vol/1000000).toFixed(1)}M |
-| **Status** | ✅ Dentro do Range Estrito |
+| **Banda de Bollinger** | ${best.bPercent.toFixed(1)}% (Range de Ignição) |
+| **Banda Central (SMA)**| ${formatCurrency(best.sma)} |
+| **Variação 24h** | +${best.change}% |
+
+**Observação:** O ativo está em leve alta e posicionado logo acima da banda central. A estratégia visa capturar o movimento até a banda superior com risco controlado abaixo da média.
             `;
             await typeEffect(liveEl, parseMarkdown(report));
         } catch (e) {
-            liveEl.innerHTML = "Erro ao processar. Verifique sua conexão com as APIs.";
+            liveEl.innerHTML = "Erro de conexão. Tente novamente.";
         }
     }
 
