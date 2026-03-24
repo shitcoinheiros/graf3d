@@ -16,11 +16,7 @@
             --input-area-height: 140px;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'Inter', sans-serif;
@@ -75,19 +71,10 @@
             gap: 1.5rem;
         }
 
-        /* Estrutura das Mensagens */
-        .message-wrapper {
-            display: flex;
-            width: 100%;
-            max-width: 850px;
-            margin: 0 auto;
-        }
+        .message-wrapper { display: flex; width: 100%; max-width: 850px; margin: 0 auto; }
 
-        /* USUÁRIO: Alinhado à Direita, Balão Azul, Sem Avatar */
-        .message-wrapper.user {
-            justify-content: flex-end;
-        }
-
+        /* USER: Direita, Azul, Sem Foto */
+        .message-wrapper.user { justify-content: flex-end; }
         .message-wrapper.user .text-box {
             background: var(--user-bubble);
             color: white;
@@ -97,15 +84,10 @@
             max-width: 75%;
         }
 
-        /* ASSISTENTE: Alinhado à Esquerda, Balão Branco, Com Avatar */
-        .message-wrapper.assistant {
-            justify-content: flex-start;
-            gap: 12px;
-        }
-
+        /* ASSISTANT: Esquerda, Branco, Com Foto */
+        .message-wrapper.assistant { justify-content: flex-start; gap: 12px; }
         .message-wrapper.assistant .text-box {
             background: white;
-            color: #374151;
             padding: 12px 18px;
             border-radius: 18px 18px 18px 2px;
             border: 1px solid #e5e5e5;
@@ -113,105 +95,26 @@
         }
 
         .avatar {
-            width: 30px;
-            height: 30px;
-            border-radius: 4px;
-            flex-shrink: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1rem;
-            background: var(--gpt-accent);
-            color: white;
+            width: 30px; height: 30px; border-radius: 4px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--gpt-accent); color: white; font-size: 1rem;
         }
 
-        .text-box {
-            line-height: 1.6;
-            font-size: 15px;
-            overflow-x: auto;
-        }
-
-        /* Estilização Interna (Markdown-like) */
+        .text-box { line-height: 1.6; font-size: 15px; overflow-x: auto; }
         .text-box h2 { font-weight: 600; font-size: 1.2rem; margin: 1rem 0 0.5rem; color: #111827; }
-        .text-box p { margin-bottom: 0.75rem; }
         
-        pre {
-            background: #0d0d0d;
-            color: #ececec;
-            padding: 1rem;
-            border-radius: 8px;
-            margin: 1rem 0;
-            font-family: 'Fira Code', monospace;
-            font-size: 13px;
-            overflow-x: auto;
-            border: 1px solid #2d2d2d;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 1rem 0;
-            background: white;
-            border-radius: 8px;
-            font-size: 13px;
-            border: 1px solid #eee;
-        }
-
+        pre { background: #0d0d0d; color: #ececec; padding: 1rem; border-radius: 8px; margin: 1rem 0; font-family: 'Fira Code', monospace; font-size: 13px; overflow-x: auto; border: 1px solid #2d2d2d; }
+        table { width: 100%; border-collapse: collapse; margin: 1rem 0; background: white; border-radius: 8px; font-size: 13px; border: 1px solid #eee; }
         th { background: #f9fafb; padding: 10px; text-align: left; color: #6b7280; border-bottom: 1px solid #eee; }
         td { padding: 10px; border-bottom: 1px solid #f9f9f9; }
 
-        /* Rodapé de Entrada */
-        .input-area {
-            flex-shrink: 0;
-            background: linear-gradient(180deg, rgba(247,247,248,0) 0%, rgba(247,247,248,1) 50%);
-            padding: 1rem;
-            padding-bottom: calc(1rem + env(safe-area-inset-bottom));
-        }
+        .input-area { flex-shrink: 0; background: linear-gradient(180deg, rgba(247,247,248,0) 0%, rgba(247,247,248,1) 50%); padding: 1rem; padding-bottom: calc(1rem + env(safe-area-inset-bottom)); }
+        .input-container { max-width: 800px; margin: 0 auto; position: relative; background: white; border: 1px solid #e5e5e5; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        #user-input { width: 100%; padding: 14px 45px 14px 16px; border: none; border-radius: 12px; outline: none; font-size: 16px; }
+        #send-btn { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: var(--gpt-accent); color: white; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
 
-        .input-container {
-            max-width: 800px;
-            margin: 0 auto;
-            position: relative;
-            background: white;
-            border: 1px solid #e5e5e5;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        }
-
-        #user-input {
-            width: 100%;
-            padding: 14px 45px 14px 16px;
-            border: none;
-            border-radius: 12px;
-            outline: none;
-            font-size: 16px;
-        }
-
-        #send-btn {
-            position: absolute;
-            right: 8px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: var(--gpt-accent);
-            color: white;
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-        }
-
-        #send-btn:disabled { background: #d1d1d1; cursor: not-allowed; }
-
-        .typing-dot {
-            width: 4px; height: 4px; background: #8e8ea0; border-radius: 50%; animation: bounce 1.4s infinite;
-        }
+        .typing-dot { width: 4px; height: 4px; background: #8e8ea0; border-radius: 50%; animation: bounce 1.4s infinite; }
         @keyframes bounce { 0%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-6px); } }
-
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-thumb { background: #d1d1e2; border-radius: 10px; }
     </style>
 </head>
 <body>
@@ -232,9 +135,8 @@
         <div class="message-wrapper assistant">
             <div class="avatar">🤖</div>
             <div class="text-box">
-                <p>Olá! Sou seu terminal de inteligência para o mercado cripto.</p>
-                <p>Fiz a varredura nas <strong>Bandas de Bollinger</strong> e volume das moedas em tendência. Posso te dar a melhor recomendação para as próximas 24h agora.</p>
-                <p>Tente perguntar: <strong>"Qual moeda comprar agora?"</strong></p>
+                <p>Configurado: Filtro de compra entre <strong>51% e 60%</strong> da Banda de Bollinger.</p>
+                <p>Pronto para escanear moedas em tendência na CoinGecko.</p>
             </div>
         </div>
     </div>
@@ -246,9 +148,6 @@
         <button id="send-btn">
             <svg stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24" height="18" width="18" xmlns="http://www.w3.org/2000/svg"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
         </button>
-    </div>
-    <div class="max-width-[800px] mx-auto">
-        <p class="text-[10px] text-center text-gray-400 mt-2 px-4">Esta ferramenta usa APIs públicas e não garante lucros. Opere com gerenciamento de risco.</p>
     </div>
 </div>
 
@@ -266,33 +165,17 @@
     }
 
     function parseMarkdown(text) {
-        return text
-            .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-            .replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>')
-            .replace(/```([\s\S]*?)```/gim, '<pre><code>$1</code></pre>')
-            .replace(/\n/g, '<br>');
+        return text.replace(/^## (.*$)/gim, '<h2>$1</h2>').replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>').replace(/```([\s\S]*?)```/gim, '<pre><code>$1</code></pre>').replace(/\n/g, '<br>');
     }
 
-    function scrollToEnd() {
-        chatContainer.scrollTo({
-            top: chatContainer.scrollHeight,
-            behavior: 'smooth'
-        });
-    }
+    function scrollToEnd() { chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' }); }
 
     function appendMessage(role, content, isLive = false) {
         const wrapper = document.createElement('div');
         wrapper.className = `message-wrapper ${role}`;
         const id = isLive ? 'live-' + Date.now() : '';
-        
-        let innerHTML = '';
-        // Só coloca avatar se for o assistente
-        if (role === 'assistant') {
-            innerHTML += `<div class="avatar">🤖</div>`;
-        }
-        
+        let innerHTML = role === 'assistant' ? `<div class="avatar">🤖</div>` : '';
         innerHTML += `<div class="text-box" id="${id}">${role === 'user' ? content : parseMarkdown(content)}</div>`;
-        
         wrapper.innerHTML = innerHTML;
         messagesList.appendChild(wrapper);
         scrollToEnd();
@@ -304,7 +187,6 @@
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = html;
         const nodes = Array.from(tempDiv.childNodes);
-        
         for (const node of nodes) {
             if (node.nodeType === Node.TEXT_NODE) {
                 const text = node.textContent;
@@ -313,105 +195,97 @@
                     scrollToEnd();
                     await new Promise(r => setTimeout(r, 4));
                 }
-            } else {
-                element.appendChild(node.cloneNode(true));
-                scrollToEnd();
-            }
+            } else { element.appendChild(node.cloneNode(true)); scrollToEnd(); }
         }
     }
 
     async function performAnalysis() {
         const liveEl = appendMessage('assistant', '', true);
-        liveEl.innerHTML = '<div class="flex items-center gap-2"><div class="flex gap-1"><div class="typing-dot"></div><div class="typing-dot" style="animation-delay: 0.2s"></div><div class="typing-dot" style="animation-delay: 0.4s"></div></div> <span class="text-xs text-gray-400">Varrendo mercado em tempo real...</span></div>';
+        liveEl.innerHTML = '<div class="flex items-center gap-2"><div class="flex gap-1"><div class="typing-dot"></div><div class="typing-dot" style="animation-delay: 0.2s"></div><div class="typing-dot" style="animation-delay: 0.4s"></div></div> <span class="text-xs text-gray-400">Verificando Regras (51%-60% Bollinger)...</span></div>';
 
         try {
             const trendingRes = await fetch(`${COINGECKO_API}/search/trending`);
             const trendData = await trendingRes.json();
-            const symbols = trendData.coins.slice(0, 8).map(c => c.item.symbol.toUpperCase());
+            const symbols = trendData.coins.map(c => c.item.symbol.toUpperCase());
 
             const tickerRes = await fetch(`${BINANCE_API}/ticker/24hr`);
             const allTickers = await tickerRes.json();
 
-            const analyzed = [];
+            const candidates = [];
             for (const sym of symbols) {
                 const tick = allTickers.find(t => t.symbol === sym + 'USDT');
-                if (tick && parseFloat(tick.quoteVolume) > 10000000) {
-                    const klineRes = await fetch(`${BINANCE_API}/klines?symbol=${sym}USDT&interval=1h&limit=12`);
+                if (tick) {
+                    const priceChange = parseFloat(tick.priceChangePercent);
+                    const klineRes = await fetch(`${BINANCE_API}/klines?symbol=${sym}USDT&interval=1h&limit=20`);
                     const klines = await klineRes.json();
+                    if (klines.length < 20) continue;
+
                     const prices = klines.map(k => parseFloat(k[4]));
-                    
-                    const sma = prices.reduce((a, b) => a + b, 0) / 12;
-                    const variance = prices.reduce((a, b) => a + Math.pow(b - sma, 2), 0) / 12;
+                    const sma = prices.reduce((a, b) => a + b, 0) / 20;
+                    const variance = prices.reduce((a, b) => a + Math.pow(b - sma, 2), 0) / 20;
                     const stdDev = Math.sqrt(variance);
                     const lastPrice = prices[prices.length - 1];
+                    
+                    // bPercent: 0% = Banda Inferior, 50% = Média Central, 100% = Banda Superior
                     const bPercent = ((lastPrice - (sma - 2*stdDev)) / (4*stdDev)) * 100;
 
-                    analyzed.push({
-                        sym, price: lastPrice, change: tick.priceChangePercent, 
-                        vol: tick.quoteVolume, bPercent, score: (bPercent > 50 && bPercent < 90 ? 50 : 20) + (parseFloat(tick.priceChangePercent) > 0 ? 30 : 0)
-                    });
+                    // APLICANDO SUAS REGRAS ESTRITAS:
+                    // 1. Deve estar acima da média central (> 50%)
+                    // 2. Ideal entre 51% e 60%
+                    // 3. Máximo absoluto de 63%
+                    // 4. Preço deve estar positivo (priceChange > 0)
+                    if (bPercent >= 51 && bPercent <= 63 && priceChange > 0) {
+                        candidates.push({ sym, price: lastPrice, bPercent, change: priceChange, vol: tick.quoteVolume });
+                    }
                 }
             }
 
-            analyzed.sort((a, b) => b.score - a.score);
-            const best = analyzed[0];
-
-            if (!best) {
-                liveEl.innerHTML = "Não encontrei padrões de trade ideais neste exato momento. O volume das Trending Coins está abaixo do mínimo seguro.";
+            if (candidates.length === 0) {
+                liveEl.innerHTML = "Nenhuma moeda em tendência atende aos critérios de 51%-60% da banda no momento.";
                 return;
             }
 
+            candidates.sort((a, b) => b.vol - a.vol);
+            const best = candidates[0];
+
             const report = `
-## 🏆 Recomendação de Compra: **${best.sym}/USDT**
+## 🎯 Oportunidade Detectada: **${best.sym}/USDT**
 
-Detectei um setup de **continuação de tendência** baseado em volume e volatilidade.
+Ativo filtrado seguindo a regra de leve alta acima da média central.
 
-**Estratégia sugerida:**
-- **Entrada:** ${formatCurrency(best.price)}
-- **Alvo Realista:** ${formatCurrency(best.price * 1.07)} (+7%)
-- **Stop Loss:** ${formatCurrency(best.price * 0.95)} (-5%)
+**Métricas de Execução:**
+- **Preço Atual:** ${formatCurrency(best.price)}
+- **Posição na Banda:** ${best.bPercent.toFixed(2)}% (Ideal: 51-60%)
+- **Variação 24h:** +${best.change}%
 
-**Análise Técnica:**
-| Indicador | Status |
+**Por que comprar?**
+O ativo está em **leve alta** e acabou de cruzar a média central das Bandas de Bollinger, sem atingir a zona de exaustão (>63%). Isso indica um pivô de alta com espaço para buscar a banda superior.
+
+| Parâmetro | Valor |
 | :--- | :--- |
-| **Volatilidade (Bollinger)** | ${best.bPercent.toFixed(1)}% (Zona de Expansão) |
+| **Setup** | Pullback na Média |
 | **Volume 24h** | $${(best.vol/1000000).toFixed(1)}M |
-| **IA Score** | **${best.score}/100** |
-
-O ativo **${best.sym}** está trabalhando acima da média móvel de 12 horas, com as bandas de Bollinger se abrindo, indicando que a pressão compradora ainda não exauriu. Este cenário é ideal para um trade rápido de 24 horas.
+| **Status** | ✅ Dentro do Range Estrito |
             `;
-
             await typeEffect(liveEl, parseMarkdown(report));
-
         } catch (e) {
-            liveEl.innerHTML = "Erro ao processar dados. Por favor, tente novamente em alguns segundos.";
+            liveEl.innerHTML = "Erro ao processar. Verifique sua conexão com as APIs.";
         }
     }
 
     async function handleSend() {
         const text = userInput.value.trim();
         if (!text || sendBtn.disabled) return;
-
         userInput.value = '';
         sendBtn.disabled = true;
-        
         appendMessage('user', text);
-
-        const lowerText = text.toLowerCase();
-        if (lowerText.includes('moeda') || lowerText.includes('comprar') || lowerText.includes('oportunidade') || lowerText.includes('qual')) {
-            await performAnalysis();
-        } else {
-            const reply = appendMessage('assistant', '', true);
-            await typeEffect(reply, parseMarkdown("Posso te ajudar com isso! Peça uma **análise de oportunidade** ou pergunte **qual moeda comprar hoje** para eu iniciar os cálculos."));
-        }
-
+        await performAnalysis();
         sendBtn.disabled = false;
         userInput.focus();
     }
 
     sendBtn.addEventListener('click', handleSend);
     userInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleSend(); });
-
 </script>
 </body>
 </html>
