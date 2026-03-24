@@ -32,8 +32,7 @@
             align-items: center;
             gap: 10px;
             flex-shrink: 0;
-            position: sticky;
-            top: 0;
+            position: relative;
             z-index: 10;
         }
 
@@ -60,12 +59,13 @@
             text-overflow: ellipsis;
         }
 
-        /* Área de chat principal - responsiva */
+        /* Área de chat principal - limitada e com rolagem */
         .chat-main {
             flex: 1;
             overflow-y: auto;
             background: #f7f7f8;
             -webkit-overflow-scrolling: touch;
+            min-height: 0; /* Importante para flexbox limitar altura */
         }
 
         .conversation-container {
@@ -269,14 +269,15 @@
             30% { transform: translateY(-6px); opacity: 1; }
         }
 
-        /* Input estilo ChatGPT - responsivo */
+        /* Input estilo ChatGPT - FIXO NA PARTE INFERIOR */
         .input-footer {
             background: #ffffff;
             border-top: 1px solid #e5e5e5;
             padding: 12px 12px;
             flex-shrink: 0;
-            position: sticky;
+            position: relative;
             bottom: 0;
+            width: 100%;
         }
 
         @media (min-width: 768px) {
@@ -358,7 +359,7 @@
             cursor: not-allowed;
         }
 
-        /* Scrollbar personalizada para mobile */
+        /* Scrollbar personalizada */
         ::-webkit-scrollbar {
             width: 4px;
         }
@@ -420,6 +421,7 @@
     <div class="chatgpt-title">ChatGPT · Crypto Analyst</div>
 </div>
 
+<!-- Área de diálogo limitada com rolagem independente -->
 <div class="chat-main" id="chatMain">
     <div class="conversation-container" id="conversation">
         <div class="message-group">
@@ -436,6 +438,7 @@
     </div>
 </div>
 
+<!-- Input fixo na parte inferior -->
 <div class="input-footer">
     <div class="input-box">
         <input type="text" id="userInput" placeholder="Digite sua pergunta..." onkeypress="handleKeyPress(event)" autocomplete="off">
