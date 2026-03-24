@@ -18,6 +18,11 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
         }
 
         /* Header */
@@ -49,13 +54,14 @@
             font-size: 15px;
         }
 
-        /* Container do chat com altura fixa e rolagem */
+        /* Container do chat */
         .chat-container {
             flex: 1;
             display: flex;
             flex-direction: column;
             min-height: 0;
             background: #f7f7f8;
+            overflow: hidden;
         }
 
         .chat-messages {
@@ -159,12 +165,16 @@
             30% { transform: translateY(-6px); opacity: 1; }
         }
 
-        /* Input fixo na parte inferior */
+        /* Input area - COM PADDING ESPECIAL PARA SAFE AREA */
         .input-area {
             background: #ffffff;
             border-top: 1px solid #e5e5e5;
             padding: 12px;
             flex-shrink: 0;
+            /* Padding extra para safe area do iPhone */
+            padding-bottom: max(12px, env(safe-area-inset-bottom, 12px));
+            /* Fallback para navegadores mais antigos */
+            padding-bottom: max(12px, constant(safe-area-inset-bottom, 12px));
         }
 
         .input-wrapper {
@@ -230,12 +240,17 @@
                 max-width: 800px;
                 margin: 0 auto;
             }
+            
+            .input-area {
+                padding: 16px 20px;
+                padding-bottom: max(16px, env(safe-area-inset-bottom, 16px));
+            }
         }
 
-        /* Ajuste para safe area no mobile */
-        @supports (padding-bottom: env(safe-area-inset-bottom)) {
+        /* Ajuste específico para Android com gesture navigation */
+        @media (max-width: 768px) {
             .input-area {
-                padding-bottom: max(12px, env(safe-area-inset-bottom));
+                padding-bottom: max(12px, env(safe-area-inset-bottom, 20px));
             }
         }
     </style>
@@ -358,7 +373,9 @@
         }
 
         function scrollToBottom() {
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            setTimeout(() => {
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            }, 10);
         }
 
         function formatPrice(p) {
@@ -418,7 +435,6 @@
             let total = 0;
             const factors = [];
             
-            // Bollinger (35%)
             if (bollinger) {
                 const bp = bollinger.bandPercent;
                 if (bp >= 50 && bp <= 70) { total += 35; factors.push(`Bollinger: ${bp.toFixed(1)}% (35 pts) - ideal`); }
@@ -428,7 +444,6 @@
                 else { total += 15; factors.push(`Bollinger: ${bp.toFixed(1)}% (15 pts)`); }
             } else { total += 20; factors.push(`Bollinger: dados limitados (20 pts)`); }
             
-            // Valorização (25%)
             if (binInfo) {
                 const g = binInfo.change;
                 if (g > 0 && g <= 5) { total += 25; factors.push(`Valorização: +${g.toFixed(2)}% (25 pts) - saudável`); }
@@ -439,7 +454,6 @@
                 else { total += 5; factors.push(`Valorização: ${g.toFixed(2)}% (5 pts) - queda forte`); }
             } else { total += 15; factors.push(`Valorização: indisponível (15 pts)`); }
             
-            // Volume (20%)
             if (binInfo) {
                 const volM = binInfo.volume / 1e6;
                 if (volM > 50) { total += 20; factors.push(`Volume: $${volM.toFixed(0)}M (20 pts) - excepcional`); }
@@ -449,7 +463,6 @@
                 else { total += 5; factors.push(`Volume: $${volM.toFixed(0)}M (5 pts) - baixo`); }
             } else { total += 10; factors.push(`Volume: indisponível (10 pts)`); }
             
-            // Popularidade (20%)
             let trendPts = trendScore ? Math.min(20, trendScore / 5) : 10;
             total += trendPts;
             factors.push(`Popularidade: ${trendScore || 'médio'} (${trendPts} pts)`);
@@ -583,11 +596,19 @@ ${rankingText}
             await processQuestion(msg);
             sendBtn.disabled = false;
             userInput.focus();
+            // Garantir que o scroll vai para o final
+            setTimeout(scrollToBottom, 100);
         }
 
         function handleKeyPress(e) {
             if (e.key === 'Enter') sendMessage();
         }
+        
+        // Ajuste de foco e scroll inicial
+        setTimeout(() => {
+            scrollToBottom();
+            userInput.focus();
+        }, 100);
     </script>
 </body>
 </html>
