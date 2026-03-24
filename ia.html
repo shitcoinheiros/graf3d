@@ -19,11 +19,10 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            position: fixed;
-            width: 100%;
+            position: relative;
         }
 
-        /* Header estilo ChatGPT - responsivo */
+        /* Header estilo ChatGPT */
         .chatgpt-header {
             background: #ffffff;
             border-bottom: 1px solid #e5e5e5;
@@ -32,7 +31,6 @@
             align-items: center;
             gap: 10px;
             flex-shrink: 0;
-            position: relative;
             z-index: 10;
         }
 
@@ -59,13 +57,14 @@
             text-overflow: ellipsis;
         }
 
-        /* Área de chat principal - limitada e com rolagem */
+        /* Área de chat principal - ocupa todo espaço disponível */
         .chat-main {
             flex: 1;
             overflow-y: auto;
             background: #f7f7f8;
             -webkit-overflow-scrolling: touch;
-            min-height: 0; /* Importante para flexbox limitar altura */
+            min-height: 0;
+            position: relative;
         }
 
         .conversation-container {
@@ -96,7 +95,7 @@
             }
         }
 
-        /* Mensagens estilo ChatGPT - responsivas */
+        /* Mensagens estilo ChatGPT */
         .message-group {
             margin-bottom: 20px;
         }
@@ -151,7 +150,7 @@
             max-width: 100%;
         }
 
-        /* Conteúdo do assistente com estilo de texto puro */
+        /* Conteúdo do assistente */
         .assistant-content {
             font-size: 15px;
             line-height: 1.6;
@@ -213,7 +212,6 @@
             }
         }
 
-        /* Estilo para tabelas com ASCII - responsivo */
         .assistant-content pre code {
             background: none;
             padding: 0;
@@ -269,7 +267,7 @@
             30% { transform: translateY(-6px); opacity: 1; }
         }
 
-        /* Input estilo ChatGPT - FIXO NA PARTE INFERIOR */
+        /* Input fixo na parte inferior - SEMPRE VISÍVEL */
         .input-footer {
             background: #ffffff;
             border-top: 1px solid #e5e5e5;
@@ -278,6 +276,7 @@
             position: relative;
             bottom: 0;
             width: 100%;
+            z-index: 10;
         }
 
         @media (min-width: 768px) {
@@ -359,7 +358,7 @@
             cursor: not-allowed;
         }
 
-        /* Scrollbar personalizada */
+        /* Scrollbar */
         ::-webkit-scrollbar {
             width: 4px;
         }
@@ -421,7 +420,7 @@
     <div class="chatgpt-title">ChatGPT · Crypto Analyst</div>
 </div>
 
-<!-- Área de diálogo limitada com rolagem independente -->
+<!-- Área de diálogo com rolagem independente -->
 <div class="chat-main" id="chatMain">
     <div class="conversation-container" id="conversation">
         <div class="message-group">
@@ -438,7 +437,7 @@
     </div>
 </div>
 
-<!-- Input fixo na parte inferior -->
+<!-- Input fixo na parte inferior - sempre visível -->
 <div class="input-footer">
     <div class="input-box">
         <input type="text" id="userInput" placeholder="Digite sua pergunta..." onkeypress="handleKeyPress(event)" autocomplete="off">
@@ -447,7 +446,7 @@
 </div>
 
 <script>
-    // ==================== LÓGICA DE ANÁLISE (regras intactas) ====================
+    // ==================== LÓGICA DE ANÁLISE ====================
     const conversationDiv = document.getElementById('conversation');
     const userInput = document.getElementById('userInput');
     const sendBtn = document.getElementById('sendBtn');
@@ -456,7 +455,6 @@
     const COINGECKO_API = 'https://api.coingecko.com/api/v3';
     const BINANCE_API = 'https://api.binance.com/api/v3';
 
-    // Função para adicionar mensagem do usuário
     function addUserMessage(text) {
         const group = document.createElement('div');
         group.className = 'message-group';
@@ -471,7 +469,6 @@
         scrollToBottom();
     }
 
-    // Função para adicionar mensagem do assistente com efeito de digitação
     async function addAssistantMessageWithTyping(contentHtml) {
         return new Promise((resolve) => {
             const group = document.createElement('div');
@@ -512,7 +509,6 @@
         });
     }
 
-    // Mostrar indicador de "pensando"
     function showThinking() {
         const group = document.createElement('div');
         group.className = 'message-group';
@@ -545,8 +541,10 @@
 
     function scrollToBottom() {
         setTimeout(() => {
-            chatMain.scrollTop = chatMain.scrollHeight;
-        }, 10);
+            if (chatMain) {
+                chatMain.scrollTop = chatMain.scrollHeight;
+            }
+        }, 20);
     }
 
     function formatPrice(p) {
