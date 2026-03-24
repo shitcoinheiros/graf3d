@@ -11,28 +11,24 @@
             --gpt-dark: #202123;
             --gpt-gray: #343541;
             --gpt-accent: #10a37f;
+            --user-bubble: #007bff;
             --header-height: 60px;
-            --input-area-height: 140px; /* Espaço aproximado para o input e margens */
+            --input-area-height: 140px;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'Inter', sans-serif;
             background-color: #f7f7f8;
             color: #374151;
             height: 100vh;
-            height: 100svh; /* Suporte para mobile moderno */
+            height: 100svh;
             display: flex;
             flex-direction: column;
             overflow: hidden;
         }
 
-        /* Header Fixo */
         .app-header {
             height: var(--header-height);
             background: rgba(255, 255, 255, 0.9);
@@ -58,7 +54,6 @@
             font-weight: bold;
         }
 
-        /* Área de Chat com Scroll Independente */
         #chat-container {
             flex: 1;
             overflow-y: auto;
@@ -68,78 +63,77 @@
             flex-direction: column;
         }
 
-        /* O segredo para não sobrepor: um preenchimento no final da lista de mensagens */
         .messages-list {
+            padding: 1rem;
             padding-bottom: var(--input-area-height);
-        }
-
-        .message-wrapper {
-            width: 100%;
-            padding: 1.5rem 1rem;
-            border-bottom: 1px solid rgba(0,0,0,0.03);
-        }
-
-        .message-wrapper.user { background: #ffffff; }
-        .message-wrapper.assistant { background: #f7f7f8; }
-
-        .message-content {
-            max-width: 800px;
-            margin: 0 auto;
             display: flex;
-            gap: 1rem;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        /* Estrutura Base da Mensagem */
+        .message-wrapper {
+            display: flex;
+            width: 100%;
+            max-width: 850px;
+            margin: 0 auto;
+        }
+
+        /* Estilo da Mensagem do USUÁRIO (Lado Direito) */
+        .message-wrapper.user {
+            justify-content: flex-end;
+        }
+
+        .message-wrapper.user .text-box {
+            background: var(--user-bubble);
+            color: white;
+            padding: 12px 18px;
+            border-radius: 18px 18px 2px 18px; /* Cantinho chanfrado estilo WhatsApp/Telegram */
+            max-width: 70%;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        /* Estilo da Mensagem do ASSISTENTE (Lado Esquerdo) */
+        .message-wrapper.assistant {
+            justify-content: flex-start;
+            gap: 12px;
+        }
+
+        .message-wrapper.assistant .text-box {
+            background: white;
+            padding: 12px 18px;
+            border-radius: 18px 18px 18px 2px;
+            border: 1px solid #e5e5e5;
+            max-width: 85%;
         }
 
         .avatar {
-            width: 30px;
-            height: 30px;
-            border-radius: 4px;
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
             flex-shrink: 0;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1rem;
+            background: var(--gpt-accent);
+            color: white;
+            font-size: 14px;
         }
-
-        .user .avatar { background: #5436da; color: white; }
-        .assistant .avatar { background: var(--gpt-accent); color: white; }
 
         .text-box {
-            flex: 1;
             line-height: 1.6;
             font-size: 15px;
-            color: #374151;
-            overflow-x: auto;
+            word-wrap: break-word;
         }
 
-        /* Estilos de Texto IA */
-        .text-box h2 { font-weight: 600; font-size: 1.2rem; margin: 1rem 0 0.5rem; color: #111827; }
-        .text-box p { margin-bottom: 0.75rem; }
-        
-        pre {
-            background: #0d0d0d;
-            color: #ececec;
-            padding: 1rem;
-            border-radius: 8px;
-            margin: 1rem 0;
-            font-family: 'Fira Code', monospace;
-            font-size: 13px;
-            overflow-x: auto;
-            border: 1px solid #2d2d2d;
-        }
+        /* Formatação de Tabelas e Código dentro do balão da IA */
+        .text-box h2 { font-weight: 600; font-size: 1.1rem; margin-bottom: 8px; }
+        pre { background: #1e1e1e; color: #d4d4d4; padding: 10px; border-radius: 6px; margin: 10px 0; font-size: 12px; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; background: #fff; font-size: 12px; border-radius: 4px; overflow: hidden; }
+        th { background: #f3f4f6; padding: 8px; text-align: left; border-bottom: 2px solid #e5e7eb; }
+        td { padding: 8px; border-bottom: 1px solid #f3f4f6; color: #4b5563;}
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 1rem 0;
-            background: white;
-            border-radius: 8px;
-            font-size: 13px;
-        }
-
-        th { background: #f9fafb; padding: 10px; text-align: left; color: #6b7280; border-bottom: 1px solid #eee; }
-        td { padding: 10px; border-bottom: 1px solid #f9f9f9; }
-
-        /* Rodapé de Entrada Fixo */
+        /* Rodapé */
         .input-area {
             flex-shrink: 0;
             background: linear-gradient(180deg, rgba(247,247,248,0) 0%, rgba(247,247,248,1) 50%);
@@ -179,20 +173,10 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.2s;
         }
 
-        #send-btn:disabled { background: #d1d1d1; cursor: not-allowed; }
-
-        /* Indicador de Digitação */
-        .typing-dot {
-            width: 4px; height: 4px; background: #8e8ea0; border-radius: 50%; animation: bounce 1.4s infinite;
-        }
+        .typing-dot { width: 4px; height: 4px; background: #8e8ea0; border-radius: 50%; animation: bounce 1.4s infinite; }
         @keyframes bounce { 0%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-6px); } }
-
-        /* Scrollbar Mobile */
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-thumb { background: #d1d1e2; border-radius: 10px; }
     </style>
 </head>
 <body>
@@ -210,15 +194,12 @@
 
 <main id="chat-container">
     <div class="messages-list" id="messages-list">
-        <!-- Boas-vindas -->
         <div class="message-wrapper assistant">
-            <div class="message-content">
-                <div class="avatar">🤖</div>
-                <div class="text-box">
-                    <p>Olá! Sou seu terminal de inteligência para o mercado cripto.</p>
-                    <p>Fiz a varredura nas <strong>Bandas de Bollinger</strong> e volume das moedas em tendência. Posso te dar a melhor recomendação para as próximas 24h agora.</p>
-                    <p>Tente perguntar: <strong>"Qual moeda comprar agora?"</strong></p>
-                </div>
+            <div class="avatar">🤖</div>
+            <div class="text-box">
+                <p>Olá! Sou seu terminal de inteligência para o mercado cripto.</p>
+                <p>Analiso <strong>Bandas de Bollinger</strong> e volume em tempo real.</p>
+                <p>Pergunte: <strong>"Qual moeda comprar agora?"</strong></p>
             </div>
         </div>
     </div>
@@ -231,9 +212,7 @@
             <svg stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24" height="18" width="18" xmlns="http://www.w3.org/2000/svg"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
         </button>
     </div>
-    <div class="max-width-[800px] mx-auto">
-        <p class="text-[10px] text-center text-gray-400 mt-2 px-4">Esta ferramenta usa APIs públicas e não garante lucros. Opere com gerenciamento de risco.</p>
-    </div>
+    <p class="text-[10px] text-center text-gray-400 mt-2 px-4">Análise baseada em dados públicos. Opere com cautela.</p>
 </div>
 
 <script>
@@ -258,10 +237,7 @@
     }
 
     function scrollToEnd() {
-        chatContainer.scrollTo({
-            top: chatContainer.scrollHeight,
-            behavior: 'smooth'
-        });
+        chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
     }
 
     function appendMessage(role, content, isLive = false) {
@@ -269,12 +245,15 @@
         wrapper.className = `message-wrapper ${role}`;
         const id = isLive ? 'live-' + Date.now() : '';
         
-        wrapper.innerHTML = `
-            <div class="message-content">
-                <div class="avatar">${role === 'user' ? '👤' : '🤖'}</div>
-                <div class="text-box" id="${id}">${role === 'user' ? content : parseMarkdown(content)}</div>
-            </div>
-        `;
+        // Lógica visual: Se for assistente coloca avatar, se for user não coloca
+        let innerHTML = '';
+        if(role === 'assistant') {
+            innerHTML += `<div class="avatar">🤖</div>`;
+        }
+        
+        innerHTML += `<div class="text-box" id="${id}">${role === 'user' ? content : parseMarkdown(content)}</div>`;
+        
+        wrapper.innerHTML = innerHTML;
         messagesList.appendChild(wrapper);
         scrollToEnd();
         return id ? document.getElementById(id) : null;
@@ -303,7 +282,7 @@
 
     async function performAnalysis() {
         const liveEl = appendMessage('assistant', '', true);
-        liveEl.innerHTML = '<div class="flex items-center gap-2"><div class="flex gap-1"><div class="typing-dot"></div><div class="typing-dot" style="animation-delay: 0.2s"></div><div class="typing-dot" style="animation-delay: 0.4s"></div></div> <span class="text-xs text-gray-400">Varrendo mercado em tempo real...</span></div>';
+        liveEl.innerHTML = '<div class="flex items-center gap-2"><div class="flex gap-1"><div class="typing-dot"></div><div class="typing-dot" style="animation-delay: 0.2s"></div><div class="typing-dot" style="animation-delay: 0.4s"></div></div> <span class="text-xs text-gray-400">Varrendo mercado...</span></div>';
 
         try {
             const trendingRes = await fetch(`${COINGECKO_API}/search/trending`);
@@ -320,7 +299,6 @@
                     const klineRes = await fetch(`${BINANCE_API}/klines?symbol=${sym}USDT&interval=1h&limit=12`);
                     const klines = await klineRes.json();
                     const prices = klines.map(k => parseFloat(k[4]));
-                    
                     const sma = prices.reduce((a, b) => a + b, 0) / 12;
                     const variance = prices.reduce((a, b) => a + Math.pow(b - sma, 2), 0) / 12;
                     const stdDev = Math.sqrt(variance);
@@ -338,61 +316,48 @@
             const best = analyzed[0];
 
             if (!best) {
-                liveEl.innerHTML = "Não encontrei padrões de trade ideais neste exato momento. O volume das Trending Coins está abaixo do mínimo seguro.";
+                liveEl.innerHTML = "Mercado lateralizado. Sem sinais claros agora.";
                 return;
             }
 
             const report = `
-## 🏆 Recomendação de Compra: **${best.sym}/USDT**
-
-Detectei um setup de **continuação de tendência** baseado em volume e volatilidade.
-
-**Estratégia sugerida:**
+## 🏆 Sugestão: **${best.sym}/USDT**
 - **Entrada:** ${formatCurrency(best.price)}
-- **Alvo Realista:** ${formatCurrency(best.price * 1.07)} (+7%)
-- **Stop Loss:** ${formatCurrency(best.price * 0.95)} (-5%)
+- **Alvo:** ${formatCurrency(best.price * 1.07)}
+- **Stop:** ${formatCurrency(best.price * 0.95)}
 
-**Análise Técnica:**
-| Indicador | Status |
+| Indicador | Valor |
 | :--- | :--- |
-| **Volatilidade (Bollinger)** | ${best.bPercent.toFixed(1)}% (Zona de Expansão) |
-| **Volume 24h** | $${(best.vol/1000000).toFixed(1)}M |
+| **Bollinger** | ${best.bPercent.toFixed(1)}% |
 | **IA Score** | **${best.score}/100** |
-
-O ativo **${best.sym}** está trabalhando acima da média móvel de 12 horas, com as bandas de Bollinger se abrindo, indicando que a pressão compradora ainda não exauriu. Este cenário é ideal para um trade rápido de 24 horas.
             `;
-
             await typeEffect(liveEl, parseMarkdown(report));
-
         } catch (e) {
-            liveEl.innerHTML = "Erro ao processar dados. Por favor, tente novamente em alguns segundos.";
+            liveEl.innerHTML = "Erro na API. Tente novamente.";
         }
     }
 
     async function handleSend() {
         const text = userInput.value.trim();
         if (!text || sendBtn.disabled) return;
-
         userInput.value = '';
         sendBtn.disabled = true;
         
         appendMessage('user', text);
 
         const lowerText = text.toLowerCase();
-        if (lowerText.includes('moeda') || lowerText.includes('comprar') || lowerText.includes('oportunidade') || lowerText.includes('qual')) {
+        if (lowerText.includes('moeda') || lowerText.includes('comprar') || lowerText.includes('qual')) {
             await performAnalysis();
         } else {
             const reply = appendMessage('assistant', '', true);
-            await typeEffect(reply, parseMarkdown("Posso te ajudar com isso! Peça uma **análise de oportunidade** ou pergunte **qual moeda comprar hoje** para eu iniciar os cálculos."));
+            await typeEffect(reply, parseMarkdown("Pergunte por uma **análise** ou **qual moeda comprar** para eu começar."));
         }
-
         sendBtn.disabled = false;
         userInput.focus();
     }
 
     sendBtn.addEventListener('click', handleSend);
     userInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleSend(); });
-
 </script>
 </body>
 </html>
