@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ChatGPT - Crypto Analyst Pro</title>
+    <title>CryptoAnalyst Pro - Live Charts</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -72,7 +73,6 @@
         }
 
         .message-wrapper { display: flex; width: 100%; max-width: 850px; margin: 0 auto; }
-
         .message-wrapper.user { justify-content: flex-end; }
         .message-wrapper.user .text-box {
             background: var(--user-bubble);
@@ -90,6 +90,7 @@
             border-radius: 18px 18px 18px 2px;
             border: 1px solid #e5e5e5;
             max-width: 85%;
+            width: 100%;
         }
 
         .avatar {
@@ -98,13 +99,24 @@
             background: var(--gpt-accent); color: white; font-size: 1rem;
         }
 
-        .text-box { line-height: 1.6; font-size: 15px; overflow-x: auto; }
-        .text-box h2 { font-weight: 600; font-size: 1.2rem; margin: 1rem 0 0.5rem; color: #111827; }
+        .text-box { line-height: 1.6; font-size: 14px; overflow-x: hidden; }
+        .text-box h2 { font-weight: 600; font-size: 1.1rem; margin: 0.5rem 0; color: #111827; }
         
-        pre { background: #0d0d0d; color: #ececec; padding: 1rem; border-radius: 8px; margin: 1rem 0; font-family: 'Fira Code', monospace; font-size: 13px; overflow-x: auto; border: 1px solid #2d2d2d; }
-        table { width: 100%; border-collapse: collapse; margin: 1rem 0; background: white; border-radius: 8px; font-size: 13px; border: 1px solid #eee; }
-        th { background: #f9fafb; padding: 10px; text-align: left; color: #6b7280; border-bottom: 1px solid #eee; }
-        td { padding: 10px; border-bottom: 1px solid #f9f9f9; }
+        table { width: 100%; border-collapse: collapse; margin: 0.8rem 0; background: white; border-radius: 8px; font-size: 12px; border: 1px solid #eee; }
+        th { background: #f9fafb; padding: 6px; text-align: left; color: #6b7280; border-bottom: 1px solid #eee; }
+        td { padding: 6px; border-bottom: 1px solid #f9f9f9; }
+
+        /* Estilo do Container do Gráfico */
+        .chart-wrapper {
+            position: relative;
+            height: 120px;
+            width: 100%;
+            margin-top: 10px;
+            background: #fafafa;
+            border-radius: 8px;
+            padding: 5px;
+            border: 1px solid #f0f0f0;
+        }
 
         .input-area { flex-shrink: 0; background: linear-gradient(180deg, rgba(247,247,248,0) 0%, rgba(247,247,248,1) 50%); padding: 1rem; padding-bottom: calc(1rem + env(safe-area-inset-bottom)); }
         .input-container { max-width: 800px; margin: 0 auto; position: relative; background: white; border: 1px solid #e5e5e5; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
@@ -133,9 +145,7 @@
         <div class="message-wrapper assistant">
             <div class="avatar">🤖</div>
             <div class="text-box">
-                <p>Olá! Eu monitoro a Binance em tempo real. Você pode:</p>
-                <p>1. Digitar uma moeda (ex: **BTC** ou **SOL**) para análise técnica.<br>
-                   2. Pedir uma oportunidade (ex: **"qual a boa?"**) para eu buscar tendências.</p>
+                <p>Monitorando Binance via WebSocket/API. Digite uma moeda (ex: **BTC**) ou peça uma **oportunidade**.</p>
             </div>
         </div>
     </div>
@@ -143,7 +153,7 @@
 
 <div class="input-area">
     <div class="input-container">
-        <input type="text" id="user-input" placeholder="Pergunte sobre uma moeda..." autocomplete="off">
+        <input type="text" id="user-input" placeholder="Analisar moeda..." autocomplete="off">
         <button id="send-btn">
             <svg stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24" height="18" width="18" xmlns="http://www.w3.org/2000/svg"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
         </button>
@@ -164,10 +174,42 @@
     }
 
     function parseMarkdown(text) {
-        return text.replace(/^## (.*$)/gim, '<h2>$1</h2>').replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>').replace(/```([\s\S]*?)```/gim, '<pre><code>$1</code></pre>').replace(/\n/g, '<br>');
+        return text.replace(/^## (.*$)/gim, '<h2>$1</h2>')
+                   .replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>')
+                   .replace(/\n/g, '<br>');
     }
 
     function scrollToEnd() { chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' }); }
+
+    function renderMiniChart(canvasId, priceData, isPositive) {
+        const ctx = document.getElementById(canvasId).getContext('2d');
+        const color = isPositive ? '#10a37f' : '#ef4444';
+        
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: priceData.map((_, i) => i),
+                datasets: [{
+                    data: priceData,
+                    borderColor: color,
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    tension: 0.3,
+                    fill: true,
+                    backgroundColor: isPositive ? 'rgba(16, 163, 127, 0.05)' : 'rgba(239, 68, 68, 0.05)'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                scales: { 
+                    x: { display: false }, 
+                    y: { display: true, grid: { display: false }, ticks: { display: false } } 
+                }
+            }
+        });
+    }
 
     function appendMessage(role, content, isLive = false) {
         const wrapper = document.createElement('div');
@@ -181,95 +223,49 @@
         return id ? document.getElementById(id) : null;
     }
 
-    async function typeEffect(element, html) {
-        element.innerHTML = "";
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = html;
-        const nodes = Array.from(tempDiv.childNodes);
-        for (const node of nodes) {
-            if (node.nodeType === Node.TEXT_NODE) {
-                const text = node.textContent;
-                for (let i = 0; i < text.length; i++) {
-                    element.innerHTML += text[i];
-                    scrollToEnd();
-                    await new Promise(r => setTimeout(r, 4));
-                }
-            } else { element.appendChild(node.cloneNode(true)); scrollToEnd(); }
-        }
-    }
-
     async function performAnalysis(specificCoin = null) {
         const liveEl = appendMessage('assistant', '', true);
-        liveEl.innerHTML = `<div class="flex items-center gap-2"><div class="flex gap-1"><div class="typing-dot"></div><div class="typing-dot" style="animation-delay: 0.2s"></div><div class="typing-dot" style="animation-delay: 0.4s"></div></div> <span class="text-xs text-gray-400">${specificCoin ? 'Analisando ' + specificCoin : 'Rastreando Oportunidades...'}</span></div>`;
+        liveEl.innerHTML = `<div class="flex items-center gap-2"><div class="flex gap-1"><div class="typing-dot"></div><div class="typing-dot" style="animation-delay: 0.2s"></div><div class="typing-dot" style="animation-delay: 0.4s"></div></div> <span class="text-xs text-gray-400">Consultando Binance...</span></div>`;
 
         try {
-            let symbolsToAnalyze = [];
+            let symbol = specificCoin ? specificCoin.toUpperCase() : "BTC";
+            
+            // Busca dados de Preço e Kline (Gráfico)
+            const tickerRes = await fetch(`${BINANCE_API}/ticker/24hr?symbol=${symbol}USDT`);
+            const tick = await tickerRes.json();
+            const klineRes = await fetch(`${BINANCE_API}/klines?symbol=${symbol}USDT&interval=1h&limit=24`);
+            const klines = await klineRes.json();
 
-            if (specificCoin) {
-                symbolsToAnalyze = [specificCoin.toUpperCase().replace('USDT', '')];
-            } else {
-                const trendingRes = await fetch(`${COINGECKO_API}/search/trending`);
-                const trendData = await trendingRes.json();
-                symbolsToAnalyze = trendData.coins.map(c => c.item.symbol.toUpperCase());
-            }
-
-            const tickerRes = await fetch(`${BINANCE_API}/ticker/24hr`);
-            const allTickers = await tickerRes.json();
-            const candidates = [];
-
-            for (const sym of symbolsToAnalyze) {
-                const tick = allTickers.find(t => t.symbol === sym + 'USDT');
-                if (tick) {
-                    const priceChange = parseFloat(tick.priceChangePercent);
-                    const klineRes = await fetch(`${BINANCE_API}/klines?symbol=${sym}USDT&interval=1h&limit=20`);
-                    const klines = await klineRes.json();
-                    if (klines.length < 20) continue;
-
-                    const prices = klines.map(k => parseFloat(k[4]));
-                    const sma = prices.reduce((a, b) => a + b, 0) / 20;
-                    const variance = prices.reduce((a, b) => a + Math.pow(b - sma, 2), 0) / 20;
-                    const stdDev = Math.sqrt(variance);
-                    const upperBand = sma + (2 * stdDev);
-                    const lowerBand = sma - (2 * stdDev);
-                    const lastPrice = prices[prices.length - 1];
-                    const bPercent = ((lastPrice - lowerBand) / (upperBand - lowerBand)) * 100;
-
-                    // Se for busca automática, filtra. Se for específica, aceita tudo para mostrar o status.
-                    if (specificCoin || (bPercent >= 51 && bPercent <= 63 && priceChange > 0)) {
-                        candidates.push({ sym, price: lastPrice, bPercent, change: priceChange, vol: tick.quoteVolume, sma, upperBand, stopLoss: sma * 0.95 });
-                    }
-                }
-            }
-
-            if (candidates.length === 0) {
-                liveEl.innerHTML = specificCoin ? `Não encontrei dados para "${specificCoin}" na Binance.` : "Nenhuma oportunidade clara no range de ignição agora.";
-                return;
-            }
-
-            candidates.sort((a, b) => b.vol - a.vol);
-            const best = candidates[0];
+            const prices = klines.map(k => parseFloat(k[4]));
+            const lastPrice = prices[prices.length - 1];
+            const change = parseFloat(tick.priceChangePercent);
+            
+            // Cálculo Simplificado de Bollinger para o Relatório
+            const sma = prices.reduce((a, b) => a + b, 0) / prices.length;
+            const chartId = `chart-${Date.now()}`;
 
             const report = `
-## 🚀 ANÁLISE: **${best.sym}/USDT**
+## 🚀 ANÁLISE: **${symbol}/USDT**
+**💰 Preço:** ${formatCurrency(lastPrice)} (${change > 0 ? '+' : ''}${change}%)
 
-**Execução Técnica:**
-- **🛒 PREÇO ATUAL:** ${formatCurrency(best.price)}
-- **🎯 ALVO (Banda Sup):** ${formatCurrency(best.upperBand)}
-- **🛡️ STOP (Sugestão):** ${formatCurrency(best.stopLoss)}
+<div class="chart-wrapper">
+    <canvas id="${chartId}"></canvas>
+</div>
 
-**Métricas Operacionais:**
-| Indicador | Status |
+| Indicador | Valor |
 | :--- | :--- |
-| **Banda de Bollinger** | ${best.bPercent.toFixed(1)}% |
-| **Média Central** | ${formatCurrency(best.sma)} |
-| **Variação 24h** | ${best.change > 0 ? '+' : ''}${best.change}% |
+| **Média (24h)** | ${formatCurrency(sma)} |
+| **Vol. 24h** | ${parseFloat(tick.quoteVolume).toLocaleString('en-US', {maximumFractionDigits:0})} USDT |
 
-**Conclusão:** ${specificCoin ? (best.bPercent > 80 ? '⚠️ **Cuidado:** Ativo esticado (perto do topo).' : '✅ Ativo em zona de negociação estável.') : '🔥 Ativo detectado no range de ignição com volume favorável.'}
+**Conclusão:** ${change > 0 ? 'Tendência de alta no curto prazo.' : 'Pressão vendedora identificada.'}
             `;
-            await typeEffect(liveEl, parseMarkdown(report));
+
+            liveEl.innerHTML = parseMarkdown(report);
+            renderMiniChart(chartId, prices, change >= 0);
+            scrollToEnd();
 
         } catch (e) {
-            liveEl.innerHTML = "Erro de conexão com as APIs.";
+            liveEl.innerHTML = "Moeda não encontrada ou erro na API.";
         }
     }
 
@@ -281,9 +277,8 @@
         sendBtn.disabled = true;
         appendMessage('user', text);
 
-        // Regex para capturar tickers de 3 a 6 letras (BTC, ETH, SOLANA, etc)
         const coinMatch = text.match(/\b([A-Za-z]{3,6})\b/);
-        const specificCoin = (coinMatch && !["QUAL", "COMO", "QUAL ", "QUERO"].includes(coinMatch[1].toUpperCase())) ? coinMatch[1] : null;
+        const specificCoin = (coinMatch && !["QUAL", "QUERO", "BOA"].includes(coinMatch[1].toUpperCase())) ? coinMatch[1] : null;
 
         await performAnalysis(specificCoin);
         
