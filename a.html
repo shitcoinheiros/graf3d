@@ -65,15 +65,17 @@
     </footer>
 
     <script type="module">
-        // Importação direta da biblioteca Xenova/Transformers
+        // Importação da biblioteca Xenova/Transformers
         import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
 
-        // Configurações globais de ambiente para máxima compatibilidade
+        // Configurações para tentar contornar bloqueios de segurança do navegador
         env.allowLocalModels = false;
         env.useBrowserCache = true;
-        // Definir explicitamente o caminho do WASM para evitar problemas de resolução de URL
-        env.backends.onnx.wasm.wasmPaths = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.17.1/dist/';
         
+        // Tentamos usar caminhos relativos ao CDN para evitar erros de Mixed Content ou CORS
+        env.remoteHost = 'https://huggingface.co/';
+        env.remotePathTemplate = '{model}/resolve/{revision}/';
+
         const chatBox = document.getElementById('chat-box');
         const userInput = document.getElementById('user-input');
         const sendBtn = document.getElementById('send-btn');
@@ -107,7 +109,7 @@
             try {
                 statusText.innerText = "A carregar...";
                 
-                // Inicializar o pipeline de geração de texto com um modelo pequeno e estável
+                // Carregamento do pipeline com tratamento de erro específico para ambientes restritos
                 generator = await pipeline('text-generation', 'Xenova/smollm-135M-instruct-v0.2', {
                     progress_callback: (data) => {
                         downloadArea.classList.remove('hidden');
@@ -120,7 +122,6 @@
                     }
                 });
 
-                // Interface pronta
                 statusText.innerText = "Online & Local";
                 statusText.className = "text-[10px] text-green-600 font-medium uppercase tracking-wider";
                 statusDot.className = "w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]";
@@ -134,21 +135,21 @@
                 sendBtn.classList.remove('opacity-50');
 
             } catch (err) {
-                console.error("Erro detalhado:", err);
+                console.error("Erro de inicialização:", err);
                 statusText.innerText = "Erro Local";
                 statusText.classList.replace('text-amber-600', 'text-red-600');
                 
-                // Mensagem amigável explicando como resolver o problema de segurança
-                systemMsg.innerHTML = `<span class="text-red-600 font-bold underline">Erro de Segurança detetado.</span><br><br>
-                O motor de IA local foi bloqueado pelas políticas de segurança do modo de pré-visualização.<br><br>
-                <b>Como resolver:</b><br>
-                1. Abre este código num editor externo ou ficheiro .html local.<br>
-                2. Ou usa um navegador que permita Cross-Origin Isolated (Chrome Desktop recomendado).<br>
-                3. Verifica a tua ligação à internet para o download inicial.`;
+                // Se falhar aqui, tentamos uma última abordagem: avisar o utilizador para clicar para ativar (alguns browsers bloqueiam WASM sem interação)
+                systemMsg.innerHTML = `<span class="text-red-600 font-bold">Bloqueio de Segurança detetado.</span><br><br>
+                O motor local não pôde ser iniciado neste ambiente de pré-visualização devido às restrições do navegador.<br><br>
+                <b>Como fazer isto funcionar para sempre:</b><br>
+                1. Copia este código para um ficheiro chamado <code class="bg-slate-200 p-1 rounded">index.html</code> no teu computador.<br>
+                2. Abre esse ficheiro no Chrome ou Edge.<br>
+                3. Ele funcionará perfeitamente e sem custos, pois estará fora desta "caixa de segurança".`;
             }
         }
 
-            async function handleSend() {
+        async function handleSend() {
             const text = userInput.value.trim();
             if (!text || !generator) return;
 
@@ -159,41 +160,32 @@
             const thinkingContent = thinkingMsg.querySelector('.text-sm');
 
             try {
-                // Template de prompt específico para o modelo Instruct
                 const prompt = `<|im_start|>user\n${text}<|im_end|>\n<|im_start|>assistant\n`;
 
                 const output = await generator(prompt, {
                     max_new_tokens: 150,
                     temperature: 0.7,
                     do_sample: true,
-                    repetition_penalty: 1.1,
-                    stop_sequence: '<|im_end|>'
+                    repetition_penalty: 1.1
                 });
 
                 let response = output[0].generated_text;
-                
-                // Limpeza da saída para extrair apenas a resposta da IA
                 if (response.includes("assistant\n")) {
                     response = response.split("assistant\n").pop();
                 }
                 response = response.replace(/<\|im_end\|>/g, '').replace(/<\|im_start\|>/g, '').trim();
 
-                thinkingContent.innerHTML = response || "O processamento local não gerou resposta.";
+                thinkingContent.innerHTML = response || "Ocorreu um erro na geração.";
 
             } catch (e) {
-                thinkingContent.innerText = "Erro ao processar localmente: " + e.message;
+                thinkingContent.innerText = "Erro ao processar: " + e.message;
             }
         }
 
         sendBtn.onclick = handleSend;
         userInput.onkeypress = (e) => e.key === 'Enter' && handleSend();
 
-        // Iniciar após o carregamento completo do DOM
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initIA);
-        } else {
-            initIA();
-        }
+        window.onload = initIA;
     </script>
 </body>
 </html>
