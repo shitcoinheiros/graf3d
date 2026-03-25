@@ -3,96 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Neural Trade Terminal v3</title>
+    <title>CryptoAnalyst v4 - Pro Trader</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/brain.js"></script>
     <style>
-        :root { --gpt-accent: #10a37f; --user-bubble: #007bff; }
-        body { font-family: 'Inter', sans-serif; background-color: #0b0e11; color: #eaecef; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        #chat-container { flex: 1; overflow-y: auto; padding: 1rem; scroll-behavior: smooth; }
-        .messages-list { max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.5rem; }
-        .text-box { padding: 16px; border-radius: 12px; font-size: 15px; line-height: 1.6; border: 1px solid #2b2f36; background: #1e2329; }
-        .user .text-box { background: var(--user-bubble); border: none; margin-left: auto; color: white; }
-        .trade-card { background: #2b2f36; border-radius: 12px; padding: 15px; margin-top: 10px; border-left: 4px solid #f0b90b; }
-        .input-area { background: #181a20; border-top: 1px solid #2b2f36; padding: 1.5rem; }
-        input { background: #2b2f36; border: 1px solid #474d57; color: white; border-radius: 10px; padding: 12px; width: 100%; outline: none; }
-        input:focus { border-color: #f0b90b; }
-        .status-bar { font-size: 10px; color: #848e9c; padding: 5px 20px; background: #181a20; border-bottom: 1px solid #2b2f36; }
+        :root { --binance-yellow: #F0B90B; --dark-bg: #0B0E11; --card-bg: #1E2329; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--dark-bg); color: #EAECEF; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        #chat-container { flex: 1; overflow-y: auto; padding: 1.5rem; scroll-behavior: smooth; }
+        .text-box { padding: 16px; border-radius: 12px; font-size: 14px; line-height: 1.6; background: var(--card-bg); border: 1px solid #2B2F36; max-width: 85%; }
+        .user .text-box { background: #2B2F36; border: none; margin-left: auto; color: #F0B90B; }
+        .trade-card { background: #2B2F36; border-radius: 12px; padding: 15px; margin-top: 12px; border-left: 4px solid var(--binance-yellow); box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .input-area { background: #181A20; border-top: 1px solid #2B2F36; padding: 1.2rem; }
+        input { background: #2B2F36; border: 1px solid #474D57; color: white; border-radius: 8px; padding: 12px; width: 100%; outline: none; transition: 0.2s; }
+        input:focus { border-color: var(--binance-yellow); }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+        .badge-buy { background: rgba(14, 203, 129, 0.15); color: #0ecb81; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div class="status-bar flex justify-between uppercase font-bold">
-    <span>Neural Engine: Active</span>
-    <span id="ai-status">Transformers.js Loading...</span>
-</div>
+<header class="p-4 border-b border-[#2B2F36] flex justify-between items-center bg-[#181A20]">
+    <div class="flex items-center gap-2">
+        <div class="text-2xl">⚡</div>
+        <span class="font-bold tracking-tight">SCALP <span class="text-[#F0B90B]">TERMINAL</span></span>
+    </div>
+    <div class="text-[10px] text-gray-500 font-mono">
+        <span class="status-dot bg-green-500"></span> ENGINE: BRAIN.JS 
+    </div>
+</header>
 
 <main id="chat-container">
-    <div class="messages-list" id="messages-list">
+    <div id="messages-list" class="flex flex-col gap-6 max-w-4xl mx-auto">
         <div class="flex assistant">
             <div class="text-box">
-                **Terminal On.** Meus modelos neurais foram recalibrados. <br>
-                Agora tenho um motor de vocabulário para não ser repetitivo. O que vamos caçar hoje?
+                **Sistema pronto.** <br>
+                Removi o peso morto. Agora estou focado em **Price Action** e **Bandas**. <br>
+                Manda o ticker (ex: **SOL**) ou digita **"Comprar"** pro meu radar agir.
             </div>
         </div>
     </div>
 </main>
 
 <div class="input-area">
-    <div class="max-w-[800px] mx-auto relative">
-        <input type="text" id="user-input" placeholder="Ex: 'analise sol' ou 'comprar'">
-        <button id="send-btn" class="absolute right-3 top-1/2 -translate-y-1/2 text-[#f0b90b] font-bold">ENVIAR</button>
+    <div class="max-w-3xl mx-auto relative">
+        <input type="text" id="user-input" placeholder="Qual a próxima entrada?" autocomplete="off">
+        <button id="send-btn" class="absolute right-3 top-1/2 -translate-y-1/2 text-[#F0B90B] hover:scale-110 transition-transform">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+        </button>
     </div>
 </div>
 
-<script type="module">
-    import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.1';
-    env.allowLocalModels = false;
-    let sentimentPipe;
-
-    // --- MOTOR DE VOCABULÁRIO (Aumentando a "humanidade") ---
-    const VOCABULARY = {
-        searching: [
-            "Deixa eu dar uma olhada no fluxo dessa moeda...",
-            "Consultando o livro de ofertas e as bandas de Bollinger agora mesmo.",
-            "Processando dados técnicos... um segundo, estou conferindo a tendência.",
-            "Analisando o volume e a pressão de compra para você."
+<script>
+    // --- MOTOR DE VOCABULÁRIO (Frases dinâmicas para parecer humano) ---
+    const VOZ = {
+        analisando: [
+            "Buscando o gráfico de {coin}... um segundo enquanto calculo a volatilidade.",
+            "Deixa eu ver como o preço está reagindo às Bandas de Bollinger em {coin}.",
+            "Iniciando varredura técnica para {coin}. O mercado está agitado...",
+            "Conectando na API da Binance para ler o candle de 1h de {coin}."
         ],
-        positive: [
-            "Cara, o setup está bonito! Olha esses pontos de entrada:",
-            "Encontrei uma estrutura de alta interessante aqui. Veja:",
-            "Temos um sinal neural de força. Pode ser um bom scalp.",
-            "O gráfico está gritando compra. Se liga nos alvos:"
+        conclusao_alta: [
+            "Achei algo interessante! O setup de {coin} está esticando.",
+            "Temos força compradora em {coin}. Veja os pontos de scalp:",
+            "A rede neural curtiu o gráfico de {coin}. O alvo está logo ali:",
+            "Sinal de ignição detectado em {coin}. Alvos calculados abaixo:"
         ],
-        neutral: [
-            "O mercado está meio morno para essa moeda. Mas aqui estão os níveis:",
-            "Não vejo uma explosão agora, mas o preço está respeitando as zonas.",
-            "Análise concluída. O risco/retorno está equilibrado.",
-            "Técnico neutro, mas os pontos de trade curtos são esses:"
+        conclusao_baixa: [
+            "A situação de {coin} está meio feia, o preço está 'derretendo' da média.",
+            "Não vejo força em {coin} agora. Mas se você quiser arriscar, os pontos são:",
+            "Análise técnica de {coin} aponta fraqueza. Cuidado com o FOMO.",
+            "A rede neural deu um score baixo para {coin}, mas aqui estão as zonas:"
         ]
     };
 
-    const getRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
-
-    // --- REDE NEURAL (Brain.js) ---
     const net = new brain.NeuralNetwork();
     net.train([
-        { input: [0.55, 0.02], output: [1] }, // Alta Probabilidade
-        { input: [0.30, -0.05], output: [0] } // Baixa
+        { input: [0.55, 0.02], output: [0.9] }, // Alta confiança (rompendo média com volume)
+        { input: [0.30, -0.05], output: [0.2] }, // Baixa (abaixo da média caindo)
+        { input: [0.85, 0.10], output: [0.4] }  // Exaustão (topo da banda)
     ]);
 
-    async function init() {
-        sentimentPipe = await pipeline('sentiment-analysis', 'Xenova/distilbert-base-uncased-finetuned-sst-2-english');
-        document.getElementById('ai-status').innerText = "🟢 SYSTEM ONLINE";
-    }
-    init();
+    const getRand = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
-    async function getTradeData(symbol) {
-        const pair = symbol.toUpperCase() + 'USDT';
+    async function fetchTrade(symbol) {
+        const coin = symbol.toUpperCase().replace('USDT', '');
         try {
             const [tRes, kRes] = await Promise.all([
-                fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${pair}`),
-                fetch(`https://api.binance.com/api/v3/klines?symbol=${pair}&interval=1h&limit=20`)
+                fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${coin}USDT`),
+                fetch(`https://api.binance.com/api/v3/klines?symbol=${coin}USDT&interval=1h&limit=20`)
             ]);
             const tick = await tRes.json();
             const klines = await kRes.json();
@@ -105,50 +103,60 @@
             const lower = sma - (2 * stdDev);
             const score = net.run([(lastPrice - lower)/(upper - lower), parseFloat(tick.priceChangePercent)/100])[0];
 
-            return { symbol, price: lastPrice, upper, lower, sma, score: score * 100 };
+            return { coin, price: lastPrice, upper, lower, sma, score: score * 100, change: tick.priceChangePercent };
         } catch (e) { return null; }
     }
 
     async function handle() {
-        const query = document.getElementById('user-input').value;
-        if(!query) return;
-        appendMsg('user', query);
-        document.getElementById('user-input').value = '';
+        const input = document.getElementById('user-input');
+        const raw = input.value.trim();
+        if (!raw) return;
 
-        const thinking = appendMsg('assistant', getRandom(VOCABULARY.searching));
+        appendMsg('user', raw);
+        input.value = '';
+
+        const coinMatch = raw.match(/[a-zA-Z]{3,6}/);
+        if (!coinMatch) {
+            appendMsg('assistant', "Me manda um ticker válido, tipo **BTC** ou **ETH**.");
+            return;
+        }
+
+        const coin = coinMatch[0].toUpperCase();
+        const msgAguarde = appendMsg('assistant', getRand(VOZ.analisando).replace('{coin}', coin));
         
-        // Simulação de busca Trending se for "comprar"
-        let targetSymbol = query.match(/[a-zA-Z]{3,5}/)[0]; 
-        const data = await getTradeData(targetSymbol);
-
-        if(data) {
-            const intro = data.score > 60 ? getRandom(VOCABULARY.positive) : getRandom(VOCABULARY.neutral);
-            const stop = data.price * 0.985; // Stop de 1.5%
-            const target = data.upper;
-
+        const data = await fetchTrade(coin);
+        if (data) {
+            const intro = data.score > 60 ? getRand(VOZ.conclusao_alta) : getRand(VOZ.conclusao_baixa);
+            const stop = data.price * 0.985; 
             const html = `
-                ${intro}
+                ${intro.replace('{coin}', data.coin)}
                 <div class="trade-card">
-                    <div class="text-[#f0b90b] font-bold mb-2">SINAL: ${data.symbol.toUpperCase()}/USDT</div>
-                    <div class="grid grid-cols-2 gap-2 text-sm">
-                        <span class="text-gray-400">Entrada:</span> <span class="text-white">$${data.price}</span>
-                        <span class="text-green-400 font-bold">Alvo:</span> <span class="text-white">$${target.toFixed(4)}</span>
-                        <span class="text-red-400 font-bold">Stop:</span> <span class="text-white">$${stop.toFixed(4)}</span>
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="badge-buy">${data.score > 60 ? '🚀 LONG/COMPRA' : '⚠️ ATENÇÃO'}</span>
+                        <span class="text-[10px] font-mono text-gray-500">SCORE: ${data.score.toFixed(1)}%</span>
                     </div>
-                    <div class="mt-3 text-[10px] text-gray-500 uppercase">Confiança Neural: ${data.score.toFixed(1)}%</div>
+                    <div class="space-y-1">
+                        <div class="flex justify-between"><span>💰 Entrada:</span> <span class="font-bold text-white">$${data.price}</span></div>
+                        <div class="flex justify-between"><span>🎯 Alvo:</span> <span class="font-bold text-green-400">$${data.upper.toFixed(4)}</span></div>
+                        <div class="flex justify-between"><span>🛑 Stop:</span> <span class="font-bold text-red-400">$${stop.toFixed(4)}</span></div>
+                    </div>
+                    <div class="mt-3 pt-2 border-t border-gray-600 text-[10px] text-gray-400">
+                        Volatilidade de 24h: <strong>${data.change}%</strong>
+                    </div>
                 </div>
             `;
-            updateMsg(thinking, html);
+            updateMsg(msgAguarde, html);
         } else {
-            updateMsg(thinking, "Não consegui ler os dados dessa moeda. Certeza que o ticker está certo?");
+            updateMsg(msgAguarde, `Deu erro ao buscar **${coin}**. Verifique se a moeda existe na Binance.`);
         }
     }
 
     function appendMsg(role, text) {
         const div = document.createElement('div');
-        div.className = `message-wrapper ${role} flex`;
-        div.innerHTML = `<div class="text-box">${text}</div>`;
+        div.className = `flex ${role}`;
+        div.innerHTML = `<div class="text-box">${text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')}</div>`;
         document.getElementById('messages-list').appendChild(div);
+        document.getElementById('chat-container').scrollTo(0, document.getElementById('chat-container').scrollHeight);
         return div;
     }
 
@@ -158,6 +166,7 @@
     }
 
     document.getElementById('send-btn').onclick = handle;
+    document.getElementById('user-input').onkeypress = (e) => e.key === 'Enter' && handle();
 </script>
 </body>
 </html>
