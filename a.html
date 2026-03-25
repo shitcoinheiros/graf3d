@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IA 100% Local e Gratuita</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        #chat-box::-webkit-scrollbar { width: 4px; }
+        #chat-box::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .loading-dots::after {
+            content: '.';
+            animation: dots 1.5s steps(5, end) infinite;
+        }
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60% { content: '...'; }
+            80%, 100% { content: ''; }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 h-screen flex flex-col font-sans">
+
+    <!-- Cabeçalho -->
+    <header class="p-4 bg-white border-b flex justify-between items-center shadow-sm">
+        <div>
+            <h1 class="font-bold text-slate-800">IA Privada & Local</h1>
+            <p id="status-text" class="text-[10px] text-amber-600 font-medium uppercase tracking-wider">A inicializar motor...</p>
+        </div>
+        <div id="status-dot" class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></div>
+    </header>
+
+    <!-- Barra de Download -->
+    <div id="download-area" class="px-4 py-2 bg-blue-50 border-b hidden">
+        <div class="flex justify-between text-[10px] text-blue-700 mb-1 font-bold">
+            <span id="load-msg">A carregar recursos locais...</span>
+            <span id="load-percent">0%</span>
+        </div>
+        <div class="w-full bg-blue-200 rounded-full h-1.5">
+            <div id="load-bar" class="bg-blue-600 h-1.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+        </div>
+    </div>
+
+    <!-- Área de Chat -->
+    <main id="chat-box" class="flex-1 overflow-y-auto p-4 space-y-4 flex flex-col">
+        <div class="bg-white p-3.5 rounded-2xl rounded-tl-none shadow-sm border border-slate-100 max-w-[85%] self-start">
+            <p class="text-xs font-bold text-blue-600 mb-1">Sistema</p>
+            <p class="text-sm text-slate-700 leading-relaxed">Esta IA é processada 100% no teu dispositivo. Uma vez carregada, não gasta dados nem envia mensagens para a nuvem.</p>
+        </div>
+    </main>
+
+    <!-- Barra de Input -->
+    <footer class="p-4 bg-white border-t">
+        <div class="flex gap-2 items-center">
+            <input type="text" id="user-input" disabled
+                class="flex-1 p-3.5 bg-slate-100 border-none rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all opacity-50"
+                placeholder="A aguardar motor...">
+            <button id="send-btn" disabled
+                class="bg-blue-600 text-white p-3.5 rounded-2xl opacity-50 transition-all shadow-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+            </button>
+        </div>
+        <p class="text-[10px] text-center text-slate-400 mt-3 font-medium">SmolLM-135M via ONNX Local</p>
+    </footer>
+
+    <script type="module">
+        // Importamos a versão específica que resolve melhor os caminhos de CDN
+        import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
+
+        // Configuração de ambiente para evitar erros de permissão CORS
+        env.allowLocalModels = false;
+        env.useBrowserCache = true;
+        
+        const chatBox = document.getElementById('chat-box');
+        const userInput = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-btn');
+        const statusText = document.getElementById('status-text');
+        const statusDot = document.getElementById('status-dot');
+        const downloadArea = document.getElementById('download-area');
+        const loadBar = document.getElementById('load-bar');
+        const loadPercent = document.getElementById('load-percent');
+        const loadMsg = document.getElementById('load-msg');
+
+        let generator;
+
+        function appendMessage(role, text) {
+            const div = document.createElement('div');
+            const isAi = role === 'ai';
+            div.className = isAi 
+                ? 'bg-white p-3.5 rounded-2xl rounded-tl-none shadow-sm border border-slate-100 max-w-[85%] self-start mb-2'
+                : 'bg-blue-600 p-3.5 rounded-2xl rounded-tr-none text-white max-w-[85%] self-end ml-auto mb-2 shadow-md';
+            
+            div.innerHTML = `
+                <p class="text-[10px] ${isAi ? 'text-blue-600' : 'text-blue-200'} font-bold uppercase mb-1">${isAi ? 'IA Local' : 'Tu'}</p>
+                <div class="text-sm leading-relaxed">${text}</div>
+            `;
+            chatBox.appendChild(div);
+            chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: 'smooth' });
+            return div;
+        }
+
+        async function initIA() {
+            try {
+                statusText.innerText = "A carregar...";
+                
+                // Usamos o pipeline de geração de texto
+                generator = await pipeline('text-generation', 'Xenova/smollm-135M-instruct-v0.2', {
+                    progress_callback: (data) => {
+                        downloadArea.classList.remove('hidden');
+                        if (data.status === 'progress') {
+                            const p = Math.round(data.progress);
+                            loadBar.style.width = p + '%';
+                            loadPercent.innerText = p + '%';
+                            loadMsg.innerText = `A descarregar: ${data.file.split('/').pop()}`;
+                        }
+                        if (data.status === 'done' || data.status === 'ready') {
+                            // Não escondemos imediatamente para feedback visual
+                        }
+                    }
+                });
+
+                statusText.innerText = "Online & Local";
+                statusText.className = "text-[10px] text-green-600 font-medium uppercase tracking-wider";
+                statusDot.className = "w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]";
+                statusDot.classList.remove('animate-pulse');
+                downloadArea.classList.add('hidden');
+                
+                userInput.disabled = false;
+                userInput.classList.remove('opacity-50');
+                userInput.placeholder = "Escreve aqui...";
+                sendBtn.disabled = false;
+                sendBtn.classList.remove('opacity-50');
+
+            } catch (err) {
+                console.error("Erro detalhado:", err);
+                statusText.innerText = "Erro Local";
+                statusText.classList.replace('text-amber-600', 'text-red-600');
+                appendMessage('ai', '<b>Erro de Segurança:</b> O navegador bloqueou o carregamento local. Tenta abrir num separador normal (fora de previews) ou verificar a ligação Wi-Fi.');
+            }
+        }
+
+        async function handleSend() {
+            const text = userInput.value.trim();
+            if (!text || !generator) return;
+
+            userInput.value = '';
+            appendMessage('user', text);
+
+            const thinkingMsg = appendMessage('ai', '<span class="loading-dots">A processar no dispositivo</span>');
+            const thinkingContent = thinkingMsg.querySelector('.text-sm');
+
+            try {
+                // Formato de prompt para SmolLM Instruct
+                const prompt = `<|im_start|>user\n${text}<|im_end|>\n<|im_start|>assistant\n`;
+
+                const output = await generator(prompt, {
+                    max_new_tokens: 150,
+                    temperature: 0.7,
+                    do_sample: true,
+                    repetition_penalty: 1.1,
+                    stop_sequence: '<|im_end|>'
+                });
+
+                let response = output[0].generated_text;
+                
+                // Limpeza da resposta para mostrar apenas o texto da IA
+                if (response.includes("assistant\n")) {
+                    response = response.split("assistant\n").pop();
+                }
+                response = response.replace(/<\|im_end\|>/g, '').replace(/<\|im_start\|>/g, '').trim();
+
+                thinkingContent.innerHTML = response || "O processamento local não gerou resposta.";
+
+            } catch (e) {
+                thinkingContent.innerText = "Erro ao processar localmente: " + e.message;
+            }
+        }
+
+        sendBtn.onclick = handleSend;
+        userInput.onkeypress = (e) => e.key === 'Enter' && handleSend();
+
+        // Aguardar o carregamento total da página
+        window.addEventListener('load', initIA);
+    </script>
+</body>
+</html>
