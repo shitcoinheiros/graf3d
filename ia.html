@@ -73,7 +73,6 @@
 
         .message-wrapper { display: flex; width: 100%; max-width: 850px; margin: 0 auto; }
 
-        /* USER: Direita, Azul, Sem Foto */
         .message-wrapper.user { justify-content: flex-end; }
         .message-wrapper.user .text-box {
             background: var(--user-bubble);
@@ -84,7 +83,6 @@
             max-width: 75%;
         }
 
-        /* ASSISTANT: Esquerda, Branco, Com Foto */
         .message-wrapper.assistant { justify-content: flex-start; gap: 12px; }
         .message-wrapper.assistant .text-box {
             background: white;
@@ -135,10 +133,9 @@
         <div class="message-wrapper assistant">
             <div class="avatar">🤖</div>
             <div class="text-box">
-                <p>Estratégia Ativada:</p>
-                <p>• <strong>Entrada:</strong> Range 51%-63% da banda.<br>
-                • <strong>Alvo:</strong> Topo da Banda Superior.<br>
-                • <strong>Stop:</strong> 5% abaixo da Banda Central.</p>
+                <p>Olá! Eu monitoro a Binance em tempo real. Você pode:</p>
+                <p>1. Digitar uma moeda (ex: **BTC** ou **SOL**) para análise técnica.<br>
+                   2. Pedir uma oportunidade (ex: **"qual a boa?"**) para eu buscar tendências.</p>
             </div>
         </div>
     </div>
@@ -146,7 +143,7 @@
 
 <div class="input-area">
     <div class="input-container">
-        <input type="text" id="user-input" placeholder="Mensagem CryptoAnalyst..." autocomplete="off">
+        <input type="text" id="user-input" placeholder="Pergunte sobre uma moeda..." autocomplete="off">
         <button id="send-btn">
             <svg stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24" height="18" width="18" xmlns="http://www.w3.org/2000/svg"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
         </button>
@@ -201,20 +198,26 @@
         }
     }
 
-    async function performAnalysis() {
+    async function performAnalysis(specificCoin = null) {
         const liveEl = appendMessage('assistant', '', true);
-        liveEl.innerHTML = '<div class="flex items-center gap-2"><div class="flex gap-1"><div class="typing-dot"></div><div class="typing-dot" style="animation-delay: 0.2s"></div><div class="typing-dot" style="animation-delay: 0.4s"></div></div> <span class="text-xs text-gray-400">Calculando Alvos e Stop...</span></div>';
+        liveEl.innerHTML = `<div class="flex items-center gap-2"><div class="flex gap-1"><div class="typing-dot"></div><div class="typing-dot" style="animation-delay: 0.2s"></div><div class="typing-dot" style="animation-delay: 0.4s"></div></div> <span class="text-xs text-gray-400">${specificCoin ? 'Analisando ' + specificCoin : 'Rastreando Oportunidades...'}</span></div>`;
 
         try {
-            const trendingRes = await fetch(`${COINGECKO_API}/search/trending`);
-            const trendData = await trendingRes.json();
-            const symbols = trendData.coins.map(c => c.item.symbol.toUpperCase());
+            let symbolsToAnalyze = [];
+
+            if (specificCoin) {
+                symbolsToAnalyze = [specificCoin.toUpperCase().replace('USDT', '')];
+            } else {
+                const trendingRes = await fetch(`${COINGECKO_API}/search/trending`);
+                const trendData = await trendingRes.json();
+                symbolsToAnalyze = trendData.coins.map(c => c.item.symbol.toUpperCase());
+            }
 
             const tickerRes = await fetch(`${BINANCE_API}/ticker/24hr`);
             const allTickers = await tickerRes.json();
-
             const candidates = [];
-            for (const sym of symbols) {
+
+            for (const sym of symbolsToAnalyze) {
                 const tick = allTickers.find(t => t.symbol === sym + 'USDT');
                 if (tick) {
                     const priceChange = parseFloat(tick.priceChangePercent);
@@ -223,32 +226,23 @@
                     if (klines.length < 20) continue;
 
                     const prices = klines.map(k => parseFloat(k[4]));
-                    const sma = prices.reduce((a, b) => a + b, 0) / 20; // Média Central (Banda Central)
+                    const sma = prices.reduce((a, b) => a + b, 0) / 20;
                     const variance = prices.reduce((a, b) => a + Math.pow(b - sma, 2), 0) / 20;
                     const stdDev = Math.sqrt(variance);
-                    
                     const upperBand = sma + (2 * stdDev);
+                    const lowerBand = sma - (2 * stdDev);
                     const lastPrice = prices[prices.length - 1];
-                    const bPercent = ((lastPrice - (sma - 2*stdDev)) / (4*stdDev)) * 100;
+                    const bPercent = ((lastPrice - lowerBand) / (upperBand - lowerBand)) * 100;
 
-                    // REGRA DE COMPRA REFINADA
-                    if (bPercent >= 51 && bPercent <= 63 && priceChange > 0) {
-                        candidates.push({ 
-                            sym, 
-                            price: lastPrice, 
-                            bPercent, 
-                            change: priceChange, 
-                            vol: tick.quoteVolume,
-                            sma,         // Central
-                            upperBand,   // Alvo
-                            stopLoss: sma * 0.95 // 5% abaixo da central
-                        });
+                    // Se for busca automática, filtra. Se for específica, aceita tudo para mostrar o status.
+                    if (specificCoin || (bPercent >= 51 && bPercent <= 63 && priceChange > 0)) {
+                        candidates.push({ sym, price: lastPrice, bPercent, change: priceChange, vol: tick.quoteVolume, sma, upperBand, stopLoss: sma * 0.95 });
                     }
                 }
             }
 
             if (candidates.length === 0) {
-                liveEl.innerHTML = "Aguardando moedas entrarem no range de 51%-63% com volume positivo.";
+                liveEl.innerHTML = specificCoin ? `Não encontrei dados para "${specificCoin}" na Binance.` : "Nenhuma oportunidade clara no range de ignição agora.";
                 return;
             }
 
@@ -256,36 +250,43 @@
             const best = candidates[0];
 
             const report = `
-## 🚀 SINAL DE TRADE: **${best.sym}/USDT**
+## 🚀 ANÁLISE: **${best.sym}/USDT**
 
-**Execução Baseada em Bandas de Bollinger:**
+**Execução Técnica:**
+- **🛒 PREÇO ATUAL:** ${formatCurrency(best.price)}
+- **🎯 ALVO (Banda Sup):** ${formatCurrency(best.upperBand)}
+- **🛡️ STOP (Sugestão):** ${formatCurrency(best.stopLoss)}
 
-- **🛒 COMPRA:** ${formatCurrency(best.price)} (Região da Média Central)
-- **🎯 ALVO:** ${formatCurrency(best.upperBand)} (Topo da Banda Superior)
-- **🛡️ STOP:** ${formatCurrency(best.stopLoss)} (5% abaixo da Banda Central)
-
-**Análise Técnica:**
+**Métricas Operacionais:**
 | Indicador | Status |
 | :--- | :--- |
-| **Banda de Bollinger** | ${best.bPercent.toFixed(1)}% (Range de Ignição) |
-| **Banda Central (SMA)**| ${formatCurrency(best.sma)} |
-| **Variação 24h** | +${best.change}% |
+| **Banda de Bollinger** | ${best.bPercent.toFixed(1)}% |
+| **Média Central** | ${formatCurrency(best.sma)} |
+| **Variação 24h** | ${best.change > 0 ? '+' : ''}${best.change}% |
 
-**Observação:** O ativo está em leve alta e posicionado logo acima da banda central. A estratégia visa capturar o movimento até a banda superior com risco controlado abaixo da média.
+**Conclusão:** ${specificCoin ? (best.bPercent > 80 ? '⚠️ **Cuidado:** Ativo esticado (perto do topo).' : '✅ Ativo em zona de negociação estável.') : '🔥 Ativo detectado no range de ignição com volume favorável.'}
             `;
             await typeEffect(liveEl, parseMarkdown(report));
+
         } catch (e) {
-            liveEl.innerHTML = "Erro de conexão. Tente novamente.";
+            liveEl.innerHTML = "Erro de conexão com as APIs.";
         }
     }
 
     async function handleSend() {
         const text = userInput.value.trim();
         if (!text || sendBtn.disabled) return;
+        
         userInput.value = '';
         sendBtn.disabled = true;
         appendMessage('user', text);
-        await performAnalysis();
+
+        // Regex para capturar tickers de 3 a 6 letras (BTC, ETH, SOLANA, etc)
+        const coinMatch = text.match(/\b([A-Za-z]{3,6})\b/);
+        const specificCoin = (coinMatch && !["QUAL", "COMO", "QUAL ", "QUERO"].includes(coinMatch[1].toUpperCase())) ? coinMatch[1] : null;
+
+        await performAnalysis(specificCoin);
+        
         sendBtn.disabled = false;
         userInput.focus();
     }
