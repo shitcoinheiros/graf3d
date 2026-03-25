@@ -6,7 +6,7 @@
     <title>ChatGPT - Crypto Analyst Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
             --gpt-accent: #10a37f;
@@ -21,6 +21,7 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            margin: 0;
         }
 
         .app-header {
@@ -32,34 +33,29 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
+            z-index: 50;
         }
 
         #chat-container {
             flex: 1;
             overflow-y: auto;
-            background-color: #f7f7f8;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .messages-list {
             padding: 1rem;
             display: flex;
             flex-direction: column;
             gap: 1.5rem;
         }
 
-        .message-wrapper { display: flex; width: 100%; max-width: 850px; margin: 0 auto; }
+        .message-wrapper { display: flex; width: 100%; max-width: 850px; margin: 0 auto; gap: 12px; }
         .message-wrapper.user { justify-content: flex-end; }
         .message-wrapper.user .text-box {
             background: var(--user-bubble);
             color: white;
             padding: 12px 18px;
             border-radius: 18px 18px 2px 18px;
-            max-width: 75%;
+            max-width: 80%;
         }
 
-        .message-wrapper.assistant { justify-content: flex-start; gap: 12px; }
+        .message-wrapper.assistant { justify-content: flex-start; }
         .message-wrapper.assistant .text-box {
             background: white;
             padding: 12px 18px;
@@ -68,19 +64,49 @@
             width: 100%;
         }
 
-        .chart-wrapper {
-            position: relative;
+        .chart-box {
             height: 250px;
             width: 100%;
-            margin-top: 1rem;
-            background: #fff;
-            border-radius: 8px;
+            margin-top: 10px;
+            position: relative;
         }
 
-        .input-area { padding: 1rem; background: #f7f7f8; }
-        .input-container { max-width: 800px; margin: 0 auto; position: relative; background: white; border: 1px solid #e5e5e5; border-radius: 12px; }
-        #user-input { width: 100%; padding: 14px 45px 14px 16px; border: none; border-radius: 12px; outline: none; }
-        #send-btn { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: var(--gpt-accent); color: white; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+        .input-area { 
+            padding: 1.5rem; 
+            background: linear-gradient(180deg, rgba(247,247,248,0) 0%, rgba(247,247,248,1) 50%);
+        }
+        .input-container { 
+            max-width: 800px; 
+            margin: 0 auto; 
+            position: relative; 
+            background: white; 
+            border: 1px solid #e5e5e5; 
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        #user-input { 
+            width: 100%; 
+            padding: 14px 50px 14px 16px; 
+            border: none; 
+            border-radius: 12px; 
+            outline: none; 
+            font-size: 16px;
+        }
+        #send-btn { 
+            position: absolute; 
+            right: 10px; 
+            top: 50%; 
+            transform: translateY(-50%); 
+            background: var(--gpt-accent); 
+            color: white; 
+            width: 34px; 
+            height: 34px; 
+            border-radius: 8px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -88,23 +114,26 @@
 <header class="app-header">
     <div class="flex items-center gap-2">
         <div class="bg-[#10a37f] text-white w-8 h-8 rounded flex items-center justify-center font-bold">✦</div>
-        <span class="font-semibold text-gray-800">CryptoAnalyst Custom</span>
+        <span class="font-semibold text-gray-800">CryptoAnalyst Custom Chart</span>
     </div>
 </header>
 
 <main id="chat-container">
-    <div class="messages-list" id="messages-list"></div>
+    <div class="message-wrapper assistant">
+        <div class="w-8 h-8 bg-[#10a37f] rounded flex-shrink-0 flex items-center justify-center text-white text-xs">🤖</div>
+        <div class="text-box">Digite o ticker de uma moeda (ex: **BTC** ou **ETH**) para ver o gráfico e análise.</div>
+    </div>
 </main>
 
 <div class="input-area">
     <div class="input-container">
-        <input type="text" id="user-input" placeholder="Analisar moeda (ex: BTC)..." autocomplete="off">
+        <input type="text" id="user-input" placeholder="Analisar moeda..." autocomplete="off">
         <button id="send-btn">➔</button>
     </div>
 </div>
 
 <script>
-    const messagesList = document.getElementById('messages-list');
+    const chatContainer = document.getElementById('chat-container');
     const userInput = document.getElementById('user-input');
     const sendBtn = document.getElementById('send-btn');
 
@@ -115,19 +144,27 @@
     function appendMessage(role, content) {
         const wrapper = document.createElement('div');
         wrapper.className = `message-wrapper ${role}`;
-        wrapper.innerHTML = `
-            ${role === 'assistant' ? '<div class="w-8 h-8 bg-[#10a37f] rounded flex-shrink-0 flex items-center justify-center text-white text-xs">🤖</div>' : ''}
-            <div class="text-box">${content}</div>
-        `;
-        messagesList.appendChild(wrapper);
-        document.getElementById('chat-container').scrollTo(0, messagesList.scrollHeight);
+        
+        if (role === 'user') {
+            wrapper.innerHTML = `<div class="text-box">${content}</div>`;
+        } else {
+            wrapper.innerHTML = `
+                <div class="w-8 h-8 bg-[#10a37f] rounded flex-shrink-0 flex items-center justify-center text-white text-xs">🤖</div>
+                <div class="text-box">${content}</div>
+            `;
+        }
+        
+        chatContainer.appendChild(wrapper);
+        chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
         return wrapper;
     }
 
-    function createChart(canvasId, labels, dataPoints, color) {
+    function renderChart(canvasId, prices, color) {
         const ctx = document.getElementById(canvasId).getContext('2d');
+        const labels = prices.map((_, i) => i);
+        
         const gradient = ctx.createLinearGradient(0, 0, 0, 200);
-        gradient.addColorStop(0, color + '44');
+        gradient.addColorStop(0, color + '33');
         gradient.addColorStop(1, color + '00');
 
         new Chart(ctx, {
@@ -135,13 +172,12 @@
             data: {
                 labels: labels,
                 datasets: [{
-                    label: 'Preço (USDT)',
-                    data: dataPoints,
+                    data: prices,
                     borderColor: color,
                     borderWidth: 2,
                     fill: true,
                     backgroundColor: gradient,
-                    tension: 0.4,
+                    tension: 0.3,
                     pointRadius: 0
                 }]
             },
@@ -151,47 +187,55 @@
                 plugins: { legend: { display: false } },
                 scales: {
                     x: { display: false },
-                    y: { grid: { color: '#f0f0f0' }, ticks: { font: { size: 10 } } }
+                    y: { grid: { display: false }, ticks: { font: { size: 10 } } }
                 }
             }
         });
     }
 
-    async function handleAnalysis() {
-        const val = userInput.value.trim().toUpperCase();
-        if (!val) return;
+    async function handleSend() {
+        const text = userInput.value.trim();
+        if (!text) return;
+        
         userInput.value = '';
-        
-        appendMessage('user', val);
-        const msg = appendMessage('assistant', `Buscando dados de **${val}**...`);
-        
+        appendMessage('user', text);
+
+        const coinMatch = text.match(/\b([A-Za-z]{3,6})\b/);
+        const coin = coinMatch ? coinMatch[1].toUpperCase() : null;
+
+        if (!coin) {
+            appendMessage('assistant', "Por favor, digite um ticker válido (Ex: BTC).");
+            return;
+        }
+
+        const msgRef = appendMessage('assistant', `Analisando **${coin}** na Binance...`);
+
         try {
-            const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=${val}USDT&interval=1h&limit=30`);
+            const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=${coin}USDT&interval=1h&limit=24`);
             const data = await res.json();
-            
             const prices = data.map(d => parseFloat(d[4]));
-            const labels = data.map(d => new Date(d[0]).getHours() + 'h');
             const lastPrice = prices[prices.length - 1];
-            const isUp = prices[prices.length - 1] > prices[0];
+            const isUp = lastPrice >= prices[0];
             const color = isUp ? '#10a37f' : '#ef4444';
             const chartId = `chart-${Date.now()}`;
 
-            msg.querySelector('.text-box').innerHTML = `
-                <h2 class="font-bold text-lg">${val}/USDT</h2>
-                <p class="text-2xl font-semibold">${formatCurrency(lastPrice)}</p>
-                <div class="chart-wrapper"><canvas id="${chartId}"></canvas></div>
-                <div class="mt-4 text-xs text-gray-500">Últimas 30 horas de negociação na Binance.</div>
+            msgRef.querySelector('.text-box').innerHTML = `
+                <div class="flex justify-between items-center mb-2">
+                    <span class="font-bold text-lg">${coin}/USDT</span>
+                    <span class="font-mono ${isUp ? 'text-green-600' : 'text-red-600'}">${formatCurrency(lastPrice)}</span>
+                </div>
+                <div class="chart-box"><canvas id="${chartId}"></canvas></div>
+                <p class="text-[10px] text-gray-400 mt-2 italic">Gráfico customizado (24h de candles/1h).</p>
             `;
 
-            createChart(chartId, labels, prices, color);
-
+            renderChart(chartId, prices, color);
         } catch (e) {
-            msg.querySelector('.text-box').innerText = "Erro ao carregar ativo. Verifique o ticker (Ex: BTC, ETH).";
+            msgRef.querySelector('.text-box').innerHTML = "Ativo não encontrado ou erro na API da Binance.";
         }
     }
 
-    sendBtn.onclick = handleAnalysis;
-    userInput.onkeypress = (e) => e.key === 'Enter' && handleAnalysis();
+    sendBtn.addEventListener('click', handleSend);
+    userInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleSend(); });
 </script>
 </body>
 </html>
