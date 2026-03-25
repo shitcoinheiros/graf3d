@@ -1,255 +1,255 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ChatGPT - Crypto Analyst Pro</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --gpt-dark: #202123;
-            --gpt-gray: #343541;
-            --gpt-accent: #10a37f;
-            --user-bubble: #007bff;
-            --header-height: 60px;
-            --input-area-height: 140px;
-        }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>ChatGPT - Crypto Analyst Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --gpt-dark: #202123;
+            --gpt-gray: #343541;
+            --gpt-accent: #10a37f;
+            --user-bubble: #007bff;
+            --header-height: 60px;
+            --input-area-height: 140px;
+        }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f7f7f8;
-            color: #374151;
-            height: 100vh;
-            height: 100svh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f7f8;
+            color: #374151;
+            height: 100vh;
+            height: 100svh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
 
-        .app-header {
-            height: var(--header-height);
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid #e5e5e5;
-            padding: 0 1rem;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-shrink: 0;
-            z-index: 50;
-        }
+        .app-header {
+            height: var(--header-height);
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #e5e5e5;
+            padding: 0 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+            z-index: 50;
+        }
 
-        .gpt-badge {
-            background: var(--gpt-accent);
-            color: white;
-            width: 32px;
-            height: 32px;
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-        }
+        .gpt-badge {
+            background: var(--gpt-accent);
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
 
-        #chat-container {
-            flex: 1;
-            overflow-y: auto;
-            scroll-behavior: smooth;
-            background-color: #f7f7f8;
-            display: flex;
-            flex-direction: column;
-        }
+        #chat-container {
+            flex: 1;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+            background-color: #f7f7f8;
+            display: flex;
+            flex-direction: column;
+        }
 
-        .messages-list {
-            padding: 1rem;
-            padding-bottom: var(--input-area-height);
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-        }
+        .messages-list {
+            padding: 1rem;
+            padding-bottom: var(--input-area-height);
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
 
-        .message-wrapper { display: flex; width: 100%; max-width: 850px; margin: 0 auto; }
+        .message-wrapper { display: flex; width: 100%; max-width: 850px; margin: 0 auto; }
 
-        .message-wrapper.user { justify-content: flex-end; }
-        .message-wrapper.user .text-box {
-            background: var(--user-bubble);
-            color: white;
-            padding: 12px 18px;
-            border-radius: 18px 18px 2px 18px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            max-width: 75%;
-        }
+        .message-wrapper.user { justify-content: flex-end; }
+        .message-wrapper.user .text-box {
+            background: var(--user-bubble);
+            color: white;
+            padding: 12px 18px;
+            border-radius: 18px 18px 2px 18px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            max-width: 75%;
+        }
 
-        .message-wrapper.assistant { justify-content: flex-start; gap: 12px; }
-        .message-wrapper.assistant .text-box {
-            background: white;
-            padding: 12px 18px;
-            border-radius: 18px 18px 18px 2px;
-            border: 1px solid #e5e5e5;
-            max-width: 85%;
-        }
+        .message-wrapper.assistant { justify-content: flex-start; gap: 12px; }
+        .message-wrapper.assistant .text-box {
+            background: white;
+            padding: 12px 18px;
+            border-radius: 18px 18px 18px 2px;
+            border: 1px solid #e5e5e5;
+            max-width: 85%;
+        }
 
-        .avatar {
-            width: 30px; height: 30px; border-radius: 4px; flex-shrink: 0;
-            display: flex; align-items: center; justify-content: center;
-            background: var(--gpt-accent); color: white; font-size: 1rem;
-        }
+        .avatar {
+            width: 30px; height: 30px; border-radius: 4px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--gpt-accent); color: white; font-size: 1rem;
+        }
 
-        .text-box { line-height: 1.6; font-size: 15px; overflow-x: auto; }
-        .text-box h2 { font-weight: 600; font-size: 1.2rem; margin: 1rem 0 0.5rem; color: #111827; }
-        
-        pre { background: #0d0d0d; color: #ececec; padding: 1rem; border-radius: 8px; margin: 1rem 0; font-family: 'Fira Code', monospace; font-size: 13px; overflow-x: auto; border: 1px solid #2d2d2d; }
-        table { width: 100%; border-collapse: collapse; margin: 1rem 0; background: white; border-radius: 8px; font-size: 13px; border: 1px solid #eee; }
-        th { background: #f9fafb; padding: 10px; text-align: left; color: #6b7280; border-bottom: 1px solid #eee; }
-        td { padding: 10px; border-bottom: 1px solid #f9f9f9; }
+        .text-box { line-height: 1.6; font-size: 15px; overflow-x: auto; }
+        .text-box h2 { font-weight: 600; font-size: 1.2rem; margin: 1rem 0 0.5rem; color: #111827; }
+        
+        pre { background: #0d0d0d; color: #ececec; padding: 1rem; border-radius: 8px; margin: 1rem 0; font-family: 'Fira Code', monospace; font-size: 13px; overflow-x: auto; border: 1px solid #2d2d2d; }
+        table { width: 100%; border-collapse: collapse; margin: 1rem 0; background: white; border-radius: 8px; font-size: 13px; border: 1px solid #eee; }
+        th { background: #f9fafb; padding: 10px; text-align: left; color: #6b7280; border-bottom: 1px solid #eee; }
+        td { padding: 10px; border-bottom: 1px solid #f9f9f9; }
 
-        .input-area { flex-shrink: 0; background: linear-gradient(180deg, rgba(247,247,248,0) 0%, rgba(247,247,248,1) 50%); padding: 1rem; padding-bottom: calc(1rem + env(safe-area-inset-bottom)); }
-        .input-container { max-width: 800px; margin: 0 auto; position: relative; background: white; border: 1px solid #e5e5e5; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        #user-input { width: 100%; padding: 14px 45px 14px 16px; border: none; border-radius: 12px; outline: none; font-size: 16px; }
-        #send-btn { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: var(--gpt-accent); color: white; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+        .input-area { flex-shrink: 0; background: linear-gradient(180deg, rgba(247,247,248,0) 0%, rgba(247,247,248,1) 50%); padding: 1rem; padding-bottom: calc(1rem + env(safe-area-inset-bottom)); }
+        .input-container { max-width: 800px; margin: 0 auto; position: relative; background: white; border: 1px solid #e5e5e5; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        #user-input { width: 100%; padding: 14px 45px 14px 16px; border: none; border-radius: 12px; outline: none; font-size: 16px; }
+        #send-btn { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: var(--gpt-accent); color: white; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
 
-        .typing-dot { width: 4px; height: 4px; background: #8e8ea0; border-radius: 50%; animation: bounce 1.4s infinite; }
-        @keyframes bounce { 0%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-6px); } }
-    </style>
+        .typing-dot { width: 4px; height: 4px; background: #8e8ea0; border-radius: 50%; animation: bounce 1.4s infinite; }
+        @keyframes bounce { 0%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-6px); } }
+    </style>
 </head>
 <body>
 
 <header class="app-header">
-    <div class="flex items-center gap-2">
-        <div class="gpt-badge">✦</div>
-        <span class="font-semibold text-gray-800 tracking-tight">CryptoAnalyst Pro</span>
-    </div>
-    <div class="flex items-center gap-2">
-        <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-        <span class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Binance Live</span>
-    </div>
+    <div class="flex items-center gap-2">
+        <div class="gpt-badge">✦</div>
+        <span class="font-semibold text-gray-800 tracking-tight">CryptoAnalyst Pro</span>
+    </div>
+    <div class="flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+        <span class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Binance Live</span>
+    </div>
 </header>
 
 <main id="chat-container">
-    <div class="messages-list" id="messages-list">
-        <div class="message-wrapper assistant">
-            <div class="avatar">🤖</div>
-            <div class="text-box">
-                <p>Olá! Eu monitoro a Binance em tempo real. Você pode:</p>
-                <p>1. Digitar uma moeda (ex: **BTC** ou **SOL**) para análise técnica.<br>
-                   2. Pedir uma oportunidade (ex: **"qual a boa?"**) para eu buscar tendências.</p>
-            </div>
-        </div>
-    </div>
+    <div class="messages-list" id="messages-list">
+        <div class="message-wrapper assistant">
+            <div class="avatar">🤖</div>
+            <div class="text-box">
+                <p>Olá! Eu monitoro a Binance em tempo real. Você pode:</p>
+                <p>1. Digitar uma moeda (ex: **BTC** ou **SOL**) para análise técnica.<br>
+                   2. Pedir uma oportunidade (ex: **"qual a boa?"**) para eu buscar tendências.</p>
+            </div>
+        </div>
+    </div>
 </main>
 
 <div class="input-area">
-    <div class="input-container">
-        <input type="text" id="user-input" placeholder="Pergunte sobre uma moeda..." autocomplete="off">
-        <button id="send-btn">
-            <svg stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24" height="18" width="18" xmlns="http://www.w3.org/2000/svg"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-        </button>
-    </div>
+    <div class="input-container">
+        <input type="text" id="user-input" placeholder="Pergunte sobre uma moeda..." autocomplete="off">
+        <button id="send-btn">
+            <svg stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24" height="18" width="18" xmlns="http://www.w3.org/2000/svg"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+        </button>
+    </div>
 </div>
 
 <script>
-    const chatContainer = document.getElementById('chat-container');
-    const messagesList = document.getElementById('messages-list');
-    const userInput = document.getElementById('user-input');
-    const sendBtn = document.getElementById('send-btn');
+    const chatContainer = document.getElementById('chat-container');
+    const messagesList = document.getElementById('messages-list');
+    const userInput = document.getElementById('user-input');
+    const sendBtn = document.getElementById('send-btn');
 
-    const BINANCE_API = 'https://api.binance.com/api/v3';
-    const COINGECKO_API = 'https://api.coingecko.com/api/v3';
+    const BINANCE_API = 'https://api.binance.com/api/v3';
+    const COINGECKO_API = 'https://api.coingecko.com/api/v3';
 
-    function formatCurrency(val) {
-        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: val < 1 ? 4 : 2 }).format(val);
-    }
+    function formatCurrency(val) {
+        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: val < 1 ? 4 : 2 }).format(val);
+    }
 
-    function parseMarkdown(text) {
-        return text.replace(/^## (.*$)/gim, '<h2>$1</h2>').replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>').replace(/```([\s\S]*?)```/gim, '<pre><code>$1</code></pre>').replace(/\n/g, '<br>');
-    }
+    function parseMarkdown(text) {
+        return text.replace(/^## (.*$)/gim, '<h2>$1</h2>').replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>').replace(/```([\s\S]*?)```/gim, '<pre><code>$1</code></pre>').replace(/\n/g, '<br>');
+    }
 
-    function scrollToEnd() { chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' }); }
+    function scrollToEnd() { chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' }); }
 
-    function appendMessage(role, content, isLive = false) {
-        const wrapper = document.createElement('div');
-        wrapper.className = `message-wrapper ${role}`;
-        const id = isLive ? 'live-' + Date.now() : '';
-        let innerHTML = role === 'assistant' ? `<div class="avatar">🤖</div>` : '';
-        innerHTML += `<div class="text-box" id="${id}">${role === 'user' ? content : parseMarkdown(content)}</div>`;
-        wrapper.innerHTML = innerHTML;
-        messagesList.appendChild(wrapper);
-        scrollToEnd();
-        return id ? document.getElementById(id) : null;
-    }
+    function appendMessage(role, content, isLive = false) {
+        const wrapper = document.createElement('div');
+        wrapper.className = `message-wrapper ${role}`;
+        const id = isLive ? 'live-' + Date.now() : '';
+        let innerHTML = role === 'assistant' ? `<div class="avatar">🤖</div>` : '';
+        innerHTML += `<div class="text-box" id="${id}">${role === 'user' ? content : parseMarkdown(content)}</div>`;
+        wrapper.innerHTML = innerHTML;
+        messagesList.appendChild(wrapper);
+        scrollToEnd();
+        return id ? document.getElementById(id) : null;
+    }
 
-    async function typeEffect(element, html) {
-        element.innerHTML = "";
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = html;
-        const nodes = Array.from(tempDiv.childNodes);
-        for (const node of nodes) {
-            if (node.nodeType === Node.TEXT_NODE) {
-                const text = node.textContent;
-                for (let i = 0; i < text.length; i++) {
-                    element.innerHTML += text[i];
-                    scrollToEnd();
-                    await new Promise(r => setTimeout(r, 4));
-                }
-            } else { element.appendChild(node.cloneNode(true)); scrollToEnd(); }
-        }
-    }
+    async function typeEffect(element, html) {
+        element.innerHTML = "";
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = html;
+        const nodes = Array.from(tempDiv.childNodes);
+        for (const node of nodes) {
+            if (node.nodeType === Node.TEXT_NODE) {
+                const text = node.textContent;
+                for (let i = 0; i < text.length; i++) {
+                    element.innerHTML += text[i];
+                    scrollToEnd();
+                    await new Promise(r => setTimeout(r, 4));
+                }
+            } else { element.appendChild(node.cloneNode(true)); scrollToEnd(); }
+        }
+    }
 
-    async function performAnalysis(specificCoin = null) {
-        const liveEl = appendMessage('assistant', '', true);
-        liveEl.innerHTML = `<div class="flex items-center gap-2"><div class="flex gap-1"><div class="typing-dot"></div><div class="typing-dot" style="animation-delay: 0.2s"></div><div class="typing-dot" style="animation-delay: 0.4s"></div></div> <span class="text-xs text-gray-400">${specificCoin ? 'Analisando ' + specificCoin : 'Rastreando Oportunidades...'}</span></div>`;
+    async function performAnalysis(specificCoin = null) {
+        const liveEl = appendMessage('assistant', '', true);
+        liveEl.innerHTML = `<div class="flex items-center gap-2"><div class="flex gap-1"><div class="typing-dot"></div><div class="typing-dot" style="animation-delay: 0.2s"></div><div class="typing-dot" style="animation-delay: 0.4s"></div></div> <span class="text-xs text-gray-400">${specificCoin ? 'Analisando ' + specificCoin : 'Rastreando Oportunidades...'}</span></div>`;
 
-        try {
-            let symbolsToAnalyze = [];
+        try {
+            let symbolsToAnalyze = [];
 
-            if (specificCoin) {
-                symbolsToAnalyze = [specificCoin.toUpperCase().replace('USDT', '')];
-            } else {
-                const trendingRes = await fetch(`${COINGECKO_API}/search/trending`);
-                const trendData = await trendingRes.json();
-                symbolsToAnalyze = trendData.coins.map(c => c.item.symbol.toUpperCase());
-            }
+            if (specificCoin) {
+                symbolsToAnalyze = [specificCoin.toUpperCase().replace('USDT', '')];
+            } else {
+                const trendingRes = await fetch(`${COINGECKO_API}/search/trending`);
+                const trendData = await trendingRes.json();
+                symbolsToAnalyze = trendData.coins.map(c => c.item.symbol.toUpperCase());
+            }
 
-            const tickerRes = await fetch(`${BINANCE_API}/ticker/24hr`);
-            const allTickers = await tickerRes.json();
-            const candidates = [];
+            const tickerRes = await fetch(`${BINANCE_API}/ticker/24hr`);
+            const allTickers = await tickerRes.json();
+            const candidates = [];
 
-            for (const sym of symbolsToAnalyze) {
-                const tick = allTickers.find(t => t.symbol === sym + 'USDT');
-                if (tick) {
-                    const priceChange = parseFloat(tick.priceChangePercent);
-                    const klineRes = await fetch(`${BINANCE_API}/klines?symbol=${sym}USDT&interval=1h&limit=20`);
-                    const klines = await klineRes.json();
-                    if (klines.length < 20) continue;
+            for (const sym of symbolsToAnalyze) {
+                const tick = allTickers.find(t => t.symbol === sym + 'USDT');
+                if (tick) {
+                    const priceChange = parseFloat(tick.priceChangePercent);
+                    const klineRes = await fetch(`${BINANCE_API}/klines?symbol=${sym}USDT&interval=1h&limit=20`);
+                    const klines = await klineRes.json();
+                    if (klines.length < 20) continue;
 
-                    const prices = klines.map(k => parseFloat(k[4]));
-                    const sma = prices.reduce((a, b) => a + b, 0) / 20;
-                    const variance = prices.reduce((a, b) => a + Math.pow(b - sma, 2), 0) / 20;
-                    const stdDev = Math.sqrt(variance);
-                    const upperBand = sma + (2 * stdDev);
-                    const lowerBand = sma - (2 * stdDev);
-                    const lastPrice = prices[prices.length - 1];
-                    const bPercent = ((lastPrice - lowerBand) / (upperBand - lowerBand)) * 100;
+                    const prices = klines.map(k => parseFloat(k[4]));
+                    const sma = prices.reduce((a, b) => a + b, 0) / 20;
+                    const variance = prices.reduce((a, b) => a + Math.pow(b - sma, 2), 0) / 20;
+                    const stdDev = Math.sqrt(variance);
+                    const upperBand = sma + (2 * stdDev);
+                    const lowerBand = sma - (2 * stdDev);
+                    const lastPrice = prices[prices.length - 1];
+                    const bPercent = ((lastPrice - lowerBand) / (upperBand - lowerBand)) * 100;
 
-                    // Se for busca automática, filtra. Se for específica, aceita tudo para mostrar o status.
-                    if (specificCoin || (bPercent >= 51 && bPercent <= 63 && priceChange > 0)) {
-                        candidates.push({ sym, price: lastPrice, bPercent, change: priceChange, vol: tick.quoteVolume, sma, upperBand, stopLoss: sma * 0.95 });
-                    }
-                }
-            }
+                    // Se for busca automática, filtra. Se for específica, aceita tudo para mostrar o status.
+                    if (specificCoin || (bPercent >= 51 && bPercent <= 63 && priceChange > 0)) {
+                        candidates.push({ sym, price: lastPrice, bPercent, change: priceChange, vol: tick.quoteVolume, sma, upperBand, stopLoss: sma * 0.95 });
+                    }
+                }
+            }
 
-            if (candidates.length === 0) {
-                liveEl.innerHTML = specificCoin ? `Não encontrei dados para "${specificCoin}" na Binance.` : "Nenhuma oportunidade clara no range de ignição agora.";
-                return;
-            }
+            if (candidates.length === 0) {
+                liveEl.innerHTML = specificCoin ? `Não encontrei dados para "${specificCoin}" na Binance.` : "Nenhuma oportunidade clara no range de ignição agora.";
+                return;
+            }
 
-            candidates.sort((a, b) => b.vol - a.vol);
-            const best = candidates[0];
+            candidates.sort((a, b) => b.vol - a.vol);
+            const best = candidates[0];
 
-            const report = `
+            const report = `
 ## 🚀 ANÁLISE: **${best.sym}/USDT**
 
 **Execução Técnica:**
@@ -265,34 +265,34 @@
 | **Variação 24h** | ${best.change > 0 ? '+' : ''}${best.change}% |
 
 **Conclusão:** ${specificCoin ? (best.bPercent > 80 ? '⚠️ **Cuidado:** Ativo esticado (perto do topo).' : '✅ Ativo em zona de negociação estável.') : '🔥 Ativo detectado no range de ignição com volume favorável.'}
-            `;
-            await typeEffect(liveEl, parseMarkdown(report));
+            `;
+            await typeEffect(liveEl, parseMarkdown(report));
 
-        } catch (e) {
-            liveEl.innerHTML = "Erro de conexão com as APIs.";
-        }
-    }
+        } catch (e) {
+            liveEl.innerHTML = "Erro de conexão com as APIs.";
+        }
+    }
 
-    async function handleSend() {
-        const text = userInput.value.trim();
-        if (!text || sendBtn.disabled) return;
-        
-        userInput.value = '';
-        sendBtn.disabled = true;
-        appendMessage('user', text);
+    async function handleSend() {
+        const text = userInput.value.trim();
+        if (!text || sendBtn.disabled) return;
+        
+        userInput.value = '';
+        sendBtn.disabled = true;
+        appendMessage('user', text);
 
-        // Regex para capturar tickers de 3 a 6 letras (BTC, ETH, SOLANA, etc)
-        const coinMatch = text.match(/\b([A-Za-z]{3,6})\b/);
-        const specificCoin = (coinMatch && !["QUAL", "COMO", "QUAL ", "QUERO"].includes(coinMatch[1].toUpperCase())) ? coinMatch[1] : null;
+        // Regex para capturar tickers de 3 a 6 letras (BTC, ETH, SOLANA, etc)
+        const coinMatch = text.match(/\b([A-Za-z]{3,6})\b/);
+        const specificCoin = (coinMatch && !["QUAL", "COMO", "QUAL ", "QUERO"].includes(coinMatch[1].toUpperCase())) ? coinMatch[1] : null;
 
-        await performAnalysis(specificCoin);
-        
-        sendBtn.disabled = false;
-        userInput.focus();
-    }
+        await performAnalysis(specificCoin);
+        
+        sendBtn.disabled = false;
+        userInput.focus();
+    }
 
-    sendBtn.addEventListener('click', handleSend);
-    userInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleSend(); });
+    sendBtn.addEventListener('click', handleSend);
+    userInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleSend(); });
 </script>
 </body>
 </html>
