@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ChatGPT - Crypto Analyst Pro</title>
+    <title>Sarai - Crypto Intelligence</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
     <style>
@@ -42,16 +42,14 @@
             z-index: 50;
         }
 
-        .gpt-badge {
-            background: var(--gpt-accent);
-            color: white;
+        /* Estilo do Avatar da Sarai */
+        .avatar-sarai {
             width: 32px;
             height: 32px;
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
+            border-radius: 50%;
+            object-fit: cover;
+            background: #eee;
+            border: 1px solid #ddd;
         }
 
         #chat-container {
@@ -92,10 +90,9 @@
             max-width: 85%;
         }
 
-        .avatar {
-            width: 30px; height: 30px; border-radius: 4px; flex-shrink: 0;
+        .avatar-container {
+            width: 35px; height: 35px; flex-shrink: 0;
             display: flex; align-items: center; justify-content: center;
-            background: var(--gpt-accent); color: white; font-size: 1rem;
         }
 
         .text-box { line-height: 1.6; font-size: 15px; overflow-x: auto; }
@@ -119,8 +116,8 @@
 
 <header class="app-header">
     <div class="flex items-center gap-2">
-        <div class="gpt-badge">✦</div>
-        <span class="font-semibold text-gray-800 tracking-tight">CryptoAnalyst Pro</span>
+        <img src="https://i.postimg.cc/FFdK78k7/1000389305-removebg-preview-(1).png" class="avatar-sarai" alt="Sarai">
+        <span class="font-semibold text-gray-800 tracking-tight">Sarai AI</span>
     </div>
     <div class="flex items-center gap-2">
         <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
@@ -131,11 +128,13 @@
 <main id="chat-container">
     <div class="messages-list" id="messages-list">
         <div class="message-wrapper assistant">
-            <div class="avatar">🤖</div>
+            <div class="avatar-container">
+                <img src="https://i.postimg.cc/FFdK78k7/1000389305-removebg-preview-(1).png" class="avatar-sarai" alt="Sarai">
+            </div>
             <div class="text-box">
-                <p>Olá! Eu monitoro a Binance em tempo real. Você pode:</p>
-                <p>1. Digitar uma moeda (ex: **BTC** ou **SOL**) para análise técnica.<br>
-                   2. Pedir uma oportunidade (ex: **"qual a boa?"**) para eu buscar tendências.</p>
+                <p>Olá! Eu sou a <strong>Sarai</strong>. Monitoro a Binance em tempo real para você.</p>
+                <p>1. Digite uma moeda (ex: **BTC** ou **SOL**) para análise técnica.<br>
+                   2. Peça uma oportunidade (ex: **"qual a boa?"**) para eu buscar tendências.</p>
             </div>
         </div>
     </div>
@@ -143,7 +142,7 @@
 
 <div class="input-area">
     <div class="input-container">
-        <input type="text" id="user-input" placeholder="Pergunte sobre uma moeda..." autocomplete="off">
+        <input type="text" id="user-input" placeholder="Pergunte para a Sarai..." autocomplete="off">
         <button id="send-btn">
             <svg stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24" height="18" width="18" xmlns="http://www.w3.org/2000/svg"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
         </button>
@@ -155,6 +154,7 @@
     const messagesList = document.getElementById('messages-list');
     const userInput = document.getElementById('user-input');
     const sendBtn = document.getElementById('send-btn');
+    const SARAI_AVATAR = "https://i.postimg.cc/FFdK78k7/1000389305-removebg-preview-(1).png";
 
     const BINANCE_API = 'https://api.binance.com/api/v3';
     const COINGECKO_API = 'https://api.coingecko.com/api/v3';
@@ -173,8 +173,10 @@
         const wrapper = document.createElement('div');
         wrapper.className = `message-wrapper ${role}`;
         const id = isLive ? 'live-' + Date.now() : '';
-        let innerHTML = role === 'assistant' ? `<div class="avatar">🤖</div>` : '';
+        
+        let innerHTML = role === 'assistant' ? `<div class="avatar-container"><img src="${SARAI_AVATAR}" class="avatar-sarai"></div>` : '';
         innerHTML += `<div class="text-box" id="${id}">${role === 'user' ? content : parseMarkdown(content)}</div>`;
+        
         wrapper.innerHTML = innerHTML;
         messagesList.appendChild(wrapper);
         scrollToEnd();
@@ -200,7 +202,7 @@
 
     async function performAnalysis(specificCoin = null) {
         const liveEl = appendMessage('assistant', '', true);
-        liveEl.innerHTML = `<div class="flex items-center gap-2"><div class="flex gap-1"><div class="typing-dot"></div><div class="typing-dot" style="animation-delay: 0.2s"></div><div class="typing-dot" style="animation-delay: 0.4s"></div></div> <span class="text-xs text-gray-400">${specificCoin ? 'Analisando ' + specificCoin : 'Rastreando Oportunidades...'}</span></div>`;
+        liveEl.innerHTML = `<div class="flex items-center gap-2"><div class="flex gap-1"><div class="typing-dot"></div><div class="typing-dot" style="animation-delay: 0.2s"></div><div class="typing-dot" style="animation-delay: 0.4s"></div></div> <span class="text-xs text-gray-400">${specificCoin ? 'Sarai analisando ' + specificCoin : 'Sarai rastreando o mercado...'}</span></div>`;
 
         try {
             let symbolsToAnalyze = [];
@@ -234,7 +236,6 @@
                     const lastPrice = prices[prices.length - 1];
                     const bPercent = ((lastPrice - lowerBand) / (upperBand - lowerBand)) * 100;
 
-                    // Se for busca automática, filtra. Se for específica, aceita tudo para mostrar o status.
                     if (specificCoin || (bPercent >= 51 && bPercent <= 63 && priceChange > 0)) {
                         candidates.push({ sym, price: lastPrice, bPercent, change: priceChange, vol: tick.quoteVolume, sma, upperBand, stopLoss: sma * 0.95 });
                     }
@@ -242,7 +243,7 @@
             }
 
             if (candidates.length === 0) {
-                liveEl.innerHTML = specificCoin ? `Não encontrei dados para "${specificCoin}" na Binance.` : "Nenhuma oportunidade clara no range de ignição agora.";
+                liveEl.innerHTML = specificCoin ? `Não encontrei dados para "${specificCoin}" na Binance.` : "Nenhuma oportunidade clara no radar da Sarai agora.";
                 return;
             }
 
@@ -250,7 +251,7 @@
             const best = candidates[0];
 
             const report = `
-## 🚀 ANÁLISE: **${best.sym}/USDT**
+## 🚀 ANÁLISE SARAI: **${best.sym}/USDT**
 
 **Execução Técnica:**
 - **🛒 PREÇO ATUAL:** ${formatCurrency(best.price)}
@@ -264,12 +265,12 @@
 | **Média Central** | ${formatCurrency(best.sma)} |
 | **Variação 24h** | ${best.change > 0 ? '+' : ''}${best.change}% |
 
-**Conclusão:** ${specificCoin ? (best.bPercent > 80 ? '⚠️ **Cuidado:** Ativo esticado (perto do topo).' : '✅ Ativo em zona de negociação estável.') : '🔥 Ativo detectado no range de ignição com volume favorável.'}
+**Conclusão:** ${specificCoin ? (best.bPercent > 80 ? '⚠️ **Atenção:** O ativo está esticado (perto do topo).' : '✅ Zona de negociação estável.') : '🔥 Detectei um sinal de ignição com volume favorável!'}
             `;
             await typeEffect(liveEl, parseMarkdown(report));
 
         } catch (e) {
-            liveEl.innerHTML = "Erro de conexão com as APIs.";
+            liveEl.innerHTML = "Erro ao conectar com a Binance. Tente novamente.";
         }
     }
 
@@ -281,9 +282,8 @@
         sendBtn.disabled = true;
         appendMessage('user', text);
 
-        // Regex para capturar tickers de 3 a 6 letras (BTC, ETH, SOLANA, etc)
         const coinMatch = text.match(/\b([A-Za-z]{3,6})\b/);
-        const specificCoin = (coinMatch && !["QUAL", "COMO", "QUAL ", "QUERO"].includes(coinMatch[1].toUpperCase())) ? coinMatch[1] : null;
+        const specificCoin = (coinMatch && !["QUAL", "COMO", "QUERO", "BOM"].includes(coinMatch[1].toUpperCase())) ? coinMatch[1] : null;
 
         await performAnalysis(specificCoin);
         
