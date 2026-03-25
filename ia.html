@@ -90,6 +90,7 @@
             border-radius: 18px 18px 18px 2px;
             border: 1px solid #e5e5e5;
             max-width: 85%;
+            width: 100%;
         }
 
         .avatar {
@@ -98,10 +99,18 @@
             background: var(--gpt-accent); color: white; font-size: 1rem;
         }
 
-        .text-box { line-height: 1.6; font-size: 15px; overflow-x: auto; }
-        .text-box h2 { font-weight: 600; font-size: 1.2rem; margin: 1rem 0 0.5rem; color: #111827; }
+        .text-box { line-height: 1.6; font-size: 15px; }
+        .text-box h2 { font-weight: 600; font-size: 1.2rem; margin: 0.5rem 0; color: #111827; }
         
-        pre { background: #0d0d0d; color: #ececec; padding: 1rem; border-radius: 8px; margin: 1rem 0; font-family: 'Fira Code', monospace; font-size: 13px; overflow-x: auto; border: 1px solid #2d2d2d; }
+        .chart-container {
+            width: 100%;
+            height: 300px;
+            margin: 1rem 0;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #eee;
+        }
+
         table { width: 100%; border-collapse: collapse; margin: 1rem 0; background: white; border-radius: 8px; font-size: 13px; border: 1px solid #eee; }
         th { background: #f9fafb; padding: 10px; text-align: left; color: #6b7280; border-bottom: 1px solid #eee; }
         td { padding: 10px; border-bottom: 1px solid #f9f9f9; }
@@ -133,9 +142,7 @@
         <div class="message-wrapper assistant">
             <div class="avatar">🤖</div>
             <div class="text-box">
-                <p>Olá! Eu monitoro a Binance em tempo real. Você pode:</p>
-                <p>1. Digitar uma moeda (ex: **BTC** ou **SOL**) para análise técnica.<br>
-                   2. Pedir uma oportunidade (ex: **"qual a boa?"**) para eu buscar tendências.</p>
+                <p>Olá! Digite uma moeda (ex: **BTC**) para análise com gráfico em tempo real.</p>
             </div>
         </div>
     </div>
@@ -143,7 +150,7 @@
 
 <div class="input-area">
     <div class="input-container">
-        <input type="text" id="user-input" placeholder="Pergunte sobre uma moeda..." autocomplete="off">
+        <input type="text" id="user-input" placeholder="Analisar moeda..." autocomplete="off">
         <button id="send-btn">
             <svg stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24" height="18" width="18" xmlns="http://www.w3.org/2000/svg"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
         </button>
@@ -164,7 +171,11 @@
     }
 
     function parseMarkdown(text) {
-        return text.replace(/^## (.*$)/gim, '<h2>$1</h2>').replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>').replace(/```([\s\S]*?)```/gim, '<pre><code>$1</code></pre>').replace(/\n/g, '<br>');
+        return text
+            .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+            .replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>')
+            .replace(/\[CHART:(.*)\]/gim, '<div class="chart-container" id="chart-$1"></div>')
+            .replace(/\n/g, '<br>');
     }
 
     function scrollToEnd() { chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' }); }
@@ -181,112 +192,75 @@
         return id ? document.getElementById(id) : null;
     }
 
-    async function typeEffect(element, html) {
-        element.innerHTML = "";
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = html;
-        const nodes = Array.from(tempDiv.childNodes);
-        for (const node of nodes) {
-            if (node.nodeType === Node.TEXT_NODE) {
-                const text = node.textContent;
-                for (let i = 0; i < text.length; i++) {
-                    element.innerHTML += text[i];
-                    scrollToEnd();
-                    await new Promise(r => setTimeout(r, 4));
-                }
-            } else { element.appendChild(node.cloneNode(true)); scrollToEnd(); }
-        }
+    function loadTradingView(symbol, containerId) {
+        const script = document.createElement('script');
+        script.src = 'https://s3.tradingview.com/tv.js';
+        script.async = true;
+        script.onload = () => {
+            new TradingView.widget({
+                "autosize": true,
+                "symbol": `BINANCE:${symbol}USDT`,
+                "interval": "60",
+                "timezone": "Etc/UTC",
+                "theme": "light",
+                "style": "1",
+                "locale": "br",
+                "toolbar_bg": "#f1f3f6",
+                "enable_publishing": false,
+                "hide_top_toolbar": true,
+                "save_image": false,
+                "container_id": containerId
+            });
+        };
+        document.head.appendChild(script);
     }
 
     async function performAnalysis(specificCoin = null) {
+        const liveId = 'live-' + Date.now();
         const liveEl = appendMessage('assistant', '', true);
-        liveEl.innerHTML = `<div class="flex items-center gap-2"><div class="flex gap-1"><div class="typing-dot"></div><div class="typing-dot" style="animation-delay: 0.2s"></div><div class="typing-dot" style="animation-delay: 0.4s"></div></div> <span class="text-xs text-gray-400">${specificCoin ? 'Analisando ' + specificCoin : 'Rastreando Oportunidades...'}</span></div>`;
+        liveEl.innerHTML = `<div class="flex items-center gap-2"><div class="typing-dot"></div><span class="text-xs text-gray-400">Consultando Binance...</span></div>`;
 
         try {
-            let symbolsToAnalyze = [];
+            let symbol = specificCoin ? specificCoin.toUpperCase() : "BTC";
+            
+            const tickerRes = await fetch(`${BINANCE_API}/ticker/24hr?symbol=${symbol}USDT`);
+            const tick = await tickerRes.json();
 
-            if (specificCoin) {
-                symbolsToAnalyze = [specificCoin.toUpperCase().replace('USDT', '')];
-            } else {
-                const trendingRes = await fetch(`${COINGECKO_API}/search/trending`);
-                const trendData = await trendingRes.json();
-                symbolsToAnalyze = trendData.coins.map(c => c.item.symbol.toUpperCase());
-            }
+            if (tick.code) throw new Error("Not found");
 
-            const tickerRes = await fetch(`${BINANCE_API}/ticker/24hr`);
-            const allTickers = await tickerRes.json();
-            const candidates = [];
-
-            for (const sym of symbolsToAnalyze) {
-                const tick = allTickers.find(t => t.symbol === sym + 'USDT');
-                if (tick) {
-                    const priceChange = parseFloat(tick.priceChangePercent);
-                    const klineRes = await fetch(`${BINANCE_API}/klines?symbol=${sym}USDT&interval=1h&limit=20`);
-                    const klines = await klineRes.json();
-                    if (klines.length < 20) continue;
-
-                    const prices = klines.map(k => parseFloat(k[4]));
-                    const sma = prices.reduce((a, b) => a + b, 0) / 20;
-                    const variance = prices.reduce((a, b) => a + Math.pow(b - sma, 2), 0) / 20;
-                    const stdDev = Math.sqrt(variance);
-                    const upperBand = sma + (2 * stdDev);
-                    const lowerBand = sma - (2 * stdDev);
-                    const lastPrice = prices[prices.length - 1];
-                    const bPercent = ((lastPrice - lowerBand) / (upperBand - lowerBand)) * 100;
-
-                    // Se for busca automática, filtra. Se for específica, aceita tudo para mostrar o status.
-                    if (specificCoin || (bPercent >= 51 && bPercent <= 63 && priceChange > 0)) {
-                        candidates.push({ sym, price: lastPrice, bPercent, change: priceChange, vol: tick.quoteVolume, sma, upperBand, stopLoss: sma * 0.95 });
-                    }
-                }
-            }
-
-            if (candidates.length === 0) {
-                liveEl.innerHTML = specificCoin ? `Não encontrei dados para "${specificCoin}" na Binance.` : "Nenhuma oportunidade clara no range de ignição agora.";
-                return;
-            }
-
-            candidates.sort((a, b) => b.vol - a.vol);
-            const best = candidates[0];
-
+            const price = parseFloat(tick.lastPrice);
+            const change = parseFloat(tick.priceChangePercent);
+            
             const report = `
-## 🚀 ANÁLISE: **${best.sym}/USDT**
-
-**Execução Técnica:**
-- **🛒 PREÇO ATUAL:** ${formatCurrency(best.price)}
-- **🎯 ALVO (Banda Sup):** ${formatCurrency(best.upperBand)}
-- **🛡️ STOP (Sugestão):** ${formatCurrency(best.stopLoss)}
-
-**Métricas Operacionais:**
-| Indicador | Status |
+## Analisando ${symbol}/USDT
+[CHART:${symbol}]
+| Métrica | Valor |
 | :--- | :--- |
-| **Banda de Bollinger** | ${best.bPercent.toFixed(1)}% |
-| **Média Central** | ${formatCurrency(best.sma)} |
-| **Variação 24h** | ${best.change > 0 ? '+' : ''}${best.change}% |
-
-**Conclusão:** ${specificCoin ? (best.bPercent > 80 ? '⚠️ **Cuidado:** Ativo esticado (perto do topo).' : '✅ Ativo em zona de negociação estável.') : '🔥 Ativo detectado no range de ignição com volume favorável.'}
+| **Preço** | ${formatCurrency(price)} |
+| **24h Change** | ${change > 0 ? '+' : ''}${change}% |
+| **Volume** | ${formatCurrency(parseFloat(tick.quoteVolume))} |
             `;
-            await typeEffect(liveEl, parseMarkdown(report));
+
+            liveEl.innerHTML = parseMarkdown(report);
+            loadTradingView(symbol, `chart-${symbol}`);
+            scrollToEnd();
 
         } catch (e) {
-            liveEl.innerHTML = "Erro de conexão com as APIs.";
+            liveEl.innerHTML = "Moeda não encontrada ou erro de conexão.";
         }
     }
 
     async function handleSend() {
         const text = userInput.value.trim();
         if (!text || sendBtn.disabled) return;
-        
         userInput.value = '';
         sendBtn.disabled = true;
         appendMessage('user', text);
 
-        // Regex para capturar tickers de 3 a 6 letras (BTC, ETH, SOLANA, etc)
         const coinMatch = text.match(/\b([A-Za-z]{3,6})\b/);
-        const specificCoin = (coinMatch && !["QUAL", "COMO", "QUAL ", "QUERO"].includes(coinMatch[1].toUpperCase())) ? coinMatch[1] : null;
+        const coin = coinMatch ? coinMatch[1] : null;
 
-        await performAnalysis(specificCoin);
-        
+        await performAnalysis(coin);
         sendBtn.disabled = false;
         userInput.focus();
     }
