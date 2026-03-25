@@ -3,143 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>CryptoAnalyst Pro - Smart Terminal</title>
+    <title>CryptoAnalyst Pro - AI Terminal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
     <style>
         :root {
-            --gpt-dark: #202123;
-            --gpt-gray: #343541;
             --gpt-accent: #10a37f;
             --user-bubble: #007bff;
-            --header-height: 60px;
         }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f7f7f8;
-            color: #374151;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .app-header {
-            height: var(--header-height);
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid #e5e5e5;
-            padding: 0 1rem;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            z-index: 50;
-        }
-
-        .gpt-badge {
-            background: var(--gpt-accent);
-            color: white;
-            width: 32px; height: 32px;
-            border-radius: 6px;
-            display: flex; align-items: center; justify-content: center;
-            font-weight: bold;
-        }
-
-        #chat-container {
-            flex: 1;
-            overflow-y: auto;
-            scroll-behavior: smooth;
-            padding-bottom: 2rem;
-        }
-
-        .messages-list {
-            padding: 1rem;
-            max-width: 850px;
-            margin: 0 auto;
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-        }
-
+        body { font-family: 'Inter', sans-serif; background-color: #f7f7f8; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        .app-header { height: 60px; background: white; border-bottom: 1px solid #e5e5e5; padding: 0 1rem; display: flex; align-items: center; justify-content: space-between; z-index: 50; }
+        #chat-container { flex: 1; overflow-y: auto; padding-bottom: 2rem; }
+        .messages-list { padding: 1rem; max-width: 850px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.5rem; }
         .message-wrapper { display: flex; width: 100%; gap: 12px; }
         .message-wrapper.user { justify-content: flex-end; }
-        
-        .message-wrapper.user .text-box {
-            background: var(--user-bubble);
-            color: white;
-            border-radius: 18px 18px 2px 18px;
-        }
-
-        .message-wrapper.assistant .text-box {
-            background: white;
-            border: 1px solid #e5e5e5;
-            border-radius: 18px 18px 18px 2px;
-        }
-
-        .avatar {
-            width: 32px; height: 32px; border-radius: 4px; flex-shrink: 0;
-            display: flex; align-items: center; justify-content: center;
-            background: var(--gpt-accent); color: white;
-        }
-
-        .text-box {
-            padding: 12px 18px;
-            max-width: 85%;
-            line-height: 1.6;
-            font-size: 15px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
-        }
-
-        .input-area {
-            background: white;
-            border-top: 1px solid #e5e5e5;
-            padding: 1.5rem;
-        }
-
-        .input-container {
-            max-width: 800px;
-            margin: 0 auto;
-            position: relative;
-        }
-
-        #user-input {
-            width: 100%;
-            padding: 14px 50px 14px 16px;
-            border: 1px solid #e5e5e5;
-            border-radius: 12px;
-            outline: none;
-            font-size: 16px;
-            transition: border 0.2s;
-        }
-
-        #user-input:focus { border-color: var(--gpt-accent); }
-
-        #send-btn {
-            position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
-            background: var(--gpt-accent); color: white;
-            width: 34px; height: 34px; border-radius: 8px;
-            display: flex; align-items: center; justify-content: center;
-        }
-
-        .typing-dot { width: 4px; height: 4px; background: #8e8ea0; border-radius: 50%; animation: bounce 1.4s infinite; }
-        @keyframes bounce { 0%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-6px); } }
-        
+        .message-wrapper.assistant .text-box { background: white; border: 1px solid #e5e5e5; border-radius: 18px 18px 18px 2px; }
+        .message-wrapper.user .text-box { background: var(--user-bubble); color: white; border-radius: 18px 18px 2px 18px; }
+        .text-box { padding: 12px 18px; max-width: 85%; line-height: 1.6; font-size: 15px; }
+        .avatar { width: 32px; height: 32px; border-radius: 4px; display: flex; align-items: center; justify-content: center; background: var(--gpt-accent); color: white; }
+        .input-area { background: white; border-top: 1px solid #e5e5e5; padding: 1.5rem; }
+        .input-container { max-width: 800px; margin: 0 auto; position: relative; }
+        #user-input { width: 100%; padding: 14px 50px 14px 16px; border: 1px solid #e5e5e5; border-radius: 12px; outline: none; }
+        #ai-status { position: fixed; top: 60px; left: 0; width: 0%; height: 2px; background: var(--gpt-accent); transition: width 0.3s; z-index: 100; }
         table { width: 100%; margin: 10px 0; font-size: 13px; border-collapse: collapse; }
         th, td { padding: 8px; text-align: left; border-bottom: 1px solid #eee; }
-        h2 { font-weight: 700; color: #111827; margin-top: 10px; }
+        h2 { font-weight: 700; margin-top: 10px; }
     </style>
 </head>
 <body>
 
+<div id="ai-status"></div>
+
 <header class="app-header">
     <div class="flex items-center gap-2">
-        <div class="gpt-badge">✦</div>
-        <span class="font-semibold text-gray-800">CryptoAnalyst Pro</span>
+        <div class="bg-[#10a37f] text-white p-1 rounded">✦</div>
+        <span class="font-semibold">CryptoAnalyst AI</span>
     </div>
-    <div class="flex items-center gap-2 text-[11px] font-bold text-gray-400">
-        <span class="w-2 h-2 rounded-full bg-green-500"></span> BINANCE LIVE
-    </div>
+    <div id="model-badge" class="text-[10px] bg-gray-100 px-2 py-1 rounded text-gray-500">CARREGANDO IA...</div>
 </header>
 
 <main id="chat-container">
@@ -147,10 +47,8 @@
         <div class="message-wrapper assistant">
             <div class="avatar">🤖</div>
             <div class="text-box">
-                Olá! Sou seu analista técnico. <br>
-                • Digite <strong>"Comprar"</strong> para varredura geral.<br>
-                • Digite o ticker (ex: <strong>"BTC"</strong>) para checagem direta.<br>
-                • Entendo erros de digitação como "conprar" ou "ajdua".
+                Sistema online. Agora estou equipado com **Transformers.js**!<br>
+                Além de comandos, posso sentir o "humor" das suas frases.
             </div>
         </div>
     </div>
@@ -158,14 +56,41 @@
 
 <div class="input-area">
     <div class="input-container">
-        <input type="text" id="user-input" placeholder="O que deseja analisar?" autocomplete="off">
-        <button id="send-btn">
+        <input type="text" id="user-input" placeholder="Digite um comando ou uma frase sobre o mercado..." autocomplete="off">
+        <button id="send-btn" class="absolute right-2 top-1/2 -translate-y-1/2 bg-[#10a37f] text-white p-2 rounded-lg">
             <svg stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24" height="18" width="18"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
         </button>
     </div>
 </div>
 
-<script>
+<script type="module">
+    // IMPORTANDO IA TRANSFORMERS.JS
+    import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.1';
+    
+    // Configurações para rodar local no browser
+    env.allowLocalModels = false;
+
+    let classifier;
+    const statusLoader = document.getElementById('ai-status');
+    const badge = document.getElementById('model-badge');
+
+    // Inicializa a IA em segundo plano
+    async function initAI() {
+        try {
+            classifier = await pipeline('sentiment-analysis', 'Xenova/distilbert-base-uncased-finetuned-sst-2-english', {
+                progress_callback: (p) => {
+                    if(p.status === 'progress') statusLoader.style.width = p.progress + '%';
+                    if(p.status === 'ready') {
+                        statusLoader.style.width = '0%';
+                        badge.innerText = 'IA PRONTA (LOCAL)';
+                        badge.classList.replace('text-gray-500', 'text-green-600');
+                    }
+                }
+            });
+        } catch (e) { badge.innerText = 'IA OFFLINE'; }
+    }
+    initAI();
+
     const messagesList = document.getElementById('messages-list');
     const userInput = document.getElementById('user-input');
     const sendBtn = document.getElementById('send-btn');
@@ -174,7 +99,7 @@
     const BINANCE_API = 'https://api.binance.com/api/v3';
     const COINGECKO_API = 'https://api.coingecko.com/api/v3';
 
-    // --- ALGORITMO DE CORREÇÃO (Levenshtein) ---
+    // Algoritmo Levenshtein (Correção de erros)
     function getSimilarity(a, b) {
         const matrix = Array.from({ length: a.length + 1 }, (_, i) => [i]);
         for (let j = 1; j <= b.length; j++) matrix[0][j] = j;
@@ -188,16 +113,15 @@
     }
 
     function matchCommand(input, targets) {
-        let bestMatch = { item: null, dist: 4 }; // Limite de 3 erros
+        let best = { item: null, dist: 3 };
         targets.forEach(t => {
             const d = getSimilarity(input.toLowerCase(), t.toLowerCase());
-            if (d < bestMatch.dist) bestMatch = { item: t, dist: d };
+            if (d < best.dist) best = { item: t, dist: d };
         });
-        return bestMatch.item;
+        return best.item;
     }
 
-    // --- UTILITÁRIOS ---
-    function formatCurrency(val) { return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: val < 1 ? 4 : 2 }).format(val); }
+    // Funções de UI
     function parseMarkdown(text) { return text.replace(/^## (.*$)/gim, '<h2>$1</h2>').replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>').replace(/\n/g, '<br>'); }
     function scrollToEnd() { chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' }); }
 
@@ -213,14 +137,12 @@
 
     async function typeEffect(element, html) {
         element.innerHTML = "";
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = html;
+        const tempDiv = document.createElement('div'); tempDiv.innerHTML = html;
         const nodes = Array.from(tempDiv.childNodes);
         for (const node of nodes) {
             if (node.nodeType === Node.TEXT_NODE) {
                 for (let char of node.textContent) {
                     element.innerHTML += char;
-                    if (Math.random() > 0.8) scrollToEnd();
                     await new Promise(r => setTimeout(r, 5));
                 }
             } else { element.appendChild(node.cloneNode(true)); }
@@ -228,101 +150,59 @@
         scrollToEnd();
     }
 
-    // --- MOTOR TÉCNICO ---
-    async function fetchTechnicalData(symbol) {
-        try {
-            const pair = symbol.toUpperCase().endsWith('USDT') ? symbol.toUpperCase() : symbol.toUpperCase() + 'USDT';
-            const [tickerRes, klinesRes] = await Promise.all([
-                fetch(`${BINANCE_API}/ticker/24hr?symbol=${pair}`),
-                fetch(`${BINANCE_API}/klines?symbol=${pair}&interval=1h&limit=20`)
-            ]);
-            const tick = await tickerRes.json();
-            const klines = await klinesRes.json();
-            const prices = klines.map(k => parseFloat(k[4]));
-            const sma = prices.reduce((a, b) => a + b, 0) / 20;
-            const variance = prices.reduce((a, b) => a + Math.pow(b - sma, 2), 0) / 20;
-            const stdDev = Math.sqrt(variance);
-            const upperBand = sma + (2 * stdDev);
-            const lowerBand = sma - (2 * stdDev);
-            const lastPrice = prices[prices.length - 1];
-            const bPercent = ((lastPrice - lowerBand) / (upperBand - lowerBand)) * 100;
-
-            return {
-                symbol: pair, price: lastPrice, change: parseFloat(tick.priceChangePercent),
-                bPercent, sma, upper: upperBand, stop: sma * 0.95, vol: parseFloat(tick.quoteVolume),
-                isValid: (bPercent >= 51 && bPercent <= 63 && parseFloat(tick.priceChangePercent) > 0)
-            };
-        } catch (e) { return null; }
-    }
-
     const Brain = {
+        async analyzeSentiment(text) {
+            if (!classifier) return null;
+            const res = await classifier(text);
+            return res[0]; // { label: 'POSITIVE/NEGATIVE', score: 0.99 }
+        },
+
         async executeScan() {
-            const liveEl = appendMessage('assistant', 'Escaneando tendências e aplicando filtro 51-63%...', true);
+            const el = appendMessage('assistant', 'Varrendo mercado...', true);
             const res = await fetch(`${COINGECKO_API}/search/trending`);
             const data = await res.json();
-            const coins = data.coins.slice(0, 10).map(c => c.item.symbol);
-            let best = null;
-            for (let s of coins) {
-                const tech = await fetchTechnicalData(s);
-                if (tech && tech.isValid && (!best || tech.vol > best.vol)) best = tech;
-            }
-            if (!best) await typeEffect(liveEl, "Nenhuma moeda em tendência no range de ignição agora.");
-            else this.renderTrade(liveEl, best, "Oportunidade Encontrada");
+            await typeEffect(el, `Encontrei **${data.coins.length}** moedas em tendência. Use o ticker (ex: BTC) para análise técnica.`);
         },
 
         async executeSingle(symbol) {
-            const liveEl = appendMessage('assistant', `Consultando ${symbol} na Binance...`, true);
-            const data = await fetchTechnicalData(symbol);
-            if (!data) await typeEffect(liveEl, `Ticker **${symbol}** não encontrado ou erro de API.`);
-            else this.renderTrade(liveEl, data, `Análise Técnica: ${data.symbol}`);
-        },
-
-        renderTrade(el, d, title) {
-            const status = d.isValid ? "🚀 COMPRA ATIVADA" : "⚠️ AGUARDAR FORA DO RANGE";
-            const report = `## ${title}\n**Status:** ${status}\n- **🛒 PREÇO:** ${formatCurrency(d.price)}\n- **🎯 ALVO:** ${formatCurrency(d.upper)}\n- **🛡️ STOP:** ${formatCurrency(d.stop)}\n\n**Técnico:** Banda em **${d.bPercent.toFixed(1)}%**.`;
-            typeEffect(el, parseMarkdown(report));
-        },
-
-        showHelp() {
-            const liveEl = appendMessage('assistant', '', true);
-            typeEffect(liveEl, parseMarkdown(`## Comandos:\n- **Comprar:** Varredura técnica.\n- **[Ticker]:** Ex: BTC, ETH, SOL.\n- **Ajuda:** Lista de comandos.`));
+            const el = appendMessage('assistant', `Analisando ${symbol}...`, true);
+            try {
+                const res = await fetch(`${BINANCE_API}/ticker/24hr?symbol=${symbol.toUpperCase()}USDT`);
+                const d = await res.json();
+                const report = `## ${symbol.toUpperCase()}\n- **Preço:** $${parseFloat(d.lastPrice)}\n- **Variação:** ${d.priceChangePercent}%\n- **Volume:** ${parseFloat(d.quoteVolume).toLocaleString()}`;
+                typeEffect(el, parseMarkdown(report));
+            } catch { typeEffect(el, "Erro ao buscar dados na Binance."); }
         }
     };
 
-    // --- CONTROLE DE INPUT COM CORREÇÃO ---
     async function handleInteraction() {
         const query = userInput.value.trim();
-        if (!query || sendBtn.disabled) return;
+        if (!query) return;
+
         appendMessage('user', query);
         userInput.value = '';
-        sendBtn.disabled = true;
-
-        const words = query.toLowerCase().split(' ');
-        const intentTargets = ['comprar', 'ajuda', 'oportunidade', 'analisar'];
         
-        // Verifica se alguma palavra digitada "parece" com um comando
-        let detectedIntent = null;
-        words.forEach(w => {
-            const m = matchCommand(w, intentTargets);
-            if (m) detectedIntent = m;
-        });
-
-        // Regex para pegar tickers (BTC, ETH...)
+        const words = query.toLowerCase().split(' ');
+        const cmd = matchCommand(words[0], ['comprar', 'ajuda', 'scan']);
         const coinMatch = query.match(/\b([A-Z]{3,5})\b/i);
 
-        if (detectedIntent === 'ajuda') {
-            Brain.showHelp();
-        } else if (detectedIntent === 'comprar' || detectedIntent === 'oportunidade') {
+        if (cmd === 'comprar' || cmd === 'scan') {
             await Brain.executeScan();
         } else if (coinMatch) {
             await Brain.executeSingle(coinMatch[1]);
         } else {
-            const el = appendMessage('assistant', '', true);
-            await typeEffect(el, "Não reconheci o comando. Tente **'comprar'** ou digite o nome de uma moeda.");
+            // Se não for comando, a IA analisa o SENTIMENTO da frase
+            const el = appendMessage('assistant', 'Processando intenção...', true);
+            const sentiment = await Brain.analyzeSentiment(query);
+            
+            if (sentiment) {
+                const mood = sentiment.label === 'POSITIVE' ? 'otimista (Bullish) 🚀' : 'pessimista (Bearish) 📉';
+                const score = (sentiment.score * 100).toFixed(0);
+                await typeEffect(el, `Sua mensagem parece **${mood}** com ${score}% de confiança. Deseja que eu procure oportunidades de compra?`);
+            } else {
+                await typeEffect(el, "Não entendi o comando. Tente algo como 'Comprar' ou o nome de uma moeda.");
+            }
         }
-
-        sendBtn.disabled = false;
-        userInput.focus();
     }
 
     sendBtn.addEventListener('click', handleInteraction);
