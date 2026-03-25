@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>CryptoAnalyst Pro - AI Terminal</title>
+    <title>CryptoAnalyst Pro - Smart Terminal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
     <style>
@@ -148,9 +148,9 @@
             <div class="avatar">🤖</div>
             <div class="text-box">
                 Olá! Sou seu analista técnico. <br>
-                • Digite <strong>"Comprar"</strong> para varredura geral (CoinGecko).<br>
-                • Digite o nome de uma moeda (ex: <strong>"Analisar BTC"</strong>) para checagem direta.<br>
-                • Digite <strong>"Ajuda"</strong> para ver os parâmetros.
+                • Digite <strong>"Comprar"</strong> para varredura geral.<br>
+                • Digite o ticker (ex: <strong>"BTC"</strong>) para checagem direta.<br>
+                • Entendo erros de digitação como "conprar" ou "ajdua".
             </div>
         </div>
     </div>
@@ -158,7 +158,7 @@
 
 <div class="input-area">
     <div class="input-container">
-        <input type="text" id="user-input" placeholder="O que deseja analisar agora?" autocomplete="off">
+        <input type="text" id="user-input" placeholder="O que deseja analisar?" autocomplete="off">
         <button id="send-btn">
             <svg stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24" height="18" width="18"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
         </button>
@@ -174,7 +174,29 @@
     const BINANCE_API = 'https://api.binance.com/api/v3';
     const COINGECKO_API = 'https://api.coingecko.com/api/v3';
 
-    // --- LÓGICA DE TRATAMENTO DE TEXTO ---
+    // --- ALGORITMO DE CORREÇÃO (Levenshtein) ---
+    function getSimilarity(a, b) {
+        const matrix = Array.from({ length: a.length + 1 }, (_, i) => [i]);
+        for (let j = 1; j <= b.length; j++) matrix[0][j] = j;
+        for (let i = 1; i <= a.length; i++) {
+            for (let j = 1; j <= b.length; j++) {
+                const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+                matrix[i][j] = Math.min(matrix[i-1][j]+1, matrix[i][j-1]+1, matrix[i-1][j-1]+cost);
+            }
+        }
+        return matrix[a.length][b.length];
+    }
+
+    function matchCommand(input, targets) {
+        let bestMatch = { item: null, dist: 4 }; // Limite de 3 erros
+        targets.forEach(t => {
+            const d = getSimilarity(input.toLowerCase(), t.toLowerCase());
+            if (d < bestMatch.dist) bestMatch = { item: t, dist: d };
+        });
+        return bestMatch.item;
+    }
+
+    // --- UTILITÁRIOS ---
     function formatCurrency(val) { return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: val < 1 ? 4 : 2 }).format(val); }
     function parseMarkdown(text) { return text.replace(/^## (.*$)/gim, '<h2>$1</h2>').replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>').replace(/\n/g, '<br>'); }
     function scrollToEnd() { chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' }); }
@@ -206,7 +228,7 @@
         scrollToEnd();
     }
 
-    // --- CÁLCULOS TÉCNICOS ---
+    // --- MOTOR TÉCNICO ---
     async function fetchTechnicalData(symbol) {
         try {
             const pair = symbol.toUpperCase().endsWith('USDT') ? symbol.toUpperCase() : symbol.toUpperCase() + 'USDT';
@@ -214,125 +236,89 @@
                 fetch(`${BINANCE_API}/ticker/24hr?symbol=${pair}`),
                 fetch(`${BINANCE_API}/klines?symbol=${pair}&interval=1h&limit=20`)
             ]);
-            
             const tick = await tickerRes.json();
             const klines = await klinesRes.json();
             const prices = klines.map(k => parseFloat(k[4]));
-            
             const sma = prices.reduce((a, b) => a + b, 0) / 20;
             const variance = prices.reduce((a, b) => a + Math.pow(b - sma, 2), 0) / 20;
             const stdDev = Math.sqrt(variance);
-            
             const upperBand = sma + (2 * stdDev);
             const lowerBand = sma - (2 * stdDev);
             const lastPrice = prices[prices.length - 1];
             const bPercent = ((lastPrice - lowerBand) / (upperBand - lowerBand)) * 100;
 
             return {
-                symbol: pair,
-                price: lastPrice,
-                change: parseFloat(tick.priceChangePercent),
-                bPercent,
-                sma,
-                upper: upperBand,
-                stop: sma * 0.95,
-                vol: parseFloat(tick.quoteVolume),
+                symbol: pair, price: lastPrice, change: parseFloat(tick.priceChangePercent),
+                bPercent, sma, upper: upperBand, stop: sma * 0.95, vol: parseFloat(tick.quoteVolume),
                 isValid: (bPercent >= 51 && bPercent <= 63 && parseFloat(tick.priceChangePercent) > 0)
             };
         } catch (e) { return null; }
     }
 
-    // --- MAPEAMENTO DE INTENÇÕES ---
     const Brain = {
         async executeScan() {
-            const liveEl = appendMessage('assistant', 'Iniciando varredura em tempo real...', true);
-            try {
-                const res = await fetch(`${COINGECKO_API}/search/trending`);
-                const data = await res.json();
-                const coins = data.coins.map(c => c.item.symbol);
-                
-                let best = null;
-                for (let s of coins) {
-                    const tech = await fetchTechnicalData(s);
-                    if (tech && tech.isValid) {
-                        if (!best || tech.vol > best.vol) best = tech;
-                    }
-                }
-
-                if (!best) {
-                    await typeEffect(liveEl, "Não encontrei nenhuma moeda no range de **51% a 63%** com alta positiva nas últimas 24h.");
-                } else {
-                    this.renderTrade(liveEl, best, "Oportunidade de Varredura");
-                }
-            } catch (e) { liveEl.innerHTML = "Erro ao conectar com APIs."; }
+            const liveEl = appendMessage('assistant', 'Escaneando tendências e aplicando filtro 51-63%...', true);
+            const res = await fetch(`${COINGECKO_API}/search/trending`);
+            const data = await res.json();
+            const coins = data.coins.slice(0, 10).map(c => c.item.symbol);
+            let best = null;
+            for (let s of coins) {
+                const tech = await fetchTechnicalData(s);
+                if (tech && tech.isValid && (!best || tech.vol > best.vol)) best = tech;
+            }
+            if (!best) await typeEffect(liveEl, "Nenhuma moeda em tendência no range de ignição agora.");
+            else this.renderTrade(liveEl, best, "Oportunidade Encontrada");
         },
 
         async executeSingle(symbol) {
-            const liveEl = appendMessage('assistant', `Analisando par ${symbol}/USDT...`, true);
+            const liveEl = appendMessage('assistant', `Consultando ${symbol} na Binance...`, true);
             const data = await fetchTechnicalData(symbol);
-            
-            if (!data) {
-                await typeEffect(liveEl, `Não encontrei dados para **${symbol}**. Verifique se o ticker está correto na Binance.`);
-                return;
-            }
-
-            const status = data.isValid ? "✅ DENTRO DA ESTRATÉGIA" : "⚠️ FORA DOS CRITÉRIOS";
-            this.renderTrade(liveEl, data, `Análise: ${data.symbol}`, status);
+            if (!data) await typeEffect(liveEl, `Ticker **${symbol}** não encontrado ou erro de API.`);
+            else this.renderTrade(liveEl, data, `Análise Técnica: ${data.symbol}`);
         },
 
-        renderTrade(el, d, title, status = "") {
-            const report = `
-## ${title}
-${status ? `**Status:** ${status}\n` : ''}
-- **🛒 ENTRADA:** ${formatCurrency(d.price)}
-- **🎯 ALVO:** ${formatCurrency(d.upper)} (Banda Superior)
-- **🛡️ STOP:** ${formatCurrency(d.stop)} (5% abaixo da Média)
-
-**Dados Técnicos:**
-| Indicador | Valor |
-| :--- | :--- |
-| **Posição Banda** | ${d.bPercent.toFixed(1)}% |
-| **Média (SMA)** | ${formatCurrency(d.sma)} |
-| **Variação 24h** | ${d.change > 0 ? '+' : ''}${d.change}% |
-
-${d.isValid ? '🚀 Ativo em posição de ignição acima da média central.' : 'Reforce a análise: o ativo não está no range ideal de 51-63%.'}
-            `;
+        renderTrade(el, d, title) {
+            const status = d.isValid ? "🚀 COMPRA ATIVADA" : "⚠️ AGUARDAR FORA DO RANGE";
+            const report = `## ${title}\n**Status:** ${status}\n- **🛒 PREÇO:** ${formatCurrency(d.price)}\n- **🎯 ALVO:** ${formatCurrency(d.upper)}\n- **🛡️ STOP:** ${formatCurrency(d.stop)}\n\n**Técnico:** Banda em **${d.bPercent.toFixed(1)}%**.`;
             typeEffect(el, parseMarkdown(report));
         },
 
         showHelp() {
             const liveEl = appendMessage('assistant', '', true);
-            typeEffect(liveEl, parseMarkdown(`## Comandos Disponíveis:
-- **"Comprar" ou "Oportunidade":** Busca moedas em tendência que atendam à regra.
-- **"[NOME DA MOEDA]":** Ex: "BTC", "Analisar SOL", "Preço ETH".
-- **Parâmetros:** Compra (51%-63% da Banda), Alvo (Topo), Stop (5% abaixo da média).`));
+            typeEffect(liveEl, parseMarkdown(`## Comandos:\n- **Comprar:** Varredura técnica.\n- **[Ticker]:** Ex: BTC, ETH, SOL.\n- **Ajuda:** Lista de comandos.`));
         }
     };
 
-    // --- CONTROLE DE INPUT ---
+    // --- CONTROLE DE INPUT COM CORREÇÃO ---
     async function handleInteraction() {
         const query = userInput.value.trim();
         if (!query || sendBtn.disabled) return;
-
         appendMessage('user', query);
         userInput.value = '';
         sendBtn.disabled = true;
 
-        const lowQuery = query.toLowerCase();
+        const words = query.toLowerCase().split(' ');
+        const intentTargets = ['comprar', 'ajuda', 'oportunidade', 'analisar'];
+        
+        // Verifica se alguma palavra digitada "parece" com um comando
+        let detectedIntent = null;
+        words.forEach(w => {
+            const m = matchCommand(w, intentTargets);
+            if (m) detectedIntent = m;
+        });
+
+        // Regex para pegar tickers (BTC, ETH...)
         const coinMatch = query.match(/\b([A-Z]{3,5})\b/i);
 
-        if (lowQuery.includes('ajuda') || lowQuery.includes('funciona')) {
+        if (detectedIntent === 'ajuda') {
             Brain.showHelp();
-        } 
-        else if (lowQuery.includes('comprar') || lowQuery.includes('oportunidade') || lowQuery.includes('qual')) {
+        } else if (detectedIntent === 'comprar' || detectedIntent === 'oportunidade') {
             await Brain.executeScan();
-        }
-        else if (coinMatch) {
+        } else if (coinMatch) {
             await Brain.executeSingle(coinMatch[1]);
-        }
-        else {
+        } else {
             const el = appendMessage('assistant', '', true);
-            await typeEffect(el, "Não entendi sua solicitação. Tente digitar o nome de uma moeda (ex: **BTC**) ou peça uma **varredura**.");
+            await typeEffect(el, "Não reconheci o comando. Tente **'comprar'** ou digite o nome de uma moeda.");
         }
 
         sendBtn.disabled = false;
@@ -342,6 +328,5 @@ ${d.isValid ? '🚀 Ativo em posição de ignição acima da média central.' : 
     sendBtn.addEventListener('click', handleInteraction);
     userInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleInteraction(); });
 </script>
-
 </body>
 </html>
