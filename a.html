@@ -29,7 +29,7 @@
             <span>Ativar Motor Local</span>
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="group-hover:translate-x-1 transition-transform"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
         </button>
-        <p class="mt-6 text-[10px] text-slate-500 uppercase tracking-widest font-medium">TinyLlama (ONNX Edition)</p>
+        <p class="mt-6 text-[10px] text-slate-500 uppercase tracking-widest font-medium">SmolLM2-135M (Estável)</p>
     </div>
 
     <!-- Cabeçalho -->
@@ -53,7 +53,7 @@
         <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
             <div id="load-bar" class="bg-indigo-500 h-full rounded-full transition-all duration-300" style="width: 0%"></div>
         </div>
-        <p id="finalizing-text" class="hidden text-[9px] text-indigo-300 mt-2 animate-pulse">Quase pronto... A preparar o motor na memória.</p>
+        <p id="finalizing-text" class="hidden text-[9px] text-indigo-300 mt-2 animate-pulse">A preparar motor... Isto pode demorar alguns segundos.</p>
     </div>
 
     <!-- Chat -->
@@ -61,7 +61,7 @@
         <div id="initial-welcome" class="hidden bg-slate-900 p-4 rounded-2xl rounded-tl-none border border-slate-800 max-w-[90%] self-start shadow-sm fade-in">
             <p class="text-xs font-bold text-indigo-400 mb-1">Assistente</p>
             <p class="text-sm leading-relaxed text-slate-300">
-                O motor está pronto e carregado. Já pode conversar comigo de forma totalmente privada e offline.
+                Motor carregado em modo de segurança (CPU). Podes perguntar qualquer coisa.
             </p>
         </div>
     </main>
@@ -73,7 +73,7 @@
                 class="flex-1 p-3.5 bg-slate-800 border border-slate-700 rounded-2xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all opacity-50"
                 placeholder="Aguarde o carregamento...">
             <button id="send-btn" disabled
-                class="bg-indigo-600 text-white p-3.5 rounded-2xl opacity-50 hover:bg-indigo-500 transition-all shadow-lg active:scale-95 disabled:pointer-events-none">
+                class="bg-indigo-600 text-white p-3.5 rounded-2xl opacity-50 hover:bg-indigo-500 transition-all shadow-lg active:scale-95">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
             </button>
         </div>
@@ -82,11 +82,11 @@
     <script type="module">
         import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
 
-        // Forçar cache e evitar redirecionamentos que causam 401
+        // CONFIGURAÇÕES DE ESTABILIDADE
         env.allowLocalModels = false;
         env.useBrowserCache = true;
-        env.remoteHost = 'https://huggingface.co';
-        env.remotePathTemplate = '{model}/resolve/{revision}/';
+        // Forçamos o uso do WebAssembly (CPU) para evitar o erro de 'offset out of bounds' da GPU
+        env.backends.onnx.wasm.numThreads = 4; 
 
         const setupScreen = document.getElementById('setup-screen');
         const startBtn = document.getElementById('start-engine-btn');
@@ -126,41 +126,34 @@
             statusDot.className = "w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse";
 
             try {
-                // Iniciar o pipeline. O 'await' aqui é o que garante que só avançamos quando estiver 100% pronto.
-                generator = await pipeline('text-generation', 'Xenova/TinyLlama-1.1B-Chat-v1.0', {
+                // Usamos o SmolLM2-135M por ser o mais estável para CPUs de telemóvel e PC
+                generator = await pipeline('text-generation', 'onnx-community/SmolLM2-135M-Instruct', {
+                    device: 'wasm', // Forçar CPU explicitamente
                     progress_callback: (data) => {
                         if (data.status === 'progress') {
                             const p = Math.round(data.progress);
                             loadBar.style.width = p + '%';
                             loadPercent.innerText = p + '%';
-                            if (p >= 99) {
-                                finalizingText.classList.remove('hidden');
-                            }
+                            if (p >= 95) finalizingText.classList.remove('hidden');
                         }
                     }
                 });
 
-                // Pequeno delay para garantir que o DOM e a memória estabilizam
-                setTimeout(() => {
-                    statusText.innerText = "IA Pronta";
-                    statusDot.className = "w-2.5 h-2.5 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.4)]";
-                    
-                    downloadPanel.classList.add('hidden');
-                    welcomeMsg.classList.remove('hidden');
-                    
-                    userInput.disabled = false;
-                    userInput.classList.remove('opacity-50');
-                    userInput.placeholder = "Escreva aqui...";
-                    sendBtn.disabled = false;
-                    sendBtn.classList.remove('opacity-50');
-                }, 500);
+                statusText.innerText = "Modo CPU Ativo";
+                statusDot.className = "w-2.5 h-2.5 rounded-full bg-green-500";
+                downloadPanel.classList.add('hidden');
+                welcomeMsg.classList.remove('hidden');
+                userInput.disabled = false;
+                userInput.classList.remove('opacity-50');
+                userInput.placeholder = "Escreva aqui...";
+                sendBtn.disabled = false;
+                sendBtn.classList.remove('opacity-50');
 
             } catch (err) {
-                console.error("ERRO NO ARRANQUE:", err);
-                statusText.innerText = "Erro de Acesso";
-                statusDot.className = "w-2.5 h-2.5 rounded-full bg-red-500 animate-none";
-                
-                appendMessage('ai', `<b>Erro 401 ou de Rede detetado.</b><br><br>Isto é uma restrição de segurança do ambiente onde está a testar.<br><br><b>Ação obrigatória:</b> Guarde este ficheiro no seu computador (index.html) e abra-o com o Chrome. Só assim o navegador permite o acesso total aos ficheiros do motor.`);
+                console.error(err);
+                statusText.innerText = "Erro Crítico";
+                statusDot.className = "w-2.5 h-2.5 rounded-full bg-red-500";
+                appendMessage('ai', 'Erro ao iniciar. Certifique-se de que está a usar o Chrome/Edge fora de um iframe.');
             }
         }
 
@@ -171,23 +164,25 @@
             userInput.value = '';
             appendMessage('user', text);
 
-            const thinkingMsg = appendMessage('ai', '<span class="dot-pulse text-indigo-400 italic">A processar...</span>');
+            const thinkingMsg = appendMessage('ai', '<span class="dot-pulse">...</span>');
             const contentDiv = thinkingMsg.querySelector('.text-sm');
 
             try {
-                const prompt = `<|system|>\nResponde em Português de forma curta e direta.</s>\n<|user|>\n${text}</s>\n<|assistant|>\n`;
+                // Prompt simplificado para evitar estouro de memória
+                const prompt = `<|im_start|>user\n${text}<|im_end|>\n<|im_start|>assistant\n`;
 
                 const output = await generator(prompt, {
-                    max_new_tokens: 150,
-                    temperature: 0.7,
+                    max_new_tokens: 64, // Reduzido para evitar o erro de RangeError
+                    temperature: 0.5,
                     do_sample: true,
-                    top_k: 50,
+                    top_k: 20
                 });
 
-                let response = output[0].generated_text.split('<|assistant|>\n').pop().trim();
-                contentDiv.innerText = response;
+                let response = output[0].generated_text.split('assistant\n').pop().replace('<|im_end|>', '').trim();
+                contentDiv.innerText = response || "Não consegui gerar uma resposta.";
             } catch (e) {
-                contentDiv.innerText = "Erro na geração: " + e.message;
+                contentDiv.innerText = "O motor falhou: " + e.message;
+                console.error(e);
             }
         }
 
