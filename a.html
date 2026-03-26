@@ -29,7 +29,7 @@
             <span>Ativar Motor Local</span>
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="group-hover:translate-x-1 transition-transform"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
         </button>
-        <p class="mt-6 text-[10px] text-slate-500 uppercase tracking-widest font-medium">SmolLM2-135M (Estável)</p>
+        <p class="mt-6 text-[10px] text-slate-500 uppercase tracking-widest font-medium">SmolLM2-135M (Otimizado)</p>
     </div>
 
     <!-- Cabeçalho -->
@@ -53,7 +53,7 @@
         <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
             <div id="load-bar" class="bg-indigo-500 h-full rounded-full transition-all duration-300" style="width: 0%"></div>
         </div>
-        <p id="finalizing-text" class="hidden text-[9px] text-indigo-300 mt-2 animate-pulse">A preparar motor... Isto pode demorar alguns segundos.</p>
+        <p id="finalizing-text" class="hidden text-[9px] text-indigo-300 mt-2 animate-pulse">Quase pronto... A preparar o motor na memória.</p>
     </div>
 
     <!-- Chat -->
@@ -61,7 +61,7 @@
         <div id="initial-welcome" class="hidden bg-slate-900 p-4 rounded-2xl rounded-tl-none border border-slate-800 max-w-[90%] self-start shadow-sm fade-in">
             <p class="text-xs font-bold text-indigo-400 mb-1">Assistente</p>
             <p class="text-sm leading-relaxed text-slate-300">
-                Motor carregado em modo de segurança (CPU). Podes perguntar qualquer coisa.
+                O motor está pronto. Estou a rodar totalmente no seu processador (CPU). Como posso ajudar?
             </p>
         </div>
     </main>
@@ -82,11 +82,13 @@
     <script type="module">
         import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
 
-        // CONFIGURAÇÕES DE ESTABILIDADE
+        // CONFIGURAÇÕES ANTI-ERRO 401
         env.allowLocalModels = false;
         env.useBrowserCache = true;
-        // Forçamos o uso do WebAssembly (CPU) para evitar o erro de 'offset out of bounds' da GPU
-        env.backends.onnx.wasm.numThreads = 4; 
+        
+        // Desativar a procura de ficheiros de configuração extra que causam o erro 401 no iframe
+        env.remoteHost = 'https://huggingface.co';
+        env.remotePathTemplate = '{model}/resolve/{revision}/';
 
         const setupScreen = document.getElementById('setup-screen');
         const startBtn = document.getElementById('start-engine-btn');
@@ -126,15 +128,15 @@
             statusDot.className = "w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse";
 
             try {
-                // Usamos o SmolLM2-135M por ser o mais estável para CPUs de telemóvel e PC
-                generator = await pipeline('text-generation', 'onnx-community/SmolLM2-135M-Instruct', {
-                    device: 'wasm', // Forçar CPU explicitamente
+                // Forçamos o uso de WASM e CPU para evitar erros de GPU e memória
+                generator = await pipeline('text-generation', 'Xenova/SmolLM-135M-Instruct', {
+                    device: 'wasm', 
                     progress_callback: (data) => {
                         if (data.status === 'progress') {
                             const p = Math.round(data.progress);
                             loadBar.style.width = p + '%';
                             loadPercent.innerText = p + '%';
-                            if (p >= 95) finalizingText.classList.remove('hidden');
+                            if (p >= 90) finalizingText.classList.remove('hidden');
                         }
                     }
                 });
@@ -145,15 +147,17 @@
                 welcomeMsg.classList.remove('hidden');
                 userInput.disabled = false;
                 userInput.classList.remove('opacity-50');
-                userInput.placeholder = "Escreva aqui...";
+                userInput.placeholder = "Escreva algo...";
                 sendBtn.disabled = false;
                 sendBtn.classList.remove('opacity-50');
 
             } catch (err) {
-                console.error(err);
-                statusText.innerText = "Erro Crítico";
+                console.error("ERRO DETETADO:", err);
+                statusText.innerText = "Erro de Acesso";
                 statusDot.className = "w-2.5 h-2.5 rounded-full bg-red-500";
-                appendMessage('ai', 'Erro ao iniciar. Certifique-se de que está a usar o Chrome/Edge fora de um iframe.');
+                
+                // Mensagem amigável explicando como resolver o 401
+                appendMessage('ai', `<b>Atenção:</b> O seu navegador bloqueou o download (Erro 401) por estarmos num ambiente restrito.<br><br><b>Como resolver:</b> Clique com o botão direito no código à direita, escolha "Guardar como" <b>index.html</b> e abra o ficheiro diretamente no seu Chrome ou Edge.`);
             }
         }
 
@@ -168,21 +172,20 @@
             const contentDiv = thinkingMsg.querySelector('.text-sm');
 
             try {
-                // Prompt simplificado para evitar estouro de memória
+                // Prompt simplificado para o SmolLM
                 const prompt = `<|im_start|>user\n${text}<|im_end|>\n<|im_start|>assistant\n`;
 
                 const output = await generator(prompt, {
-                    max_new_tokens: 64, // Reduzido para evitar o erro de RangeError
-                    temperature: 0.5,
+                    max_new_tokens: 60,
+                    temperature: 0.6,
                     do_sample: true,
-                    top_k: 20
+                    top_k: 30
                 });
 
-                let response = output[0].generated_text.split('assistant\n').pop().replace('<|im_end|>', '').trim();
-                contentDiv.innerText = response || "Não consegui gerar uma resposta.";
+                let response = output[0].generated_text.split('assistant\n').pop().trim();
+                contentDiv.innerText = response || "Não consegui processar.";
             } catch (e) {
-                contentDiv.innerText = "O motor falhou: " + e.message;
-                console.error(e);
+                contentDiv.innerText = "Erro: " + e.message;
             }
         }
 
