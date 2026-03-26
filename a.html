@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crypto Support - Respostas Instantâneas</title>
+    <title>Crypto Support - Dinâmico</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         #chat-box::-webkit-scrollbar { width: 4px; }
@@ -21,34 +21,31 @@
         <div class="flex items-center gap-3">
             <div class="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center font-bold shadow-lg shadow-orange-900/20 text-white text-xl">₿</div>
             <div>
-                <h1 class="text-sm font-bold leading-none text-white">CryptoBot <span class="text-orange-500 text-[10px]">SUPORTE</span></h1>
-                <p class="text-[9px] text-emerald-500 uppercase tracking-widest mt-1 font-bold">● Online e Instantâneo</p>
+                <h1 class="text-sm font-bold leading-none text-white">CryptoBot <span class="text-orange-500 text-[10px]">V2</span></h1>
+                <p class="text-[9px] text-emerald-500 uppercase tracking-widest mt-1 font-bold">● Respostas Inteligentes</p>
             </div>
         </div>
     </header>
 
     <!-- Chat Area -->
     <main id="chat-box" class="flex-1 overflow-y-auto p-4 space-y-4 bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] from-slate-900 to-slate-950">
-        <!-- Boas-vindas -->
         <div class="flex justify-start msg-appear">
             <div class="bg-slate-800 border border-slate-700 p-4 rounded-2xl max-w-[85%] shadow-lg">
                 <p class="text-[10px] font-black uppercase text-orange-500 mb-1">Assistente Virtual</p>
                 <div class="text-sm leading-relaxed">
-                    Olá! Bem-vindo ao suporte especializado. Como posso ajudar com os seus investimentos hoje?
+                    Olá! Sou o seu assistente especializado em Cripto. Como posso ajudar o seu portfólio hoje?
                 </div>
-                <div id="initial-options" class="mt-4 flex flex-wrap gap-2">
-                    <!-- Gerado via JS -->
-                </div>
+                <div id="initial-options" class="mt-4 flex flex-wrap gap-2"></div>
             </div>
         </div>
     </main>
 
-    <!-- Footer com Input para perguntas livres -->
+    <!-- Footer -->
     <footer class="p-4 bg-slate-900 border-t border-slate-800">
         <form id="chat-form" class="max-w-4xl mx-auto flex gap-2">
             <input type="text" id="user-input" autocomplete="off" 
                 class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all placeholder-slate-500"
-                placeholder="Escreva a sua dúvida ou escolha uma opção...">
+                placeholder="Tente perguntar sobre 'Bitcoin' ou 'Segurança'...">
             <button type="submit" class="bg-orange-600 p-3.5 rounded-xl hover:bg-orange-500 transition-all active:scale-90 text-white">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
             </button>
@@ -56,29 +53,60 @@
     </footer>
 
     <script>
-        // BASE DE DADOS DE RESPOSTAS (FÁCIL DE EDITAR)
+        // BASE DE DADOS EXPANDIDA
         const BOT_DATA = {
             options: [
-                { id: "btc", label: "O que é o Bitcoin?", response: "O Bitcoin é a primeira criptomoeda descentralizada do mundo. Funciona como 'ouro digital' e tem um limite de 21 milhões de unidades." },
-                { id: "seguranca", label: "Como guardar moedas?", response: "A forma mais segura é usar uma 'Cold Wallet' (carteira fria) como a Ledger ou Trezor, que mantém as tuas chaves privadas fora da internet." },
-                { id: "taxas", label: "Taxas de Rede", response: "As taxas variam conforme o congestionamento da rede. A Solana é conhecida por taxas de cêntimos, enquanto o Ethereum pode ser mais caro em picos de uso." },
-                { id: "ajuda", label: "Falar com Humano", response: "Para suporte personalizado, por favor envie um e-mail para suporte@exemplo.com ou ligue para o nosso número verde." }
+                { id: "btc", label: "O que é Bitcoin?", key: "bitcoin" },
+                { id: "seg", label: "Segurança", key: "seguranca" },
+                { id: "tax", label: "Taxas", key: "taxa" }
             ],
-            keywords: {
-                "bitcoin": "O Bitcoin (BTC) é a moeda principal. Atualmente é vista como reserva de valor devido à sua escassez programada.",
-                "ethereum": "O Ethereum (ETH) é uma rede para contratos inteligentes (Smart Contracts) e aplicações descentralizadas (dApps).",
-                "carteira": "Existem Hot Wallets (apps no telemóvel) e Cold Wallets (dispositivos físicos). Para segurança máxima, use Cold Wallets.",
-                "perda": "Se perdeu as suas palavras-passe (seed phrase), infelizmente não há como recuperar os fundos. Guarde-as sempre em papel!",
-                "taxa": "As taxas (gas) servem para pagar aos mineiros/validadores que processam a sua transação na blockchain.",
-                "comprar": "Pode comprar cripto em corretoras (Exchanges) como a Binance, Kraken ou Coinbase."
+            // Respostas com múltiplas variações (Sorteio Aleatório)
+            responses: {
+                "bitcoin": [
+                    "O Bitcoin é a primeira moeda digital descentralizada, limitada a 21 milhões de unidades.",
+                    "Pense no Bitcoin como 'ouro digital'. É uma reserva de valor protegida por criptografia.",
+                    "O BTC é uma rede global de pagamentos que não depende de bancos centrais.",
+                    "É a moeda líder do mercado, criada por Satoshi Nakamoto em 2009.",
+                    "Bitcoin é um ativo escasso e digital que permite transações diretas entre pessoas."
+                ],
+                "seguranca": [
+                    "A regra de ouro: 'Nem tuas chaves, nem teus bitcoins'. Use carteiras frias (Cold Wallets).",
+                    "Proteja os seus ativos usando autenticação de dois fatores (2FA) e nunca partilhe a sua seed phrase.",
+                    "Para valores altos, recomendamos dispositivos físicos como Ledger ou Trezor.",
+                    "Mantenha as suas moedas fora de corretoras se não planeia fazer trading imediato.",
+                    "Cuidado com phishing! Nunca clique em links suspeitos que prometem lucros fáceis."
+                ],
+                "taxa": [
+                    "As taxas dependem do uso da rede. No Bitcoin chamam-se 'satoshis por byte'.",
+                    "Redes como Solana têm taxas quase nulas, enquanto o Ethereum pode ser mais caro.",
+                    "Para pagar menos taxas, tente enviar transações em horários de menor movimento.",
+                    "As taxas servem para incentivar os validadores a processar a sua transação com segurança.",
+                    "Lembre-se: transações com taxas muito baixas podem demorar mais tempo a serem confirmadas."
+                ]
             },
-            default: "Lamento, não entendi a sua pergunta. Tente usar palavras-chave como 'Bitcoin', 'Segurança' ou 'Taxas', ou escolha uma das opções acima."
+            // 10 Formas de falar que não entendeu
+            fallbacks: [
+                "Ainda estou a aprender! Tente perguntar sobre 'Bitcoin' ou 'Segurança'.",
+                "Não consegui processar isso. Que tal escolher uma das opções abaixo?",
+                "Desculpe, o meu conhecimento foca-se em Cripto. Pode reformular a pergunta?",
+                "Essa é difícil para mim! Tente usar palavras simples como 'comprar' ou 'carteira'.",
+                "Hum, não encontrei nada sobre isso. Quer saber mais sobre 'Taxas'?",
+                "O meu sistema não reconheceu esse termo. Use o menu de opções para facilitar!",
+                "Estou confuso. Pode tentar perguntar de outra forma (ex: 'O que é Ethereum?')",
+                "Ainda não tenho essa resposta. Que tal falarmos sobre segurança de ativos?",
+                "Não entendi, mas posso ajudar com dúvidas sobre BTC, ETH ou Wallets!",
+                "Lamento, o meu radar não captou isso. Tente palavras-chave isoladas."
+            ]
         };
 
         const chatBox = document.getElementById('chat-box');
         const userInput = document.getElementById('user-input');
         const chatForm = document.getElementById('chat-form');
         const initialOptions = document.getElementById('initial-options');
+
+        function getRandom(arr) {
+            return arr[Math.floor(Math.random() * arr.length)];
+        }
 
         function appendMessage(role, text) {
             const isBot = role === 'bot';
@@ -104,7 +132,7 @@
                 btn.innerText = opt.label;
                 btn.onclick = () => {
                     appendMessage('user', opt.label);
-                    setTimeout(() => appendMessage('bot', opt.response), 300);
+                    setTimeout(() => appendMessage('bot', getRandom(BOT_DATA.responses[opt.key])), 300);
                 };
                 initialOptions.appendChild(btn);
             });
@@ -118,20 +146,24 @@
             appendMessage('user', userInput.value);
             userInput.value = '';
 
-            // Lógica de procura por palavras-chave
-            let response = BOT_DATA.default;
+            let response = null;
             
-            for (let key in BOT_DATA.keywords) {
+            // Procura por palavras-chave
+            for (let key in BOT_DATA.responses) {
                 if (text.includes(key)) {
-                    response = BOT_DATA.keywords[key];
+                    response = getRandom(BOT_DATA.responses[key]);
                     break;
                 }
+            }
+
+            // Se não encontrou, usa um dos 10 fallbacks
+            if (!response) {
+                response = getRandom(BOT_DATA.fallbacks);
             }
 
             setTimeout(() => appendMessage('bot', response), 400);
         }
 
-        // Inicialização
         showOptions();
         chatForm.onsubmit = handleInput;
     </script>
