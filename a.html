@@ -3,50 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CryptoBot Local - Especialista</title>
+    <title>CryptoBot Ultra-Fast</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         #chat-box::-webkit-scrollbar { width: 4px; }
         #chat-box::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
-        .dot-pulse { animation: pulse 1.5s infinite ease-in-out; }
-        @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
-        .msg-appear { animation: slideUp 0.3s ease-out forwards; }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .msg-appear { animation: slideUp 0.2s ease-out forwards; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        .cursor-blink { animation: blink 1s infinite; border-left: 2px solid #f97316; margin-left: 2px; }
+        @keyframes blink { 50% { opacity: 0; } }
     </style>
 </head>
 <body class="bg-slate-950 text-slate-100 h-screen flex flex-col font-sans overflow-hidden">
 
     <!-- Header -->
-    <header class="p-4 border-b border-slate-800 bg-slate-900/50 flex justify-between items-center z-10">
+    <header class="p-4 border-b border-slate-800 bg-slate-900/80 backdrop-blur-md flex justify-between items-center z-10">
         <div class="flex items-center gap-3">
             <div class="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center font-bold shadow-lg shadow-orange-900/20">₿</div>
             <div>
-                <h1 class="text-sm font-bold leading-none">CryptoBot Local</h1>
-                <p id="status-text" class="text-[9px] text-slate-500 uppercase tracking-widest mt-1">Aguardando Início</p>
+                <h1 class="text-sm font-bold leading-none text-white">CryptoBot <span class="text-orange-500 text-[10px]">ULTRA</span></h1>
+                <p id="status-text" class="text-[9px] text-slate-500 uppercase tracking-widest mt-1">Standby</p>
             </div>
         </div>
         <div id="status-dot" class="w-2 h-2 rounded-full bg-slate-700"></div>
     </header>
 
     <!-- Chat Area -->
-    <main id="chat-box" class="flex-1 overflow-y-auto p-4 space-y-4 bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] from-slate-900 to-slate-950">
-        <div id="setup-area" class="max-w-sm mx-auto mt-20 text-center">
-            <div class="mb-6 inline-flex p-4 bg-orange-500/10 rounded-full">
-                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-            </div>
-            <h2 class="text-xl font-bold mb-2">Especialista em Cripto</h2>
-            <p class="text-xs text-slate-400 mb-8 leading-relaxed">Conhecimento focado apenas em moedas digitais. <br>Seguro, local e privado.</p>
+    <main id="chat-box" class="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-950">
+        <div id="setup-area" class="max-w-sm mx-auto mt-16 text-center">
+            <h2 class="text-xl font-bold mb-2">Motor de Resposta em Tempo Real</h2>
+            <p class="text-xs text-slate-400 mb-8 leading-relaxed">As respostas aparecerão palavra por palavra, instantaneamente.</p>
             
             <button id="start-btn" class="w-full bg-orange-600 hover:bg-orange-500 py-4 rounded-2xl font-bold transition-all active:scale-95 shadow-lg shadow-orange-500/20">
-                Ativar Consultor Cripto
+                Ligar IA (Modo Rápido)
             </button>
 
             <div id="loader" class="hidden mt-8 space-y-3">
                 <div class="flex justify-between text-[10px] text-orange-400 font-black uppercase tracking-widest">
-                    <span>Sincronizando Ledger Local...</span>
+                    <span>Otimizando Motor...</span>
                     <span id="load-percent">0%</span>
                 </div>
-                <div class="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                <div class="h-1 bg-slate-800 rounded-full overflow-hidden">
                     <div id="load-bar" class="h-full bg-orange-500 w-0 transition-all duration-300"></div>
                 </div>
             </div>
@@ -54,28 +51,22 @@
     </main>
 
     <!-- Footer -->
-    <footer class="p-4 bg-slate-900 border-t border-slate-800">
+    <footer class="p-4 bg-slate-900/50 border-t border-slate-800">
         <form id="chat-form" class="max-w-4xl mx-auto flex gap-2">
             <input type="text" id="user-input" autocomplete="off" disabled 
-                class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50 opacity-50 transition-all placeholder-slate-500"
-                placeholder="Carregue o motor primeiro...">
-            <button type="submit" id="send-btn" disabled class="bg-orange-600 p-3.5 rounded-xl opacity-50 hover:bg-orange-500 transition-all disabled:pointer-events-none active:scale-90">
+                class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50 opacity-50 transition-all"
+                placeholder="Ative a IA para começar...">
+            <button type="submit" id="send-btn" disabled class="bg-orange-600 p-3.5 rounded-xl opacity-50 hover:bg-orange-500 transition-all active:scale-90">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
             </button>
         </form>
     </footer>
 
     <script type="module">
-        // BASE DE CONHECIMENTO FOCADA
+        // Base de dados simulada
         const CONHECIMENTO_CRYPTO = {
-            "tema_principal": "Criptomoedas e Blockchain",
-            "ativos": [
-                {"ticker": "BTC", "nome": "Bitcoin", "info": "A primeira criptomoeda, criada por Satoshi Nakamoto. É ouro digital."},
-                {"ticker": "ETH", "nome": "Ethereum", "info": "Plataforma de smart contracts e aplicações descentralizadas."},
-                {"ticker": "SOL", "nome": "Solana", "info": "Blockchain de alta performance com taxas muito baixas."}
-            ],
-            "seguranca": "Recomendamos o uso de Cold Wallets (Ledger, Trezor) para guardar grandes quantias.",
-            "regras": "Eu NÃO respondo a perguntas sobre culinária, desporto, política ou qualquer tema que não seja criptomoedas."
+            "tema": "Criptomoedas",
+            "info": "Bitcoin é ouro digital. Ethereum é para contratos. Solana é rápida. Guarde em carteiras frias."
         };
 
         const chatBox = document.getElementById('chat-box');
@@ -91,26 +82,34 @@
 
         let worker;
 
+        // CÓDIGO DO WORKER COM SUPORTE A STREAMING
         const workerCode = `
-            import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
+            import { pipeline, env, TextStreamer } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
             env.allowLocalModels = false;
             let generator;
+            let tokenizer;
 
             self.onmessage = async (e) => {
                 const { type, data } = e.data;
+                
                 if (type === 'load') {
-                    try {
-                        generator = await pipeline('text-generation', 'Xenova/Qwen1.5-0.5B-Chat', {
-                            progress_callback: (p) => self.postMessage({ type: 'progress', data: p })
-                        });
-                        self.postMessage({ type: 'ready' });
-                    } catch (err) { self.postMessage({ type: 'error', data: err.message }); }
+                    // SmolLM é 5x menor e mais rápido que o Qwen anterior
+                    generator = await pipeline('text-generation', 'Xenova/SmolLM-135M-Instruct', {
+                        progress_callback: (p) => self.postMessage({ type: 'progress', data: p })
+                    });
+                    self.postMessage({ type: 'ready' });
                 }
+
                 if (type === 'generate') {
-                    try {
-                        const output = await generator(data.prompt, data.config);
-                        self.postMessage({ type: 'result', data: output[0].generated_text });
-                    } catch (err) { self.postMessage({ type: 'error', data: err.message }); }
+                    // Simulando streaming através de callbacks de tokens
+                    const output = await generator(data.prompt, {
+                        ...data.config,
+                        callback_function: (beams) => {
+                            const decoded = generator.tokenizer.decode([beams[0].output_token_ids.at(-1)]);
+                            self.postMessage({ type: 'token', data: decoded });
+                        }
+                    });
+                    self.postMessage({ type: 'result-end' });
                 }
             };
         `;
@@ -118,13 +117,13 @@
         const blob = new Blob([workerCode], { type: 'application/javascript' });
         const workerUrl = URL.createObjectURL(blob);
 
-        function appendMessage(role, text) {
+        function appendMessage(role, text = "") {
             const div = document.createElement('div');
             const isAi = role === 'ai';
             div.className = `flex ${isAi ? 'justify-start' : 'justify-end'} msg-appear`;
             div.innerHTML = `
-                <div class="${isAi ? 'bg-slate-800 border border-slate-700' : 'bg-orange-600 text-white shadow-lg shadow-orange-900/20'} p-3.5 rounded-2xl max-w-[85%] text-sm">
-                    <p class="text-[9px] font-black uppercase opacity-50 mb-1 tracking-tighter">${isAi ? 'Consultor Cripto' : 'Tu'}</p>
+                <div class="${isAi ? 'bg-slate-800 border border-slate-700' : 'bg-orange-600 text-white'} p-3.5 rounded-2xl max-w-[85%] text-sm shadow-md">
+                    <p class="text-[9px] font-black uppercase opacity-50 mb-1 tracking-tighter">${isAi ? 'IA Crypto' : 'Tu'}</p>
                     <div class="content whitespace-pre-wrap">${text}</div>
                 </div>
             `;
@@ -142,31 +141,41 @@
 
             worker.onmessage = (e) => {
                 const { type, data } = e.data;
+
                 if (type === 'progress' && data.status === 'progress') {
                     const p = Math.round(data.progress);
                     loadBar.style.width = p + '%';
                     loadPercent.innerText = p + '%';
                 }
+
                 if (type === 'ready') {
                     document.getElementById('setup-area').classList.add('hidden');
-                    statusText.innerText = "Online";
-                    statusDot.className = "w-2 h-2 rounded-full bg-orange-500 shadow-[0_0_8px_#f97316]";
+                    statusText.innerText = "Em Tempo Real";
+                    statusDot.className = "w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]";
                     userInput.disabled = false;
                     userInput.classList.remove('opacity-50');
-                    userInput.placeholder = "Pergunte sobre Bitcoin ou Cripto...";
                     sendBtn.disabled = false;
                     sendBtn.classList.remove('opacity-50');
-                    appendMessage('ai', "Olá! Sou o seu especialista local em Criptomoedas. Como posso ajudar o seu portfólio hoje?");
+                    appendMessage('ai', "Motor ativo. Respostas instantâneas ativadas!");
                 }
-                if (type === 'result') {
-                    const lastAiContent = document.querySelector('.pending-ai-msg');
-                    if (lastAiContent) {
-                        const response = data.split('assistant\n').pop().replace('<|im_end|>', '').trim();
-                        lastAiContent.innerText = response;
-                        lastAiContent.classList.remove('pending-ai-msg', 'dot-pulse');
+
+                if (type === 'token') {
+                    const currentAi = document.querySelector('.streaming-msg');
+                    if (currentAi) {
+                        currentAi.innerHTML = currentAi.innerHTML.replace('<span class="cursor-blink"></span>', '') + data + '<span class="cursor-blink"></span>';
+                        chatBox.scrollTop = chatBox.scrollHeight;
+                    }
+                }
+
+                if (type === 'result-end') {
+                    const currentAi = document.querySelector('.streaming-msg');
+                    if (currentAi) {
+                        currentAi.innerHTML = currentAi.innerHTML.replace('<span class="cursor-blink"></span>', '');
+                        currentAi.classList.remove('streaming-msg');
                     }
                 }
             };
+
             worker.postMessage({ type: 'load' });
         }
 
@@ -178,27 +187,17 @@
             userInput.value = ''; 
             appendMessage('user', text);
 
-            const aiContent = appendMessage('ai', '...');
-            aiContent.classList.add('pending-ai-msg', 'dot-pulse');
+            const aiContent = appendMessage('ai', '<span class="cursor-blink"></span>');
+            aiContent.classList.add('streaming-msg');
 
             const context = JSON.stringify(CONHECIMENTO_CRYPTO);
-            
-            // PROMPT RIGIDO PARA FOCO EM CRIPTO
-            const prompt = `<|im_start|>system
-És um especialista exclusivo em CRIPTOMOEDAS. 
-REGRAS CRÍTICAS:
-1. Se o utilizador perguntar sobre culinária, desporto, celebridades ou QUALQUER coisa fora de cripto, responde EXATAMENTE: "Lamento, mas sou um especialista apenas em Criptomoedas e não posso responder a esse tema."
-2. Se a pergunta for sobre cripto, usa estes dados: ${context}
-3. Responde de forma curta e em português. <|im_end|>
-<|im_start|>user
-${text}<|im_end|>
-<|im_start|>assistant\n`;
+            const prompt = `<|im_start|>system\nÉs um especialista em Cripto. Dados: ${context}. Se a pergunta não for sobre cripto, diz apenas que não sabes. Responde em português.<|im_end|>\n<|im_start|>user\n${text}<|im_end|>\n<|im_start|>assistant\n`;
 
             worker.postMessage({ 
                 type: 'generate', 
                 data: { 
                     prompt, 
-                    config: { max_new_tokens: 100, temperature: 0.1, do_sample: true } 
+                    config: { max_new_tokens: 150, temperature: 0.1 } 
                 } 
             });
         };
