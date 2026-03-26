@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crypto Support - Advanced Logic</title>
+    <title>Crypto Support - Dinâmico</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         #chat-box::-webkit-scrollbar { width: 4px; }
@@ -12,9 +12,6 @@
         @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .option-btn { transition: all 0.2s; border: 1px solid #334155; }
         .option-btn:hover { background: #f97316; border-color: #f97316; color: white; transform: scale(1.02); }
-        .loading-dots:after { content: ' .'; animation: dots 1s steps(5, end) infinite; }
-        @keyframes dots { 0%, 20% { color: rgba(0,0,0,0); text-shadow: .5em 0 0 rgba(0,0,0,0), 1em 0 0 rgba(0,0,0,0); } 40% { color: #f97316; text-shadow: .5em 0 0 rgba(0,0,0,0), 1em 0 0 rgba(0,0,0,0); } 60% { text-shadow: .5em 0 0 #f97316, 1em 0 0 rgba(0,0,0,0); } 80%, 100% { text-shadow: .5em 0 0 #f97316, 1em 0 0 #f97316; } }
-        .correction-badge { font-size: 10px; background: rgba(249, 115, 22, 0.1); color: #f97316; padding: 2px 6px; border-radius: 4px; margin-top: 4px; display: inline-block; }
     </style>
 </head>
 <body class="bg-slate-950 text-slate-100 h-screen flex flex-col font-sans overflow-hidden">
@@ -24,8 +21,8 @@
         <div class="flex items-center gap-3">
             <div class="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center font-bold shadow-lg shadow-orange-900/20 text-white text-xl">₿</div>
             <div>
-                <h1 class="text-sm font-bold leading-none text-white">CryptoBot <span class="text-orange-500 text-[10px]">SMART-LOGIC</span></h1>
-                <p class="text-[9px] text-emerald-500 uppercase tracking-widest mt-1 font-bold">● Inteligência de Termos Ativa</p>
+                <h1 class="text-sm font-bold leading-none text-white">CryptoBot <span class="text-orange-500 text-[10px]">V2</span></h1>
+                <p class="text-[9px] text-emerald-500 uppercase tracking-widest mt-1 font-bold">● Respostas Inteligentes</p>
             </div>
         </div>
     </header>
@@ -34,9 +31,9 @@
     <main id="chat-box" class="flex-1 overflow-y-auto p-4 space-y-4 bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] from-slate-900 to-slate-950">
         <div class="flex justify-start msg-appear">
             <div class="bg-slate-800 border border-slate-700 p-4 rounded-2xl max-w-[85%] shadow-lg">
-                <p class="text-[10px] font-black uppercase text-orange-500 mb-1">Assistente Inteligente</p>
+                <p class="text-[10px] font-black uppercase text-orange-500 mb-1">Assistente Virtual</p>
                 <div class="text-sm leading-relaxed">
-                    Olá! Agora consigo entender melhor o que você escreve, mesmo com erros de digitação. Experimente perguntar sobre moedas ou termos técnicos!
+                    Olá! Sou o seu assistente especializado em Cripto. Como posso ajudar o seu portfólio hoje?
                 </div>
                 <div id="initial-options" class="mt-4 flex flex-wrap gap-2"></div>
             </div>
@@ -48,156 +45,83 @@
         <form id="chat-form" class="max-w-4xl mx-auto flex gap-2">
             <input type="text" id="user-input" autocomplete="off" 
                 class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all placeholder-slate-500"
-                placeholder="Ex: 'quem eh o vitalik?' ou 'o q significa btc?'">
-            <button type="submit" id="send-btn" class="bg-orange-600 p-3.5 rounded-xl hover:bg-orange-500 transition-all active:scale-90 text-white">
+                placeholder="Tente perguntar sobre 'Bitcoin' ou 'Segurança'...">
+            <button type="submit" class="bg-orange-600 p-3.5 rounded-xl hover:bg-orange-500 transition-all active:scale-90 text-white">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
             </button>
         </form>
     </footer>
 
     <script>
+        // BASE DE DADOS EXPANDIDA
         const BOT_DATA = {
             options: [
-                { id: "btc", label: "Bitcoin", key: "bitcoin" },
-                { id: "eth", label: "Ethereum", key: "ethereum" },
-                { id: "vitalik", label: "Vitalik Buterin", key: "vitalik buterin" }
+                { id: "btc", label: "O que é Bitcoin?", key: "bitcoin" },
+                { id: "seg", label: "Segurança", key: "seguranca" },
+                { id: "tax", label: "Taxas", key: "taxa" }
             ],
+            // Respostas com múltiplas variações (Sorteio Aleatório)
             responses: {
-                "bitcoin": ["O Bitcoin é a primeira rede descentralizada do mundo, permitindo transações sem intermediários."],
-                "ethereum": ["O Ethereum é a plataforma líder para contratos inteligentes e aplicações financeiras descentralizadas."],
-                "vitalik buterin": ["Vitalik Buterin é o programador e escritor canadense-russo que co-fundou a rede Ethereum em 2015."],
-                "blockchain": ["Blockchain é um registro digital de transações imutável e distribuído por uma rede de computadores."],
-                "satoshi": ["Satoshi Nakamoto é o nome utilizado pela pessoa ou grupo que criou o Bitcoin."]
+                "bitcoin": [
+                    "O Bitcoin é a primeira moeda digital descentralizada, limitada a 21 milhões de unidades.",
+                    "Pense no Bitcoin como 'ouro digital'. É uma reserva de valor protegida por criptografia.",
+                    "O BTC é uma rede global de pagamentos que não depende de bancos centrais.",
+                    "É a moeda líder do mercado, criada por Satoshi Nakamoto em 2009.",
+                    "Bitcoin é um ativo escasso e digital que permite transações diretas entre pessoas."
+                ],
+                "seguranca": [
+                    "A regra de ouro: 'Nem tuas chaves, nem teus bitcoins'. Use carteiras frias (Cold Wallets).",
+                    "Proteja os seus ativos usando autenticação de dois fatores (2FA) e nunca partilhe a sua seed phrase.",
+                    "Para valores altos, recomendamos dispositivos físicos como Ledger ou Trezor.",
+                    "Mantenha as suas moedas fora de corretoras se não planeia fazer trading imediato.",
+                    "Cuidado com phishing! Nunca clique em links suspeitos que prometem lucros fáceis."
+                ],
+                "taxa": [
+                    "As taxas dependem do uso da rede. No Bitcoin chamam-se 'satoshis por byte'.",
+                    "Redes como Solana têm taxas quase nulas, enquanto o Ethereum pode ser mais caro.",
+                    "Para pagar menos taxas, tente enviar transações em horários de menor movimento.",
+                    "As taxas servem para incentivar os validadores a processar a sua transação com segurança.",
+                    "Lembre-se: transações com taxas muito baixas podem demorar mais tempo a serem confirmadas."
+                ]
             },
+            // 10 Formas de falar que não entendeu
             fallbacks: [
-                "Lamento, mas não consegui encontrar informação sobre esse termo específico.",
-                "Não entendi muito bem. Pode tentar escrever de outra forma?",
-                "Esse assunto parece complexo! Tente usar apenas o nome da moeda ou da pessoa."
+                "Ainda estou a aprender! Tente perguntar sobre 'Bitcoin' ou 'Segurança'.",
+                "Não consegui processar isso. Que tal escolher uma das opções abaixo?",
+                "Desculpe, o meu conhecimento foca-se em Cripto. Pode reformular a pergunta?",
+                "Essa é difícil para mim! Tente usar palavras simples como 'comprar' ou 'carteira'.",
+                "Hum, não encontrei nada sobre isso. Quer saber mais sobre 'Taxas'?",
+                "O meu sistema não reconheceu esse termo. Use o menu de opções para facilitar!",
+                "Estou confuso. Pode tentar perguntar de outra forma (ex: 'O que é Ethereum?')",
+                "Ainda não tenho essa resposta. Que tal falarmos sobre segurança de ativos?",
+                "Não entendi, mas posso ajudar com dúvidas sobre BTC, ETH ou Wallets!",
+                "Lamento, o meu radar não captou isso. Tente palavras-chave isoladas."
             ]
         };
-
-        // ALGORITMO DE DISTÂNCIA DE LEVENSHTEIN (Para tolerar erros de digitação)
-        function getSimilarity(s1, s2) {
-            let longer = s1.length < s2.length ? s2 : s1;
-            let shorter = s1.length < s2.length ? s1 : s2;
-            if (longer.length == 0) return 1.0;
-            return (longer.length - editDistance(longer, shorter)) / parseFloat(longer.length);
-        }
-
-        function editDistance(s1, s2) {
-            s1 = s1.toLowerCase(); s2 = s2.toLowerCase();
-            let costs = new Array();
-            for (let i = 0; i <= s1.length; i++) {
-                let lastValue = i;
-                for (let j = 0; j <= s2.length; j++) {
-                    if (i == 0) costs[j] = j;
-                    else if (j > 0) {
-                        let newValue = costs[j - 1];
-                        if (s1.charAt(i - 1) != s2.charAt(j - 1))
-                            newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
-                        costs[j - 1] = lastValue;
-                        lastValue = newValue;
-                    }
-                }
-                if (i > 0) costs[s2.length] = lastValue;
-            }
-            return costs[s2.length];
-        }
 
         const chatBox = document.getElementById('chat-box');
         const userInput = document.getElementById('user-input');
         const chatForm = document.getElementById('chat-form');
         const initialOptions = document.getElementById('initial-options');
 
-        function appendMessage(role, text, isPending = false, correction = null) {
+        function getRandom(arr) {
+            return arr[Math.floor(Math.random() * arr.length)];
+        }
+
+        function appendMessage(role, text) {
             const isBot = role === 'bot';
             const div = document.createElement('div');
             div.className = `flex ${isBot ? 'justify-start' : 'justify-end'} msg-appear mb-4`;
             
-            let contentHtml = `<div class="content ${isPending ? 'loading-dots' : ''}">${text}</div>`;
-            if (correction) {
-                contentHtml += `<div class="correction-badge">Entendi: "<strong>${correction}</strong>"</div>`;
-            }
-
             div.innerHTML = `
-                <div class="${isBot ? 'bg-slate-800 border border-slate-700' : 'bg-orange-600 text-white'} p-3.5 rounded-2xl max-w-[85%] text-sm shadow-xl">
-                    <p class="text-[9px] font-black uppercase opacity-50 mb-1 tracking-tighter">${isBot ? 'Expert Bot' : 'Tu'}</p>
-                    ${contentHtml}
+                <div class="${isBot ? 'bg-slate-800 border border-slate-700' : 'bg-orange-600 text-white shadow-lg shadow-orange-900/20'} p-3.5 rounded-2xl max-w-[85%] text-sm">
+                    <p class="text-[9px] font-black uppercase opacity-50 mb-1 tracking-tighter">${isBot ? 'Assistente' : 'Tu'}</p>
+                    <div class="content">${text}</div>
                 </div>
             `;
             
             chatBox.appendChild(div);
             chatBox.scrollTop = chatBox.scrollHeight;
-            return div;
-        }
-
-        // Extrai o núcleo da frase (Remover "quem é", "o que é", etc)
-        function extractCoreTerm(input) {
-            let term = input.toLowerCase()
-                .replace(/[?|!|.|,]/g, "")
-                .replace(/\b(quem|que|quais|qual|o|eh|é|e|significa|saber|sobre|fale|falar|conte|o que|quem e|quem eh)\b/g, "")
-                .trim();
-            return term;
-        }
-
-        async function fetchWiki(query) {
-            const url = `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1&skip_disambig=1`;
-            const response = await fetch(url);
-            const data = await response.json();
-            return data.AbstractText || null;
-        }
-
-        async function handleInput(e) {
-            if (e) e.preventDefault();
-            const rawInput = userInput.value.trim();
-            if (!rawInput) return;
-
-            appendMessage('user', rawInput);
-            userInput.value = '';
-
-            const pendingDiv = appendMessage('bot', 'Processando inteligência', true);
-            const coreTerm = extractCoreTerm(rawInput);
-            
-            let bestMatch = null;
-            let highestScore = 0;
-            let response = null;
-
-            // 1. Tentar encontrar a melhor correspondência (Fuzzy Search)
-            for (let key in BOT_DATA.responses) {
-                const score = getSimilarity(coreTerm, key);
-                // Se a similaridade for maior que 60%, consideramos que é o termo
-                if (score > 0.6 && score > highestScore) {
-                    highestScore = score;
-                    bestMatch = key;
-                }
-            }
-
-            // 2. Definir resposta baseada no Match
-            if (bestMatch) {
-                response = BOT_DATA.responses[bestMatch][0];
-            } else {
-                // Se não achou local, tenta Wiki com o termo limpo
-                response = await fetchWiki(coreTerm);
-            }
-
-            // 3. Fallback final
-            if (!response) response = BOT_DATA.fallbacks[Math.floor(Math.random() * BOT_DATA.fallbacks.length)];
-
-            setTimeout(() => {
-                const contentArea = pendingDiv.querySelector('.content');
-                contentArea.innerText = response;
-                contentArea.classList.remove('loading-dots');
-                
-                // Se houve uma correção de erro de digitação, avisar o usuário
-                if (bestMatch && highestScore < 1.0 && highestScore > 0.6) {
-                    const badge = document.createElement('div');
-                    badge.className = "correction-badge";
-                    badge.innerHTML = `Entendi: "<strong>${bestMatch}</strong>"`;
-                    pendingDiv.querySelector('.bg-slate-800').appendChild(badge);
-                }
-                
-                chatBox.scrollTop = chatBox.scrollHeight;
-            }, 600);
         }
 
         function showOptions() {
@@ -206,9 +130,38 @@
                 const btn = document.createElement('button');
                 btn.className = "option-btn bg-slate-900/50 px-3 py-1.5 rounded-lg text-xs text-slate-300 hover:text-white";
                 btn.innerText = opt.label;
-                btn.onclick = () => { userInput.value = opt.label; handleInput(); };
+                btn.onclick = () => {
+                    appendMessage('user', opt.label);
+                    setTimeout(() => appendMessage('bot', getRandom(BOT_DATA.responses[opt.key])), 300);
+                };
                 initialOptions.appendChild(btn);
             });
+        }
+
+        function handleInput(e) {
+            e.preventDefault();
+            const text = userInput.value.trim().toLowerCase();
+            if (!text) return;
+
+            appendMessage('user', userInput.value);
+            userInput.value = '';
+
+            let response = null;
+            
+            // Procura por palavras-chave
+            for (let key in BOT_DATA.responses) {
+                if (text.includes(key)) {
+                    response = getRandom(BOT_DATA.responses[key]);
+                    break;
+                }
+            }
+
+            // Se não encontrou, usa um dos 10 fallbacks
+            if (!response) {
+                response = getRandom(BOT_DATA.fallbacks);
+            }
+
+            setTimeout(() => appendMessage('bot', response), 400);
         }
 
         showOptions();
